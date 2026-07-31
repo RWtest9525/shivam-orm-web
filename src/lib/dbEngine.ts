@@ -92,13 +92,13 @@ export interface ReplyTemplateRow {
 }
 
 const STORAGE_KEYS = {
-  CLIENTS: 'equinox_pulse_db_clients_v3',
-  CONNECTIONS: 'equinox_pulse_db_connections_v3',
-  REVIEWS: 'equinox_pulse_db_reviews_v3',
-  DROPPED: 'equinox_pulse_db_dropped_v3',
-  MESSAGES: 'equinox_pulse_db_messages_v3',
-  TEMPLATES: 'equinox_pulse_db_templates_v3',
-  GLOBAL_API: 'equinox_pulse_global_api_key_v3',
+  CLIENTS: 'equinox_pulse_db_clients_v4',
+  CONNECTIONS: 'equinox_pulse_db_connections_v4',
+  REVIEWS: 'equinox_pulse_db_reviews_v4',
+  DROPPED: 'equinox_pulse_db_dropped_v4',
+  MESSAGES: 'equinox_pulse_db_messages_v4',
+  TEMPLATES: 'equinox_pulse_db_templates_v4',
+  GLOBAL_API: 'equinox_pulse_global_api_key_v4',
 };
 
 // Initial Fresh Super Admin ONLY
@@ -124,6 +124,26 @@ const INITIAL_DROPPED: DroppedReviewRow[] = [];
 const INITIAL_MESSAGES: SocialMessageRow[] = [];
 const INITIAL_TEMPLATES: ReplyTemplateRow[] = [];
 
+// App Icon mapping for popular Play Store apps & high quality fallback
+const POPULAR_APP_ICONS: Record<string, { name: string; icon: string }> = {
+  'com.hoora.customer': {
+    name: 'Hoora App',
+    icon: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=150&auto=format&fit=crop&q=80',
+  },
+  'com.whatsapp': {
+    name: 'WhatsApp Messenger',
+    icon: 'https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg',
+  },
+  'com.instagram.android': {
+    name: 'Instagram',
+    icon: 'https://upload.wikimedia.org/wikipedia/commons/e/e7/Instagram_logo_2016.svg',
+  },
+  'com.flipkart.android': {
+    name: 'Flipkart Online Shopping',
+    icon: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=150&auto=format&fit=crop&q=80',
+  },
+};
+
 // Helper to extract Play Store App Package & details from link or ID
 export function parsePlayStoreLink(input: string): {
   package_name: string;
@@ -146,6 +166,17 @@ export function parsePlayStoreLink(input: string): {
     }
   }
 
+  // Check known app icons
+  if (POPULAR_APP_ICONS[pkg.toLowerCase()]) {
+    const known = POPULAR_APP_ICONS[pkg.toLowerCase()];
+    return {
+      package_name: pkg,
+      app_name: known.name,
+      app_icon_url: known.icon,
+      play_link: `https://play.google.com/store/apps/details?id=${pkg}`,
+    };
+  }
+
   // Format clean app title from package ID
   let cleanTitle = pkg;
   if (pkg.includes('.')) {
@@ -156,7 +187,7 @@ export function parsePlayStoreLink(input: string): {
 
   return {
     package_name: pkg,
-    app_name: `${cleanTitle} Application`,
+    app_name: `${cleanTitle} App`,
     app_icon_url: `https://api.dicebear.com/7.x/identicon/svg?seed=${pkg}`,
     play_link: `https://play.google.com/store/apps/details?id=${pkg}`,
   };

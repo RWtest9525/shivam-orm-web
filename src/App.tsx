@@ -5,6 +5,7 @@ import { AppLayout } from '@/components/AppLayout';
 import { LoginPage } from '@/pages/LoginPage';
 import { ClientDashboard } from '@/pages/ClientDashboard';
 import { AdminDashboard } from '@/pages/AdminDashboard';
+import { ClientsPage } from '@/pages/ClientsPage';
 import { PlatformPage } from '@/pages/PlatformPage';
 import { PlayStoreLivePage } from '@/pages/PlayStoreLivePage';
 import { SocialInboxPage } from '@/pages/SocialInboxPage';
@@ -47,7 +48,7 @@ export default function App() {
                   <AppLayout>
                     <Routes>
                       <Route path="/" element={<RoleBasedDashboard />} />
-                      <Route path="/clients" element={<AdminDashboard />} />
+                      <Route path="/clients" element={<ClientsPage />} />
                       <Route path="/live-fetcher" element={<LiveFetcherPage />} />
                       <Route path="/playstore-live" element={<PlayStoreLivePage />} />
                       <Route path="/social-inbox" element={<SocialInboxPage />} />
