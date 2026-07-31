@@ -146,10 +146,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
     <div className="flex min-h-screen transition-colors duration-200 bg-slate-50 text-slate-900 dark:bg-base-950 dark:text-slate-100">
       {/* Desktop Sidebar */}
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 border-r border-slate-200 bg-white backdrop-blur-2xl md:flex md:flex-col dark:border-white/[0.08] dark:bg-base-950/80">
-        {/* Unclipped Circular Badge Brand Header */}
-        <div className="flex h-16 items-center border-b border-slate-200 px-4 bg-slate-950 dark:border-white/[0.08]">
+        {/* Seamless Theme-Aware Brand Header */}
+        <div className="flex h-16 items-center border-b border-slate-200 px-4 bg-white dark:bg-base-950 dark:border-white/[0.08]">
           <div className="flex items-center gap-3">
-            <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-amber-500/40 bg-black p-1 shadow-md">
+            <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-amber-500/40 bg-slate-950 p-0.5 shadow-sm">
               <img
                 src="/logo.png"
                 alt="Equinox Pulse"
@@ -157,10 +157,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
               />
             </div>
             <div className="flex flex-col leading-tight">
-              <span className="text-sm font-black tracking-wide text-white">
+              <span className="text-sm font-black tracking-wide text-slate-900 dark:text-white">
                 EQUINOX <span className="text-amber-500">PULSE</span>
               </span>
-              <span className="text-[9px] font-extrabold text-slate-400 tracking-wider uppercase">
+              <span className="text-[9px] font-extrabold text-slate-500 dark:text-slate-400 tracking-wider uppercase">
                 {isAdmin ? 'Super Admin' : 'Insights. Trends.'}
               </span>
             </div>
@@ -197,23 +197,23 @@ export function AppLayout({ children }: { children: ReactNode }) {
       </aside>
 
       {/* Mobile Top Header */}
-      <div className="fixed inset-x-0 top-0 z-40 flex h-14 items-center justify-between border-b border-slate-200 bg-slate-950 px-4 backdrop-blur-xl md:hidden dark:border-white/[0.08]">
+      <div className="fixed inset-x-0 top-0 z-40 flex h-14 items-center justify-between border-b border-slate-200 bg-white/95 px-4 backdrop-blur-xl md:hidden dark:border-white/[0.08] dark:bg-base-950/90">
         <div className="flex items-center gap-2.5">
           <button
             onClick={() => setMobileDrawerOpen(true)}
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/10 text-slate-200"
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300 bg-slate-100 text-slate-800 dark:border-white/10 dark:bg-white/10 dark:text-slate-200"
           >
             <Menu className="h-5 w-5" />
           </button>
           <div className="flex items-center gap-2">
-            <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-amber-500/40 bg-black p-0.5">
+            <div className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-amber-500/40 bg-slate-950 p-0.5">
               <img src="/logo.png" alt="Equinox Pulse" className="h-full w-full object-contain" />
             </div>
-            <span className="text-sm font-black text-white">EQUINOX PULSE</span>
+            <span className="text-sm font-black text-slate-900 dark:text-white">EQUINOX PULSE</span>
           </div>
         </div>
 
-        <button onClick={handleSignOut} className="text-slate-400 hover:text-rose-400">
+        <button onClick={handleSignOut} className="text-slate-600 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400">
           <LogOut className="h-4 w-4" />
         </button>
       </div>
@@ -228,7 +228,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           <div className="relative flex w-4/5 max-w-xs flex-col border-r border-slate-200 bg-white p-4 shadow-2xl dark:border-white/10 dark:bg-base-950">
             <div className="mb-4 flex items-center justify-between border-b border-slate-200 pb-3 dark:border-white/10">
               <div className="flex items-center gap-2">
-                <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-amber-500/40 bg-black p-0.5">
+                <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-amber-500/40 bg-slate-950 p-0.5">
                   <img src="/logo.png" alt="Equinox Pulse" className="h-full w-full object-contain" />
                 </div>
                 <span className="text-sm font-bold text-slate-900 dark:text-white">Equinox Pulse</span>
