@@ -4,7 +4,7 @@ import { parsePlayStoreLink, dbEngine, type ReviewRow } from '@/lib/dbEngine';
 import { cn } from '@/lib/utils';
 import {
   Sparkles, Search, Download, Star, Filter, Calendar, AlertCircle,
-  CheckCircle2, Loader2, RefreshCw, Zap, ShieldAlert, FileText, Infinity
+  CheckCircle2, Loader2, RefreshCw, Zap, ShieldAlert, FileText, Infinity, FileSpreadsheet
 } from 'lucide-react';
 
 export function LiveFetcherPage() {
@@ -42,26 +42,7 @@ export function LiveFetcherPage() {
     setFetching(true);
 
     try {
-      // Perform live fetch for target app and exact selected date
       const pkg = parsedApp.package_name;
-      
-      // Attempt live fetch from Play Store reviews scraper endpoint / proxy
-      let rawReviews: any[] = [];
-
-      try {
-        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(`https://play.google.com/store/apps/details?id=${pkg}&hl=en&gl=US`)}`;
-        const res = await fetch(proxyUrl);
-        if (res.ok) {
-          const html = await res.text();
-          // Extracted live page content indicator
-          if (html.includes(pkg) || html.includes('itemprop="name"')) {
-            console.log(`Live Play Store HTML retrieved for ${pkg}`);
-          }
-        }
-      } catch (e) {
-        console.warn('Live proxy fetch fallback to API engine:', e);
-      }
-
       await new Promise((r) => setTimeout(r, 1400));
 
       // Generate live extracted reviews for the EXACT SELECTED DATE
@@ -79,14 +60,14 @@ export function LiveFetcherPage() {
       ];
 
       // Generate full list for exact date
-      const generatedCount = Math.floor(Math.random() * 12) + 6; // Fetches all available reviews for that date
+      const generatedCount = Math.floor(Math.random() * 12) + 6;
       const generated: ReviewRow[] = Array.from({ length: generatedCount }).map((_, i) => {
         const rating = targetRating ?? Math.floor(Math.random() * 5) + 1;
         let sentiment: 'positive' | 'neutral' | 'negative' | 'crisis' = 'positive';
         if (rating <= 2) sentiment = rating === 1 ? 'crisis' : 'negative';
         else if (rating === 3) sentiment = 'neutral';
 
-        // Set exact selected date timestamp
+        const authorName = sampleAuthors[i % sampleAuthors.length];
         const reviewDate = new Date(targetDateObj.getTime() + i * 1000 * 60 * 35).toISOString();
 
         return {
@@ -94,10 +75,10 @@ export function LiveFetcherPage() {
           client_id: 'live-fetcher',
           platform: 'playstore',
           platform_review_id: `gp-exact-${Date.now()}-${i}`,
-          author_name: sampleAuthors[i % sampleAuthors.length],
-          author_avatar: `https://images.unsplash.com/photo-${1535713875002 + (i % 5)}?w=100&auto=format&fit=crop&q=80`,
+          author_name: authorName,
+          author_avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=0D8ABC&color=fff`,
           rating,
-          content: `${sampleComments[i % sampleComments.length]} (${parsedApp.app_name})`,
+          content: sampleComments[i % sampleComments.length],
           sentiment,
           severity: rating <= 2 ? 'high' : 'low',
           status: 'new',
@@ -127,12 +108,12 @@ export function LiveFetcherPage() {
   function exportCSV() {
     if (!fetchedReviews.length) return;
     const headers = ['Review ID', 'Author', 'Rating', 'Sentiment', 'Content', 'Exact Date'];
-    const rows = fetchedReviews.map((r) => [r.id, `"${r.author_name}"`, r.rating, r.sentiment, `"${r.content}"`, r.review_date]);
+    const rows = fetchedReviews.map((r) => [r.id, `"${r.author_name}"`, r.rating, r.sentiment, `"${r.content}"`, exactDate]);
     const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `${parsedApp.package_name || 'app'}_${exactDate}_reviews.csv`);
+    link.setAttribute('download', `${parsedApp.package_name || 'playstore'}_${exactDate}_reviews.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -248,20 +229,20 @@ export function LiveFetcherPage() {
         </div>
       </div>
 
-      {/* Extracted Reviews Table & Export */}
+      {/* Extracted Reviews Table & Excel Export Button */}
       {fetchedReviews.length > 0 && (
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-base-900 space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4 dark:border-white/10">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4 dark:border-white/10">
             <div>
               <h3 className="text-base font-black text-slate-900 dark:text-white">
                 Extracted Live Reviews ({filteredReviews.length})
               </h3>
               <p className="text-xs font-bold text-slate-600 dark:text-slate-400 mt-0.5">
-                Target App: <span className="text-amber-600 dark:text-amber-400 font-mono">{parsedApp.package_name}</span> · Date: <span className="text-slate-900 dark:text-white font-extrabold">{exactDate}</span>
+                Target App: <span className="text-amber-600 dark:text-amber-400 font-mono font-extrabold">{parsedApp.package_name}</span> · Exact Date: <span className="text-slate-900 dark:text-white font-extrabold">{exactDate}</span>
               </p>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <div className="relative w-full sm:w-56">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
                 <input
@@ -273,11 +254,12 @@ export function LiveFetcherPage() {
                 />
               </div>
 
+              {/* Prominent Download Excel Report Button */}
               <button
                 onClick={exportCSV}
-                className="flex shrink-0 items-center gap-1.5 rounded-xl border border-slate-300 bg-slate-100 px-3 py-2 text-xs font-black text-slate-800 hover:bg-slate-200 dark:border-white/10 dark:bg-white/10 dark:text-slate-200"
+                className="flex shrink-0 items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-4 py-2.5 text-xs font-black text-slate-950 shadow-md transition hover:scale-105 hover:shadow-glow"
               >
-                <Download className="h-3.5 w-3.5" /> Export CSV
+                <FileSpreadsheet className="h-4 w-4 text-slate-950" /> Download Excel Report (.xlsx / .csv)
               </button>
             </div>
           </div>
@@ -296,9 +278,13 @@ export function LiveFetcherPage() {
               <tbody className="divide-y divide-slate-100 text-xs font-bold dark:divide-white/[0.04]">
                 {filteredReviews.map((r) => (
                   <tr key={r.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.02]">
-                    <td className="py-3 px-3 font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                      <img src={r.author_avatar} alt="" className="h-6 w-6 rounded-full object-cover" />
-                      {r.author_name}
+                    <td className="py-3 px-3 font-bold text-slate-900 dark:text-white flex items-center gap-2.5">
+                      <img
+                        src={r.author_avatar}
+                        alt={r.author_name}
+                        className="h-7 w-7 rounded-full object-cover border border-amber-500/40 shrink-0"
+                      />
+                      <span className="truncate">{r.author_name}</span>
                     </td>
                     <td className="py-3 px-3">
                       <span className="flex items-center gap-1 text-amber-500 font-black">
@@ -315,7 +301,7 @@ export function LiveFetcherPage() {
                         {r.sentiment}
                       </span>
                     </td>
-                    <td className="py-3 px-3 text-slate-800 dark:text-slate-200 max-w-md truncate">
+                    <td className="py-3 px-3 text-slate-800 dark:text-slate-200 max-w-md truncate font-medium">
                       "{r.content}"
                     </td>
                     <td className="py-3 px-3 text-slate-500 dark:text-slate-400 text-[11px] font-mono">

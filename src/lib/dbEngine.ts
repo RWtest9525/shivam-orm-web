@@ -92,13 +92,13 @@ export interface ReplyTemplateRow {
 }
 
 const STORAGE_KEYS = {
-  CLIENTS: 'equinox_pulse_db_clients_v5',
-  CONNECTIONS: 'equinox_pulse_db_connections_v5',
-  REVIEWS: 'equinox_pulse_db_reviews_v5',
-  DROPPED: 'equinox_pulse_db_dropped_v5',
-  MESSAGES: 'equinox_pulse_db_messages_v5',
-  TEMPLATES: 'equinox_pulse_db_templates_v5',
-  GLOBAL_API: 'equinox_pulse_global_api_key_v5',
+  CLIENTS: 'equinox_pulse_db_clients_v6',
+  CONNECTIONS: 'equinox_pulse_db_connections_v6',
+  REVIEWS: 'equinox_pulse_db_reviews_v6',
+  DROPPED: 'equinox_pulse_db_dropped_v6',
+  MESSAGES: 'equinox_pulse_db_messages_v6',
+  TEMPLATES: 'equinox_pulse_db_templates_v6',
+  GLOBAL_API: 'equinox_pulse_global_api_key_v6',
 };
 
 // Initial Fresh Super Admin ONLY
@@ -128,17 +128,17 @@ const INITIAL_TEMPLATES: ReplyTemplateRow[] = [];
 export function validateReviewsWorldApiKey(key: string): { isValid: boolean; error?: string } {
   const trimmed = key.trim();
   if (!trimmed) {
-    return { isValid: false, error: '❌ API Key Cannot Be Empty: Please enter a valid Reviews World API Key.' };
+    return { isValid: false, error: '❌ Invalid API Key: Key verification failed.' };
   }
 
-  // Strict format check: Must start with rw_live_, rw_key_, rw_v2_, rw_secret_ AND be at least 20 chars, or 32+ char token
-  const validPattern = /^(rw_live_|rw_key_|rw_v2_|rw_secret_)[a-zA-Z0-9_\-]{16,}$/;
-  const validTokenPattern = /^[a-zA-Z0-9_\-]{32,}$/;
+  // Must start with rw_live_ or rw_key_ or be a valid 24+ char key token
+  const validPrefix = /^(rw_live_|rw_key_|rw_v2_|rw_secret_)[a-zA-Z0-9_\-]{14,}$/;
+  const validHexToken = /^[a-zA-Z0-9_\-]{24,}$/;
 
-  if (!validPattern.test(trimmed) && !validTokenPattern.test(trimmed)) {
+  if (!validPrefix.test(trimmed) && !validHexToken.test(trimmed)) {
     return {
       isValid: false,
-      error: '❌ Invalid API Key Format: Key verification failed. Reviews World API keys must start with a valid provider prefix (e.g. rw_live_...) and contain at least 20 characters.',
+      error: '❌ Invalid API Key: Key verification failed.',
     };
   }
 
@@ -149,7 +149,7 @@ export function validateReviewsWorldApiKey(key: string): { isValid: boolean; err
 const POPULAR_APP_ICONS: Record<string, { name: string; icon: string }> = {
   'com.hoora.customer': {
     name: 'Hoora App',
-    icon: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=150&auto=format&fit=crop&q=80',
+    icon: 'https://ui-avatars.com/api/?name=Hoora+App&background=f59e0b&color=fff&size=150',
   },
   'com.whatsapp': {
     name: 'WhatsApp Messenger',
@@ -161,7 +161,7 @@ const POPULAR_APP_ICONS: Record<string, { name: string; icon: string }> = {
   },
   'com.flipkart.android': {
     name: 'Flipkart Online Shopping',
-    icon: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=150&auto=format&fit=crop&q=80',
+    icon: 'https://ui-avatars.com/api/?name=Flipkart&background=2563eb&color=fff&size=150',
   },
 };
 
@@ -209,7 +209,7 @@ export function parsePlayStoreLink(input: string): {
   return {
     package_name: pkg,
     app_name: `${cleanTitle} App`,
-    app_icon_url: `https://api.dicebear.com/7.x/identicon/svg?seed=${pkg}`,
+    app_icon_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanTitle)}&background=f59e0b&color=fff&size=150`,
     play_link: `https://play.google.com/store/apps/details?id=${pkg}`,
   };
 }
@@ -356,7 +356,7 @@ class DBEngine {
         platform: 'playstore',
         platform_review_id: `gp-${Date.now()}-1`,
         author_name: 'Rahul Sharma',
-        author_avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
+        author_avatar: 'https://ui-avatars.com/api/?name=Rahul+Sharma&background=0D8ABC&color=fff',
         rating: 5,
         content: `Love using ${appName}! Clean user interface and fast performance.`,
         sentiment: 'positive',
@@ -373,7 +373,7 @@ class DBEngine {
         platform: 'playstore',
         platform_review_id: `gp-${Date.now()}-2`,
         author_name: 'Ananya Roy',
-        author_avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80',
+        author_avatar: 'https://ui-avatars.com/api/?name=Ananya+Roy&background=e11d48&color=fff',
         rating: 4,
         content: `Very useful application. Would love to see dark mode support in next update.`,
         sentiment: 'positive',
