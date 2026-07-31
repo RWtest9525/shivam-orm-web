@@ -1,5 +1,4 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-
 import { dbEngine, type ClientRow } from '@/lib/dbEngine';
 
 interface AuthState {
@@ -18,18 +17,28 @@ interface AuthContextValue extends AuthState {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [currentEmail, setCurrentEmail] = useState<string>(() => {
-    return localStorage.getItem('shivam_orm_active_user') || 'client@dreamapps.com';
+  const [currentEmail, setCurrentEmail] = useState<string | null>(() => {
+    return localStorage.getItem('shivam_orm_active_user') || null;
   });
 
   const [state, setState] = useState<AuthState>({
     session: null,
     client: null,
     userRole: 'client',
-    loading: true,
+    loading: false,
   });
 
-  const resolveAuth = (email: string) => {
+  const resolveAuth = (email: string | null) => {
+    if (!email) {
+      setState({
+        session: null,
+        client: null,
+        userRole: 'client',
+        loading: false,
+      });
+      return;
+    }
+
     const clients = dbEngine.getClients();
     const foundClient = clients.find((c) => c.email.toLowerCase() === email.toLowerCase()) || clients[1] || clients[0];
     
@@ -73,6 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     localStorage.removeItem('shivam_orm_active_user');
+    setCurrentEmail(null);
     setState({ session: null, client: null, userRole: 'client', loading: false });
   };
 
