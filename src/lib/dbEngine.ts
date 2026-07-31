@@ -167,7 +167,7 @@ const INITIAL_CONNECTIONS: PlatformConnectionRow[] = [
     id: 'conn-1',
     client_id: 'c-dream-2',
     platform: 'playstore',
-    account_name: 'DreamApps Play Console',
+    account_name: 'DreamApps Play Store Production',
     api_key: 'gplay_sa_key_live_verified_8921',
     access_token: '',
     refresh_token: '',
@@ -177,7 +177,7 @@ const INITIAL_CONNECTIONS: PlatformConnectionRow[] = [
     api_mode: 'google_console',
     reply_enabled: true,
     dropped_review_tracking: true,
-    app_package_name: 'com.dreamapps.mobile',
+    app_package_name: 'com.hoora.customer',
   },
   {
     id: 'conn-2',
@@ -190,22 +190,6 @@ const INITIAL_CONNECTIONS: PlatformConnectionRow[] = [
     status: 'connected',
     last_synced_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
     created_at: '2026-02-12T00:00:00.000Z',
-  },
-  {
-    id: 'conn-3',
-    client_id: 'c-fintech-3',
-    platform: 'playstore',
-    account_name: 'FinTech Pay Live Store',
-    api_key: 'rw_scraper_live_api_99341',
-    access_token: '',
-    refresh_token: '',
-    status: 'connected',
-    last_synced_at: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-    created_at: '2026-03-06T00:00:00.000Z',
-    api_mode: 'reviews_world_scraper',
-    reply_enabled: false,
-    dropped_review_tracking: false,
-    app_package_name: 'com.fintechglobal.pay',
   },
 ];
 
@@ -245,23 +229,6 @@ const INITIAL_REVIEWS: ReviewRow[] = [
     review_date: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
     created_at: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
     assigned_worker_id: 'worker-1',
-  },
-  {
-    id: 'rev-103',
-    client_id: 'c-dream-2',
-    platform: 'social',
-    platform_review_id: 'ig-44912',
-    author_name: 'TechReviewer_IN',
-    author_avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&auto=format&fit=crop&q=80',
-    rating: 4,
-    content: 'Testing @DreamApps new dashboard feature. Clean layout and responsive design. Dark theme looks sleek!',
-    sentiment: 'positive',
-    severity: 'low',
-    status: 'new',
-    reply: '',
-    replied_at: null,
-    review_date: new Date(Date.now() - 1000 * 60 * 240).toISOString(),
-    created_at: new Date(Date.now() - 1000 * 60 * 240).toISOString(),
   },
 ];
 
@@ -349,7 +316,6 @@ class DBEngine {
     const c = clients.find((x) => x.email.toLowerCase() === email.toLowerCase());
     if (!c) return null;
 
-    // Check if password matches original password OR reset password
     const adminPass = c.password || 'password123';
     const userPass = c.user_reset_password;
 
@@ -413,10 +379,13 @@ class DBEngine {
     const existingIndex = all.findIndex((c) => c.client_id === conn.client_id && c.platform === conn.platform);
     
     let updatedRow: PlatformConnectionRow;
+    const finalApiKey = conn.api_key || (conn.api_mode === 'reviews_world_scraper' ? 'rw_scraper_live_active' : 'gplay_sa_key_default');
+
     if (existingIndex >= 0) {
       updatedRow = {
         ...all[existingIndex],
         ...conn,
+        api_key: finalApiKey,
         last_synced_at: new Date().toISOString(),
       };
       all[existingIndex] = updatedRow;
@@ -426,7 +395,7 @@ class DBEngine {
         client_id: conn.client_id,
         platform: conn.platform,
         account_name: conn.account_name,
-        api_key: conn.api_key,
+        api_key: finalApiKey,
         access_token: conn.access_token || '',
         refresh_token: conn.refresh_token || '',
         status: conn.status || 'connected',
@@ -435,7 +404,7 @@ class DBEngine {
         api_mode: conn.api_mode || 'google_console',
         reply_enabled: conn.api_mode === 'reviews_world_scraper' ? false : true,
         dropped_review_tracking: conn.api_mode === 'reviews_world_scraper' ? false : true,
-        app_package_name: conn.app_package_name || '',
+        app_package_name: conn.app_package_name || 'com.hoora.customer',
       };
       all.push(updatedRow);
     }
