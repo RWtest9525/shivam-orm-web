@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { SENTIMENT_COLORS } from '@/data/constants';
-import { Activity, TrendingUp } from 'lucide-react';
+import { Activity } from 'lucide-react';
 import { SectionCard } from '@/components/ui/SectionCard';
 
 interface Props {
@@ -67,7 +67,7 @@ export function SentimentChart({ data }: Props) {
       title="Sentiment & Review Volume"
       subtitle="Daily review volume breakdown across positive, neutral, and negative ratings"
       icon={<Activity className="h-4 w-4 text-accent-500 dark:text-accent-400" />}
-      action={
+      actions={
         <div className="flex items-center gap-4 text-xs font-semibold">
           <div className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
