@@ -5,7 +5,7 @@ import { useTheme } from '@/context/ThemeContext';
 import {
   LayoutDashboard, Settings, LogOut, Smartphone, ShoppingCart, Instagram,
   Linkedin, MessageCircle, Store, Users, ShieldCheck, ChevronRight, Sun, Moon,
-  Menu, X, Radio, MessageSquare, DownloadCloud, Sparkles
+  Menu, X, Radio, MessageSquare, DownloadCloud, User, Building2, Phone, Mail, Award
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -33,6 +33,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   const isAdmin = userRole === 'super_admin';
 
@@ -173,9 +174,12 @@ export function AppLayout({ children }: { children: ReactNode }) {
           {renderNavList()}
         </nav>
 
-        {/* User Card */}
+        {/* User Profile Card Trigger */}
         <div className="border-t border-slate-200 p-3.5 dark:border-white/[0.08]">
-          <div className="mb-2.5 flex items-center gap-2.5 rounded-xl bg-slate-100 p-2.5 dark:bg-white/[0.04]">
+          <button
+            onClick={() => setShowProfileModal(true)}
+            className="mb-2.5 flex w-full items-center gap-2.5 rounded-xl bg-slate-100 p-2.5 text-left transition hover:bg-slate-200 dark:bg-white/[0.04] dark:hover:bg-white/[0.08]"
+          >
             <img
               src={client?.app_icon_url || `https://api.dicebear.com/7.x/identicon/svg?seed=${client?.company_name}`}
               alt={client?.company_name}
@@ -185,8 +189,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
               <p className="truncate text-xs font-bold text-slate-900 dark:text-slate-200">{client?.company_name}</p>
               <p className="truncate text-[10px] text-slate-500 dark:text-slate-400">{client?.email}</p>
             </div>
-            {isAdmin && <ShieldCheck className="h-4 w-4 text-amber-500" />}
-          </div>
+            {isAdmin ? <ShieldCheck className="h-4 w-4 text-amber-500 shrink-0" /> : <User className="h-4 w-4 text-slate-400 shrink-0" />}
+          </button>
 
           <button
             onClick={handleSignOut}
@@ -214,8 +218,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
           </div>
         </div>
 
-        <button onClick={handleSignOut} className="text-slate-600 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400">
-          <LogOut className="h-4 w-4" />
+        <button onClick={() => setShowProfileModal(true)} className="p-1 text-slate-600 dark:text-slate-300">
+          <User className="h-5 w-5" />
         </button>
       </div>
 
@@ -244,6 +248,75 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
             <div className="flex-1 overflow-y-auto no-scrollbar">
               {renderNavList(() => setMobileDrawerOpen(false))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* User Profile Modal */}
+      {showProfileModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl dark:bg-base-900 dark:border-white/10 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3 dark:border-white/10">
+              <h3 className="flex items-center gap-2 text-base font-black text-slate-900 dark:text-white">
+                <User className="h-5 w-5 text-amber-500" /> Account Profile Details
+              </h3>
+              <button onClick={() => setShowProfileModal(false)} className="text-slate-500 hover:text-slate-900 dark:hover:text-white">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.02]">
+              <img
+                src={client?.app_icon_url || `https://api.dicebear.com/7.x/identicon/svg?seed=${client?.company_name}`}
+                alt={client?.company_name}
+                className="h-14 w-14 rounded-2xl object-cover border border-slate-200 shadow-sm"
+              />
+              <div>
+                <p className="text-base font-black text-slate-900 dark:text-white">{client?.company_name}</p>
+                <p className="text-xs font-bold text-amber-600 dark:text-amber-400 capitalize">{isAdmin ? 'Super Admin Account' : `${client?.plan} Subscription`}</p>
+              </div>
+            </div>
+
+            <div className="space-y-2.5 pt-1 text-xs">
+              <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-white/[0.02]">
+                <span className="font-extrabold text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                  <Mail className="h-4 w-4" /> Email Address
+                </span>
+                <span className="font-bold text-slate-900 dark:text-white">{client?.email}</span>
+              </div>
+
+              <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-white/[0.02]">
+                <span className="font-extrabold text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                  <Building2 className="h-4 w-4" /> Contact Person
+                </span>
+                <span className="font-bold text-slate-900 dark:text-white">{client?.contact_person || 'N/A'}</span>
+              </div>
+
+              <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-white/[0.02]">
+                <span className="font-extrabold text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                  <Phone className="h-4 w-4" /> Phone Number
+                </span>
+                <span className="font-bold text-slate-900 dark:text-white">{client?.phone || 'N/A'}</span>
+              </div>
+
+              {client?.app_package_name && (
+                <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-white/[0.02]">
+                  <span className="font-extrabold text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                    <Smartphone className="h-4 w-4" /> Assigned App Package
+                  </span>
+                  <span className="font-mono text-amber-600 dark:text-amber-400 font-bold">{client?.app_package_name}</span>
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                onClick={() => setShowProfileModal(false)}
+                className="rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-5 py-2.5 text-xs font-black text-slate-950 transition hover:shadow-glow"
+              >
+                Close Profile
+              </button>
             </div>
           </div>
         </div>

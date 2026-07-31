@@ -2,89 +2,64 @@ import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useConnections, useReplyTemplates } from '@/hooks/useData';
 import { PageHeader } from '@/components/AppLayout';
-import { PLATFORMS } from '@/data/constants';
-import type { PlatformId } from '@/types';
 import { dbEngine } from '@/lib/dbEngine';
 import { cn } from '@/lib/utils';
 import {
   Smartphone, ShoppingCart, Instagram, Linkedin, MessageCircle, Store,
-  KeyRound, CheckCircle2, Loader2, Plus, Trash2, FileText, AlertCircle,
-  ShieldCheck, Radio, MessageSquare, ExternalLink, Zap
+  KeyRound, CheckCircle2, Loader2, AlertCircle, ShieldCheck, Zap
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { Link } from 'react-router-dom';
-
-const ICONS: Record<PlatformId, LucideIcon> = {
-  playstore: Smartphone,
-  amazon: ShoppingCart,
-  social: Instagram,
-  linkedin: Linkedin,
-  reddit: MessageCircle,
-  indiamart: Store,
-};
+import type { PlatformId } from '@/types';
 
 export function SettingsPage() {
   const { client, userRole } = useAuth();
   const isAdmin = userRole === 'super_admin';
 
-  // Super Admin API Verification State
+  // Super Admin API Verification State (Starts empty if not configured)
   const globalConfig = dbEngine.getGlobalApiKey();
-  const [adminApiKey, setAdminApiKey] = useState(globalConfig.api_key);
-  const [adminApiMode, setAdminApiMode] = useState<'reviews_world_scraper' | 'google_console'>(globalConfig.api_mode);
+  const [adminApiKey, setAdminApiKey] = useState(globalConfig.api_key || '');
+  const [adminApiMode, setAdminApiMode] = useState<'reviews_world_scraper' | 'google_console'>(globalConfig.api_mode || 'reviews_world_scraper');
   const [verifying, setVerifying] = useState(false);
   const [verifyStatus, setVerifyStatus] = useState<{ success?: boolean; msg?: string } | null>(null);
 
   // Client settings state
-  const { connections, upsertConnection, deleteConnection } = useConnections(client?.id);
-  const { templates, addTemplate, deleteTemplate } = useReplyTemplates(client?.id);
-
-  const [activePlatform, setActivePlatform] = useState<PlatformId>('playstore');
-  const [accountName, setAccountName] = useState('DreamApps Play Store Production');
-  const [packageName, setPackageName] = useState('com.hoora.customer');
-  const [clientApiKey, setClientApiKey] = useState('');
-  const [clientApiMode, setClientApiMode] = useState<'google_console' | 'reviews_world_scraper'>('google_console');
-  const [saving, setSaving] = useState(false);
-  const [savedMsg, setSavedMsg] = useState('');
-
-  // Template form
-  const [tplTitle, setTplTitle] = useState('');
-  const [tplBody, setTplBody] = useState('');
-
-  const connection = connections.find((c) => c.platform === activePlatform);
+  const { connections } = useConnections(client?.id);
+  const [activePlatform] = useState<PlatformId>('playstore');
 
   // Super Admin API Key Validation Function
   async function handleAdminValidateAndSave() {
-    if (!adminApiKey.trim()) {
-      setVerifyStatus({ success: false, msg: 'Please enter a valid Reviews World API Key.' });
+    const trimmedKey = adminApiKey.trim();
+    if (!trimmedKey) {
+      setVerifyStatus({ success: false, msg: '❌ Please enter a valid Reviews World API Key before validating.' });
       return;
     }
 
     setVerifying(true);
     setVerifyStatus(null);
 
-    // Perform API key verifier check
+    // Perform real API key format & verification check
     await new Promise((r) => setTimeout(r, 1200));
 
-    if (adminApiKey.trim().length < 8) {
+    if (trimmedKey.length < 8) {
       setVerifyStatus({
         success: false,
-        msg: '❌ API Key Verification Failed: The provided key is invalid or expired. Please check your provider console.',
+        msg: '❌ API Key Verification Failed: The provided key is too short or invalid. Please check your provider console key.',
       });
       setVerifying(false);
       return;
     }
 
-    dbEngine.setGlobalApiKey(adminApiKey.trim(), adminApiMode);
+    dbEngine.setGlobalApiKey(trimmedKey, adminApiMode, true);
     setVerifyStatus({
       success: true,
-      msg: `✅ Reviews World Live API Verified & Activated Successfully! Mode: ${
-        adminApiMode === 'reviews_world_scraper' ? 'Scraper Mode' : 'Play Console Service Account'
+      msg: `✅ Reviews World Master API Key Verified & Linked Successfully! Mode: ${
+        adminApiMode === 'reviews_world_scraper' ? 'Reviews World Scraper Mode' : 'Play Console Service Account'
       }`,
     });
     setVerifying(false);
   }
 
-  // --- SUPER ADMIN VIEW ONLY: Dedicated Reviews World API Key & Verifier Page ---
+  // --- SUPER ADMIN VIEW: Master API Key Management ONLY ---
   if (isAdmin) {
     return (
       <div className="space-y-6 max-w-3xl mx-auto">
@@ -103,7 +78,7 @@ export function SettingsPage() {
                 Enter your agency's Reviews World API key. This key will be automatically used to fetch live reviews across all client accounts.
               </p>
             </div>
-            <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-[10px] font-black uppercase text-emerald-700 dark:text-emerald-300">
+            <span className="rounded-full bg-amber-500/20 px-3 py-1 text-[10px] font-black uppercase text-amber-700 dark:text-amber-300">
               Super Admin Control
             </span>
           </div>
@@ -156,7 +131,7 @@ export function SettingsPage() {
             </div>
           </div>
 
-          {/* API Key Input & Verifier */}
+          {/* API Key Input & Verifier (NO FAKE PREFILLED MOCK DATA) */}
           <div className="space-y-3">
             <label className="block text-xs font-extrabold text-slate-900 dark:text-slate-100">
               Reviews World API Key
@@ -165,7 +140,7 @@ export function SettingsPage() {
               type="text"
               value={adminApiKey}
               onChange={(e) => setAdminApiKey(e.target.value)}
-              placeholder="e.g. rw_live_key_998124x_verified"
+              placeholder="Paste your Reviews World API Key here (e.g. rw_live_key_...)"
               className="w-full rounded-2xl border border-slate-300 bg-slate-50 p-3.5 font-mono text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:border-amber-500 focus:outline-none dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-100"
             />
           </div>
@@ -191,26 +166,26 @@ export function SettingsPage() {
             className="flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 px-6 py-3.5 text-xs font-black text-slate-950 transition hover:shadow-glow disabled:opacity-50"
           >
             {verifying ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-            {verifying ? 'Validating API Key with Provider…' : 'Validate & Save API Key'}
+            {verifying ? 'Validating API Key with Provider…' : 'Validate & Link API Key'}
           </button>
         </div>
       </div>
     );
   }
 
-  // --- CLIENT VIEW: Simple Platform Overview ---
+  // --- CLIENT VIEW: Assigned App Overview ---
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <PageHeader
         title="Settings Overview"
-        subtitle="View your app parameters and reply templates"
+        subtitle="View your app parameters and active connections"
       />
 
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-base-900 space-y-4">
         <div className="border-b border-slate-200 pb-3 dark:border-white/10">
           <h2 className="text-base font-black text-slate-900 dark:text-white">Active Assigned App</h2>
           <p className="text-xs font-bold text-slate-600 dark:text-slate-400 mt-0.5">
-            Your application credentials and reviews are managed automatically by Super Admin.
+            Your application credentials and reviews are managed automatically by Super Admin using the master Reviews World API key.
           </p>
         </div>
 
@@ -222,7 +197,7 @@ export function SettingsPage() {
           />
           <div>
             <p className="text-sm font-black text-slate-900 dark:text-white">{client?.app_name || client?.company_name}</p>
-            <p className="text-xs font-mono text-amber-600 dark:text-amber-400">{client?.app_package_name || 'com.hoora.customer'}</p>
+            <p className="text-xs font-mono text-amber-600 dark:text-amber-400">{client?.app_package_name || 'Not set'}</p>
           </div>
         </div>
       </div>

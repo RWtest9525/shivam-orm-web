@@ -92,16 +92,16 @@ export interface ReplyTemplateRow {
 }
 
 const STORAGE_KEYS = {
-  CLIENTS: 'equinox_pulse_db_clients_v2',
-  CONNECTIONS: 'equinox_pulse_db_connections_v2',
-  REVIEWS: 'equinox_pulse_db_reviews_v2',
-  DROPPED: 'equinox_pulse_db_dropped_v2',
-  MESSAGES: 'equinox_pulse_db_messages_v2',
-  TEMPLATES: 'equinox_pulse_db_templates_v2',
-  GLOBAL_API: 'equinox_pulse_global_api_key',
+  CLIENTS: 'equinox_pulse_db_clients_v3',
+  CONNECTIONS: 'equinox_pulse_db_connections_v3',
+  REVIEWS: 'equinox_pulse_db_reviews_v3',
+  DROPPED: 'equinox_pulse_db_dropped_v3',
+  MESSAGES: 'equinox_pulse_db_messages_v3',
+  TEMPLATES: 'equinox_pulse_db_templates_v3',
+  GLOBAL_API: 'equinox_pulse_global_api_key_v3',
 };
 
-// Initial Fresh Super Admin (No pre-populated mock clients per user instruction)
+// Initial Fresh Super Admin ONLY
 const INITIAL_CLIENTS: ClientRow[] = [
   {
     id: 'c-admin-shivam',
@@ -132,6 +132,10 @@ export function parsePlayStoreLink(input: string): {
   play_link: string;
 } {
   let pkg = input.trim();
+  if (!pkg) {
+    return { package_name: '', app_name: '', app_icon_url: '', play_link: '' };
+  }
+
   if (pkg.includes('id=')) {
     try {
       const url = new URL(pkg);
@@ -152,7 +156,7 @@ export function parsePlayStoreLink(input: string): {
 
   return {
     package_name: pkg,
-    app_name: `${cleanTitle} Mobile App`,
+    app_name: `${cleanTitle} Application`,
     app_icon_url: `https://api.dicebear.com/7.x/identicon/svg?seed=${pkg}`,
     play_link: `https://play.google.com/store/apps/details?id=${pkg}`,
   };
@@ -189,16 +193,17 @@ class DBEngine {
     this.listeners.forEach((fn) => fn());
   }
 
-  // --- GLOBAL REVIEWS WORLD API KEY (Set by Super Admin) ---
-  public getGlobalApiKey(): { api_key: string; api_mode: 'reviews_world_scraper' | 'google_console' } {
+  // --- GLOBAL REVIEWS WORLD API KEY (Starts Empty "") ---
+  public getGlobalApiKey(): { api_key: string; api_mode: 'reviews_world_scraper' | 'google_console'; is_verified: boolean } {
     return getStorage(STORAGE_KEYS.GLOBAL_API, {
-      api_key: 'rw_live_global_key_equinox',
+      api_key: '',
       api_mode: 'reviews_world_scraper',
+      is_verified: false,
     });
   }
 
-  public setGlobalApiKey(api_key: string, api_mode: 'reviews_world_scraper' | 'google_console') {
-    setStorage(STORAGE_KEYS.GLOBAL_API, { api_key, api_mode });
+  public setGlobalApiKey(api_key: string, api_mode: 'reviews_world_scraper' | 'google_console', is_verified: boolean) {
+    setStorage(STORAGE_KEYS.GLOBAL_API, { api_key, api_mode, is_verified });
     this.notify();
   }
 
@@ -260,7 +265,7 @@ class DBEngine {
         app_package_name: clientData.app_package_name,
       });
 
-      // Generate seed reviews for newly added client app
+      // Generate initial reviews for newly added client app
       this.seedInitialReviewsForApp(newClient.id, clientData.app_name || newClient.company_name);
     }
 
@@ -387,7 +392,7 @@ class DBEngine {
   public getReviews(clientId?: string, platform?: string): ReviewRow[] {
     let all = getStorage<ReviewRow[]>(STORAGE_KEYS.REVIEWS, INITIAL_REVIEWS);
     if (clientId) all = all.filter((r) => r.client_id === clientId);
-    if (platform) all = all.filter((r) => r.platform === platform);
+    if (platform) all = Array.from(all).filter((r) => r.platform === platform);
     return all;
   }
 
