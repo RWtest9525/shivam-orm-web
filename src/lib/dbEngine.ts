@@ -92,13 +92,13 @@ export interface ReplyTemplateRow {
 }
 
 const STORAGE_KEYS = {
-  CLIENTS: 'equinox_pulse_db_clients_v4',
-  CONNECTIONS: 'equinox_pulse_db_connections_v4',
-  REVIEWS: 'equinox_pulse_db_reviews_v4',
-  DROPPED: 'equinox_pulse_db_dropped_v4',
-  MESSAGES: 'equinox_pulse_db_messages_v4',
-  TEMPLATES: 'equinox_pulse_db_templates_v4',
-  GLOBAL_API: 'equinox_pulse_global_api_key_v4',
+  CLIENTS: 'equinox_pulse_db_clients_v5',
+  CONNECTIONS: 'equinox_pulse_db_connections_v5',
+  REVIEWS: 'equinox_pulse_db_reviews_v5',
+  DROPPED: 'equinox_pulse_db_dropped_v5',
+  MESSAGES: 'equinox_pulse_db_messages_v5',
+  TEMPLATES: 'equinox_pulse_db_templates_v5',
+  GLOBAL_API: 'equinox_pulse_global_api_key_v5',
 };
 
 // Initial Fresh Super Admin ONLY
@@ -123,6 +123,27 @@ const INITIAL_REVIEWS: ReviewRow[] = [];
 const INITIAL_DROPPED: DroppedReviewRow[] = [];
 const INITIAL_MESSAGES: SocialMessageRow[] = [];
 const INITIAL_TEMPLATES: ReplyTemplateRow[] = [];
+
+// Strict Reviews World API Key Verifier Helper
+export function validateReviewsWorldApiKey(key: string): { isValid: boolean; error?: string } {
+  const trimmed = key.trim();
+  if (!trimmed) {
+    return { isValid: false, error: '❌ API Key Cannot Be Empty: Please enter a valid Reviews World API Key.' };
+  }
+
+  // Strict format check: Must start with rw_live_, rw_key_, rw_v2_, rw_secret_ AND be at least 20 chars, or 32+ char token
+  const validPattern = /^(rw_live_|rw_key_|rw_v2_|rw_secret_)[a-zA-Z0-9_\-]{16,}$/;
+  const validTokenPattern = /^[a-zA-Z0-9_\-]{32,}$/;
+
+  if (!validPattern.test(trimmed) && !validTokenPattern.test(trimmed)) {
+    return {
+      isValid: false,
+      error: '❌ Invalid API Key Format: Key verification failed. Reviews World API keys must start with a valid provider prefix (e.g. rw_live_...) and contain at least 20 characters.',
+    };
+  }
+
+  return { isValid: true };
+}
 
 // App Icon mapping for popular Play Store apps & high quality fallback
 const POPULAR_APP_ICONS: Record<string, { name: string; icon: string }> = {
@@ -292,6 +313,7 @@ class DBEngine {
         access_token: '',
         refresh_token: '',
         status: 'connected',
+        last_synced_at: new Date().toISOString(),
         api_mode: this.getGlobalApiKey().api_mode,
         app_package_name: clientData.app_package_name,
       });

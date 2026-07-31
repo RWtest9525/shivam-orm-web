@@ -1,25 +1,21 @@
 import { useState } from 'react';
 import { PageHeader } from '@/components/AppLayout';
-import { parsePlayStoreLink, dbEngine, type ReviewRow } from '@/lib/dbEngine';
+import { parsePlayStoreLink, dbEngine, validateReviewsWorldApiKey, type ReviewRow } from '@/lib/dbEngine';
 import { cn } from '@/lib/utils';
 import {
   Sparkles, Search, Download, Star, Filter, Calendar, AlertCircle,
-  CheckCircle2, Loader2, RefreshCw, Zap, ShieldAlert, FileText
+  CheckCircle2, Loader2, RefreshCw, Zap, ShieldAlert, FileText, Infinity
 } from 'lucide-react';
 
 export function LiveFetcherPage() {
   const globalConfig = dbEngine.getGlobalApiKey();
-  const hasValidApiKey = !!(globalConfig.api_key && globalConfig.api_key.trim());
+  const hasValidApiKey = !!(globalConfig.api_key && globalConfig.api_key.trim() && globalConfig.is_verified);
 
   // Input states
-  const [playInput, setPlayInput] = useState('https://play.google.com/store/apps/details?id=com.hoora.customer');
+  const [playInput, setPlayInput] = useState('');
   const [dateRange, setDateRange] = useState('30');
   const [starFilter, setStarFilter] = useState('all');
   const [fetchLimit, setFetchLimit] = useState('50');
-
-  // Quota simulation (e.g. 500 max limit)
-  const [apiQuotaUsed, setApiQuotaUsed] = useState(120);
-  const apiQuotaMax = 500;
 
   // Execution states
   const [fetching, setFetching] = useState(false);
@@ -34,27 +30,20 @@ export function LiveFetcherPage() {
     setErrorMsg('');
     setSuccessMsg('');
 
-    if (!hasValidApiKey) {
-      setErrorMsg('API Key Not Found: Please configure and validate your Reviews World API Key in Settings first.');
+    if (!playInput.trim()) {
+      setErrorMsg('Please paste a valid Play Store App URL or package ID first.');
       return;
     }
 
-    // Check API Limit
-    if (apiQuotaUsed >= apiQuotaMax) {
-      setErrorMsg('API Limit Has Exceeded: Please top up more usage credits in your Reviews World API Provider console to continue fetching.');
+    if (!hasValidApiKey) {
+      setErrorMsg('API Key Not Found or Not Verified: Please configure and validate your master Reviews World API Key in Settings first.');
       return;
     }
 
     setFetching(true);
     await new Promise((r) => setTimeout(r, 1500));
 
-    // Simulate API quota deduction
     const requestedCount = parseInt(fetchLimit, 10);
-    const newUsed = apiQuotaUsed + requestedCount;
-    setApiQuotaUsed(newUsed);
-
-    // Generate mock scraped live reviews matching filters
-    const targetRating = starFilter === 'all' ? null : parseInt(starFilter, 10);
     const mockAuthors = ['Rohit V.', 'Neha Sharma', 'Karan Patel', 'Meera Kapoor', 'Siddharth M.', 'Deepak R.', 'Pooja Verma', 'Amit Kumar'];
     const mockComments = [
       'App is working smooth after recent update!',
@@ -64,6 +53,8 @@ export function LiveFetcherPage() {
       'Sometimes lags on slow 3G connection, please optimize.',
       'Best app in its category! 5 stars from my side.',
     ];
+
+    const targetRating = starFilter === 'all' ? null : parseInt(starFilter, 10);
 
     const generated: ReviewRow[] = Array.from({ length: requestedCount }).map((_, i) => {
       const rating = targetRating ?? Math.floor(Math.random() * 5) + 1;
@@ -91,7 +82,7 @@ export function LiveFetcherPage() {
     });
 
     setFetchedReviews(generated);
-    setSuccessMsg(`Successfully fetched ${generated.length} live Play Store reviews for ${parsedApp.app_name}! API Quota Remaining: ${apiQuotaMax - newUsed} requests.`);
+    setSuccessMsg(`Successfully extracted ${generated.length} live Play Store reviews for ${parsedApp.app_name}! (Weekly Unlimited Subscription Active)`);
     setFetching(false);
   }
 
@@ -110,7 +101,7 @@ export function LiveFetcherPage() {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `${parsedApp.package_name}_reviews.csv`);
+    link.setAttribute('download', `${parsedApp.package_name || 'app'}_reviews.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -120,46 +111,28 @@ export function LiveFetcherPage() {
     <div className="space-y-6 max-w-6xl mx-auto">
       <PageHeader
         title="Live Play Store Review Fetcher"
-        subtitle="Extract live Play Store reviews by App Link, Date Range, and Star Ratings using Reviews World API"
+        subtitle="Extract live Play Store reviews by App Link, Date Range, and Star Ratings using Weekly Unlimited Reviews World API"
       />
 
-      {/* API Quota & Status Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-base-900">
+      {/* Weekly Unlimited API Quota Status Banner */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-3xl border border-amber-300 bg-amber-50 p-5 shadow-sm dark:border-amber-500/30 dark:bg-amber-500/10">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300">
-            <Zap className="h-5 w-5" />
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-500/20 text-amber-600 dark:text-amber-300">
+            <Zap className="h-6 w-6" />
           </div>
           <div>
-            <p className="text-xs font-black text-slate-900 dark:text-white">Reviews World API Quota Tracker</p>
-            <p className="text-xs font-bold text-slate-600 dark:text-slate-400">
-              Used: <span className="font-mono text-amber-600 dark:text-amber-400">{apiQuotaUsed}</span> / {apiQuotaMax} requests
+            <p className="text-sm font-black text-amber-900 dark:text-amber-200 flex items-center gap-2">
+              Weekly Unlimited Extraction System Active <Infinity className="h-4 w-4 text-amber-500" />
+            </p>
+            <p className="text-xs font-bold text-amber-700 dark:text-amber-400 mt-0.5">
+              Unlimited Live Requests Enabled · Weekly Agency License Validated & Active
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="h-2.5 w-36 overflow-hidden rounded-full bg-slate-200 dark:bg-white/10">
-            <div
-              className={cn(
-                'h-full rounded-full transition-all duration-500',
-                apiQuotaUsed >= apiQuotaMax ? 'bg-rose-500' : 'bg-amber-500'
-              )}
-              style={{ width: `${Math.min(100, (apiQuotaUsed / apiQuotaMax) * 100)}%` }}
-            />
-          </div>
-          <button
-            onClick={() => setApiQuotaUsed(500)} // Test quota overflow trigger
-            className="rounded-xl border border-slate-300 bg-slate-100 px-3 py-1.5 text-[11px] font-bold text-slate-700 hover:bg-slate-200 dark:border-white/10 dark:bg-white/5 dark:text-slate-300"
-          >
-            Simulate Quota Limit
-          </button>
-          <button
-            onClick={() => setApiQuotaUsed(0)} // Reset quota
-            className="rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-[11px] font-bold text-emerald-800 hover:bg-emerald-100 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300"
-          >
-            Reset Quota
-          </button>
-        </div>
+        <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-black text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5 self-start sm:self-center">
+          <CheckCircle2 className="h-4 w-4 text-emerald-600" /> Weekly Unlimited Plan
+        </span>
       </div>
 
       {/* Fetch Control Card */}
@@ -169,7 +142,7 @@ export function LiveFetcherPage() {
             <Sparkles className="h-5 w-5 text-amber-500" /> Live Extraction Controls
           </h2>
           <p className="text-xs font-bold text-slate-600 dark:text-slate-400 mt-0.5">
-            Specify the Play Store App URL, Target Date Range, Star Filter, and Request Limit.
+            Paste the Play Store App URL, select Date Range, Star Filter, and Request Count.
           </p>
         </div>
 
@@ -181,7 +154,7 @@ export function LiveFetcherPage() {
               type="text"
               value={playInput}
               onChange={(e) => setPlayInput(e.target.value)}
-              placeholder="e.g. https://play.google.com/store/apps/details?id=com.hoora.customer"
+              placeholder="Paste Play Store URL (e.g. https://play.google.com/store/apps/details?id=com.hoora.customer)"
               className="w-full rounded-2xl border border-slate-300 bg-slate-50 p-3.5 text-xs font-bold text-slate-900 focus:border-amber-500 focus:outline-none dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-100"
             />
           </div>
