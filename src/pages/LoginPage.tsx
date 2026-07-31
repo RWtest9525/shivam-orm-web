@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { useTheme } from '@/context/ThemeContext';
-import { Eye, EyeOff, Lock, Mail, ShieldCheck, ArrowRight, Sun, Moon, KeyRound, AlertCircle, CheckCircle2, X } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, ShieldCheck, ArrowRight, KeyRound, AlertCircle, CheckCircle2, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export function LoginPage() {
   const navigate = useNavigate();
   const { session, signIn, resetPassword } = useAuth();
-  const { theme, toggleTheme } = useTheme();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -71,17 +70,6 @@ export function LoginPage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-4 py-8 bg-slate-50 dark:bg-base-950 text-slate-900 dark:text-slate-100 transition-colors duration-200">
-      {/* Top right theme switcher */}
-      <div className="absolute top-4 right-4 z-20">
-        <button
-          onClick={toggleTheme}
-          className="flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-bold text-slate-800 shadow-sm hover:bg-slate-100 dark:border-white/10 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/20"
-        >
-          {theme === 'dark' ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-slate-700" />}
-          <span>{theme === 'dark' ? 'White Theme' : 'Black Theme'}</span>
-        </button>
-      </div>
-
       <div className="w-full max-w-md">
         {/* Brand Header */}
         <div className="mb-8 flex flex-col items-center text-center">
