@@ -72,13 +72,24 @@ export function LoginPage() {
     <div className="flex min-h-screen flex-col items-center justify-center px-4 py-8 bg-slate-950 text-slate-100 selection:bg-amber-500/30">
       <div className="w-full max-w-md space-y-6">
         
-        {/* Direct Natural Logo Image - No TV Box or outer container */}
-        <div className="flex justify-center pb-2">
-          <img
-            src="/logo.png"
-            alt="Equinox Pulse"
-            className="w-full max-w-[280px] sm:max-w-[320px] h-auto object-contain drop-shadow-2xl"
-          />
+        {/* Sleek Small Circular Logo Badge & Title Header */}
+        <div className="flex flex-col items-center text-center">
+          <div className="relative flex h-20 w-20 items-center justify-center rounded-full border-2 border-amber-500/40 bg-black p-1 shadow-[0_0_30px_rgba(245,158,11,0.25)]">
+            <div className="h-full w-full rounded-full overflow-hidden bg-black flex items-center justify-center">
+              <img
+                src="/logo.png"
+                alt="Equinox Pulse Logo"
+                className="h-full w-full object-cover scale-[1.55] transform -translate-y-0.5"
+              />
+            </div>
+          </div>
+
+          <h1 className="mt-3.5 text-2xl font-black tracking-wider text-white sm:text-3xl">
+            EQUINOX <span className="text-amber-500">PULSE</span>
+          </h1>
+          <p className="mt-1 text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase">
+            INSIGHTS. TRENDS. IMPACT.
+          </p>
         </div>
 
         {/* Premium Dark Glassmorphism Login Card */}

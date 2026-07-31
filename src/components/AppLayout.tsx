@@ -146,13 +146,25 @@ export function AppLayout({ children }: { children: ReactNode }) {
     <div className="flex min-h-screen transition-colors duration-200 bg-slate-50 text-slate-900 dark:bg-base-950 dark:text-slate-100">
       {/* Desktop Sidebar */}
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 border-r border-slate-200 bg-white backdrop-blur-2xl md:flex md:flex-col dark:border-white/[0.08] dark:bg-base-950/80">
-        {/* Crisp Prominent Logo Header */}
-        <div className="flex h-20 items-center border-b border-slate-200 px-4 bg-slate-950 dark:border-white/[0.08]">
-          <img
-            src="/logo.png"
-            alt="Equinox Pulse"
-            className="h-12 w-full object-contain object-left"
-          />
+        {/* Circular Emblem Brand Header */}
+        <div className="flex h-16 items-center border-b border-slate-200 px-4 bg-slate-950 dark:border-white/[0.08]">
+          <div className="flex items-center gap-3">
+            <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-amber-500/40 bg-black p-0.5 overflow-hidden">
+              <img
+                src="/logo.png"
+                alt="Equinox Pulse"
+                className="h-full w-full object-cover scale-[1.55] transform -translate-y-0.5"
+              />
+            </div>
+            <div className="flex flex-col leading-tight">
+              <span className="text-sm font-black tracking-wide text-white">
+                EQUINOX <span className="text-amber-500">PULSE</span>
+              </span>
+              <span className="text-[9px] font-extrabold text-slate-400 tracking-wider uppercase">
+                {isAdmin ? 'Super Admin' : 'Insights. Trends.'}
+              </span>
+            </div>
+          </div>
         </div>
 
         {/* Scrollable Nav */}
@@ -193,7 +205,12 @@ export function AppLayout({ children }: { children: ReactNode }) {
           >
             <Menu className="h-5 w-5" />
           </button>
-          <img src="/logo.png" alt="Equinox Pulse" className="h-8 w-36 object-contain object-left" />
+          <div className="flex items-center gap-2">
+            <div className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-amber-500/40 bg-black p-0.5 overflow-hidden">
+              <img src="/logo.png" alt="Equinox Pulse" className="h-full w-full object-cover scale-[1.55]" />
+            </div>
+            <span className="text-sm font-black text-white">EQUINOX PULSE</span>
+          </div>
         </div>
 
         <button onClick={handleSignOut} className="text-slate-400 hover:text-rose-400">
@@ -210,7 +227,12 @@ export function AppLayout({ children }: { children: ReactNode }) {
           />
           <div className="relative flex w-4/5 max-w-xs flex-col border-r border-slate-200 bg-white p-4 shadow-2xl dark:border-white/10 dark:bg-base-950">
             <div className="mb-4 flex items-center justify-between border-b border-slate-200 pb-3 dark:border-white/10">
-              <img src="/logo.png" alt="Equinox Pulse" className="h-8 w-36 object-contain object-left" />
+              <div className="flex items-center gap-2">
+                <div className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-amber-500/40 bg-black p-0.5 overflow-hidden">
+                  <img src="/logo.png" alt="Equinox Pulse" className="h-full w-full object-cover scale-[1.55]" />
+                </div>
+                <span className="text-sm font-bold text-slate-900 dark:text-white">Equinox Pulse</span>
+              </div>
               <button
                 onClick={() => setMobileDrawerOpen(false)}
                 className="rounded-lg p-1 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
