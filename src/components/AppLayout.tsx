@@ -146,19 +146,13 @@ export function AppLayout({ children }: { children: ReactNode }) {
     <div className="flex min-h-screen transition-colors duration-200 bg-slate-50 text-slate-900 dark:bg-base-950 dark:text-slate-100">
       {/* Desktop Sidebar */}
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 border-r border-slate-200 bg-white backdrop-blur-2xl md:flex md:flex-col dark:border-white/[0.08] dark:bg-base-950/80">
-        {/* Brand Header */}
-        <div className="flex h-16 items-center border-b border-slate-200 px-4 dark:border-white/[0.08]">
-          <div className="flex items-center gap-3">
-            <img src="/logo.png" alt="Equinox Pulse" className="h-9 w-9 object-contain rounded-xl" />
-            <div className="flex flex-col leading-tight">
-              <span className="text-sm font-black tracking-wide text-slate-900 dark:text-white">
-                EQUINOX <span className="text-amber-500">PULSE</span>
-              </span>
-              <span className="text-[9px] font-extrabold text-slate-500 dark:text-slate-400 tracking-wider uppercase">
-                {isAdmin ? 'Super Admin' : 'Insights. Trends. Impact.'}
-              </span>
-            </div>
-          </div>
+        {/* Crisp Prominent Logo Header */}
+        <div className="flex h-20 items-center border-b border-slate-200 px-4 bg-slate-950 dark:border-white/[0.08]">
+          <img
+            src="/logo.png"
+            alt="Equinox Pulse"
+            className="h-12 w-full object-contain object-left"
+          />
         </div>
 
         {/* Scrollable Nav */}
@@ -191,21 +185,18 @@ export function AppLayout({ children }: { children: ReactNode }) {
       </aside>
 
       {/* Mobile Top Header */}
-      <div className="fixed inset-x-0 top-0 z-40 flex h-14 items-center justify-between border-b border-slate-200 bg-white/95 px-4 backdrop-blur-xl md:hidden dark:border-white/[0.08] dark:bg-base-950/90">
+      <div className="fixed inset-x-0 top-0 z-40 flex h-14 items-center justify-between border-b border-slate-200 bg-slate-950 px-4 backdrop-blur-xl md:hidden dark:border-white/[0.08]">
         <div className="flex items-center gap-2.5">
           <button
             onClick={() => setMobileDrawerOpen(true)}
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300 bg-slate-100 text-slate-800 dark:border-white/10 dark:bg-white/10 dark:text-slate-200"
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/10 text-slate-200"
           >
             <Menu className="h-5 w-5" />
           </button>
-          <div className="flex items-center gap-2">
-            <img src="/logo.png" alt="Equinox Pulse" className="h-7 w-7 object-contain" />
-            <span className="text-sm font-black text-slate-900 dark:text-white">EQUINOX PULSE</span>
-          </div>
+          <img src="/logo.png" alt="Equinox Pulse" className="h-8 w-36 object-contain object-left" />
         </div>
 
-        <button onClick={handleSignOut} className="text-slate-600 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400">
+        <button onClick={handleSignOut} className="text-slate-400 hover:text-rose-400">
           <LogOut className="h-4 w-4" />
         </button>
       </div>
@@ -219,10 +210,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           />
           <div className="relative flex w-4/5 max-w-xs flex-col border-r border-slate-200 bg-white p-4 shadow-2xl dark:border-white/10 dark:bg-base-950">
             <div className="mb-4 flex items-center justify-between border-b border-slate-200 pb-3 dark:border-white/10">
-              <div className="flex items-center gap-2">
-                <img src="/logo.png" alt="Equinox Pulse" className="h-7 w-7 object-contain" />
-                <span className="text-sm font-bold text-slate-900 dark:text-white">Equinox Pulse</span>
-              </div>
+              <img src="/logo.png" alt="Equinox Pulse" className="h-8 w-36 object-contain object-left" />
               <button
                 onClick={() => setMobileDrawerOpen(false)}
                 className="rounded-lg p-1 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
