@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: 'class',
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
@@ -34,6 +35,7 @@ export default {
         'glow-rose': '0 0 26px -4px rgba(244,63,94,0.45)',
         'glow-amber': '0 0 22px -4px rgba(251,191,36,0.4)',
         card: '0 1px 0 0 rgba(255,255,255,0.04) inset, 0 10px 34px -14px rgba(0,0,0,0.65)',
+        'card-light': '0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 2px 6px -1px rgba(0, 0, 0, 0.03)',
       },
     },
   },

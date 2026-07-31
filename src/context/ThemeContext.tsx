@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 
-type Theme = 'dark' | 'light';
+type Theme = 'light' | 'dark';
 
 interface ThemeContextType {
   theme: Theme;
@@ -14,21 +14,21 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(() => {
     const saved = localStorage.getItem('shivam_orm_theme');
     if (saved === 'light' || saved === 'dark') return saved;
-    return 'dark';
+    return 'light'; // Default to clean, bright light theme so user sees bright UI immediately
   });
 
   useEffect(() => {
     const root = document.documentElement;
-    if (theme === 'light') {
+    if (theme === 'dark') {
+      root.classList.add('dark');
+      root.classList.remove('light');
+      document.body.style.backgroundColor = '#0b0f17';
+      document.body.style.color = '#f1f5f9';
+    } else {
       root.classList.add('light');
       root.classList.remove('dark');
       document.body.style.backgroundColor = '#f8fafc';
       document.body.style.color = '#0f172a';
-    } else {
-      root.classList.add('dark');
-      root.classList.remove('light');
-      document.body.style.backgroundColor = '#0b0f17';
-      document.body.style.color = '#e2e8f0';
     }
     localStorage.setItem('shivam_orm_theme', theme);
   }, [theme]);
