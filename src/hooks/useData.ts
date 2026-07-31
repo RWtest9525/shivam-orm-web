@@ -134,9 +134,10 @@ export function useAllClients(isSuperAdmin: boolean) {
     });
   }, [isSuperAdmin]);
 
-  async function addClient(email: string, company: string, contact: string, phone: string, plan: string) {
+  async function addClient(email: string, company: string, contact: string, phone: string, plan: string, password?: string) {
     return dbEngine.addClient({
       email,
+      password: password || 'password123',
       company_name: company,
       contact_person: contact,
       phone,
@@ -147,6 +148,10 @@ export function useAllClients(isSuperAdmin: boolean) {
     });
   }
 
+  async function updateClientDetails(id: string, updates: Partial<ClientRow>) {
+    return dbEngine.updateClientDetails(id, updates);
+  }
+
   async function updateClientStatus(id: string, status: 'active' | 'suspended' | 'pending') {
     return dbEngine.updateClientStatus(id, status);
   }
@@ -155,7 +160,7 @@ export function useAllClients(isSuperAdmin: boolean) {
     return dbEngine.updateClientPlan(id, plan);
   }
 
-  return { clients, loading, addClient, updateClientStatus, updateClientPlan };
+  return { clients, loading, addClient, updateClientDetails, updateClientStatus, updateClientPlan };
 }
 
 export function useWorkers() {
@@ -168,9 +173,5 @@ export function useWorkers() {
     });
   }, []);
 
-  async function addWorker(name: string, email: string, assignedClientIds: string[]) {
-    return dbEngine.addWorker(name, email, assignedClientIds);
-  }
-
-  return { workers, addWorker };
+  return { workers };
 }

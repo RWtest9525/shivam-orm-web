@@ -30,7 +30,7 @@ interface NavItem {
 }
 
 export function AppLayout({ children }: { children: ReactNode }) {
-  const { client, userRole, switchUser, signOut } = useAuth();
+  const { client, userRole, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
@@ -63,37 +63,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
   const renderNavList = (onItemClick?: () => void) => (
     <div className="space-y-4">
-      {/* Role Switcher Pill (Super Admin vs Client) */}
-      <div className="rounded-xl border border-slate-200 bg-slate-100 p-2.5 dark:border-white/10 dark:bg-white/[0.04]">
-        <p className="mb-1.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-          Account Panel Switcher
-        </p>
-        <div className="grid grid-cols-2 gap-1.5">
-          <button
-            onClick={() => { switchUser('client@dreamapps.com'); onItemClick?.(); }}
-            className={cn(
-              'rounded-lg py-1.5 text-[11px] font-extrabold transition',
-              userRole === 'client'
-                ? 'bg-accent-500 text-slate-950 shadow-sm'
-                : 'text-slate-700 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-white/10'
-            )}
-          >
-            Client Panel
-          </button>
-          <button
-            onClick={() => { switchUser('admin@shivamorm.com'); onItemClick?.(); }}
-            className={cn(
-              'rounded-lg py-1.5 text-[11px] font-extrabold transition',
-              userRole === 'super_admin'
-                ? 'bg-accent-500 text-slate-950 shadow-sm'
-                : 'text-slate-700 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-white/10'
-            )}
-          >
-            Super Admin
-          </button>
-        </div>
-      </div>
-
       <div>
         <p className="px-2 pb-1.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
           {isAdmin ? 'Super Admin Workspace' : 'Main Client Workspace'}

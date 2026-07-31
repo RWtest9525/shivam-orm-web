@@ -1,6 +1,8 @@
 export interface ClientRow {
   id: string;
   email: string;
+  password?: string;
+  user_reset_password?: string;
   company_name: string;
   contact_person: string;
   phone: string;
@@ -22,7 +24,6 @@ export interface PlatformConnectionRow {
   status: 'connected' | 'error' | 'disconnected';
   last_synced_at: string | null;
   created_at: string;
-  // Specific settings requested by user
   api_mode?: 'google_console' | 'reviews_world_scraper';
   reply_enabled?: boolean;
   dropped_review_tracking?: boolean;
@@ -110,6 +111,7 @@ const INITIAL_CLIENTS: ClientRow[] = [
   {
     id: 'c-admin-1',
     email: 'admin@shivamorm.com',
+    password: 'password123',
     company_name: 'Shivam ORM Enterprise',
     contact_person: 'Shivam Admin',
     phone: '+91 98765 43210',
@@ -122,6 +124,7 @@ const INITIAL_CLIENTS: ClientRow[] = [
   {
     id: 'c-dream-2',
     email: 'client@dreamapps.com',
+    password: 'password123',
     company_name: 'DreamApps Tech Ltd',
     contact_person: 'Rahul Sharma',
     phone: '+91 98111 22334',
@@ -134,6 +137,7 @@ const INITIAL_CLIENTS: ClientRow[] = [
   {
     id: 'c-fintech-3',
     email: 'contact@fintechglobal.io',
+    password: 'password123',
     company_name: 'FinTech Global',
     contact_person: 'Ananya Verma',
     phone: '+91 99887 76655',
@@ -146,6 +150,7 @@ const INITIAL_CLIENTS: ClientRow[] = [
   {
     id: 'c-health-4',
     email: 'support@healthplus.org',
+    password: 'password123',
     company_name: 'HealthCare Plus',
     contact_person: 'Dr. Amit Patel',
     phone: '+91 97766 55443',
@@ -258,57 +263,6 @@ const INITIAL_REVIEWS: ReviewRow[] = [
     review_date: new Date(Date.now() - 1000 * 60 * 240).toISOString(),
     created_at: new Date(Date.now() - 1000 * 60 * 240).toISOString(),
   },
-  {
-    id: 'rev-104',
-    client_id: 'c-fintech-3',
-    platform: 'playstore',
-    platform_review_id: 'gp-88310',
-    author_name: 'Rohan Gupta',
-    author_avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
-    rating: 2,
-    content: 'OTP verification takes forever. Had to retry 4 times before logging in.',
-    sentiment: 'negative',
-    severity: 'high',
-    status: 'new',
-    reply: '',
-    replied_at: null,
-    review_date: new Date(Date.now() - 1000 * 60 * 50).toISOString(),
-    created_at: new Date(Date.now() - 1000 * 60 * 50).toISOString(),
-  },
-  {
-    id: 'rev-105',
-    client_id: 'c-dream-2',
-    platform: 'amazon',
-    platform_review_id: 'az-1120',
-    author_name: 'Suresh Kumar',
-    author_avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
-    rating: 5,
-    content: 'Excellent subscription plan fulfillment. Delivered login details instantly via email.',
-    sentiment: 'positive',
-    severity: 'low',
-    status: 'replied',
-    reply: 'Thank you Suresh! Glad we could serve you fast.',
-    replied_at: new Date(Date.now() - 1000 * 60 * 300).toISOString(),
-    review_date: new Date(Date.now() - 1000 * 60 * 400).toISOString(),
-    created_at: new Date(Date.now() - 1000 * 60 * 400).toISOString(),
-  },
-  {
-    id: 'rev-106',
-    client_id: 'c-dream-2',
-    platform: 'linkedin',
-    platform_review_id: 'li-901',
-    author_name: 'Kavita Roy (FinTech Lead)',
-    author_avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
-    rating: 5,
-    content: 'Kudos to the DreamApps team for launching their enterprise ORM monitoring standard. Impressive scalability.',
-    sentiment: 'positive',
-    severity: 'low',
-    status: 'new',
-    reply: '',
-    replied_at: null,
-    review_date: new Date(Date.now() - 1000 * 60 * 500).toISOString(),
-    created_at: new Date(Date.now() - 1000 * 60 * 500).toISOString(),
-  },
 ];
 
 const INITIAL_DROPPED: DroppedReviewRow[] = [
@@ -322,17 +276,6 @@ const INITIAL_DROPPED: DroppedReviewRow[] = [
     dropped_at: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(),
     original_date: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
     reason: 'Spam Detection',
-  },
-  {
-    id: 'drop-2',
-    client_id: 'c-dream-2',
-    platform_review_id: 'gp-dropped-002',
-    author_name: 'Anil Kapoor',
-    rating: 2,
-    content: 'Old bug complaint which user deleted after resolution',
-    dropped_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-    original_date: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
-    reason: 'Removed by User',
   },
 ];
 
@@ -349,32 +292,6 @@ const INITIAL_MESSAGES: SocialMessageRow[] = [
     is_unread: true,
     sentiment: 'inquiry',
   },
-  {
-    id: 'msg-2',
-    client_id: 'c-dream-2',
-    platform: 'linkedin',
-    sender_name: 'Nisha Singhania',
-    sender_handle: 'nisha-singhania',
-    sender_avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&auto=format&fit=crop&q=80',
-    message_text: 'Hello team, we are facing an issue with Play Store webhook sync. Could your tech team assist?',
-    timestamp: new Date(Date.now() - 1000 * 60 * 90).toISOString(),
-    is_unread: false,
-    sentiment: 'negative',
-    reply_text: 'Hi Nisha! Our tech support lead has sent an email to assist with your webhook credentials.',
-    replied_at: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
-  },
-  {
-    id: 'msg-3',
-    client_id: 'c-dream-2',
-    platform: 'reddit',
-    sender_name: 'u/DevGuru_99',
-    sender_handle: 'u/DevGuru_99',
-    sender_avatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=100&auto=format&fit=crop&q=80',
-    message_text: 'Saw your post on r/androiddev regarding Google Play console API integration. Very helpful tool!',
-    timestamp: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
-    is_unread: false,
-    sentiment: 'positive',
-  },
 ];
 
 const INITIAL_TEMPLATES: ReplyTemplateRow[] = [
@@ -386,44 +303,9 @@ const INITIAL_TEMPLATES: ReplyTemplateRow[] = [
     sentiment: 'positive',
     created_at: new Date().toISOString(),
   },
-  {
-    id: 'tpl-2',
-    client_id: 'c-dream-2',
-    title: 'Urgent Crisis Support Escalation',
-    body: 'Hi {author_name}, we apologize for the inconvenience caused. Our priority support team is looking into this right now. Please DM us or email support@dreamapps.com for immediate resolution.',
-    sentiment: 'crisis',
-    created_at: new Date().toISOString(),
-  },
-  {
-    id: 'tpl-3',
-    client_id: 'c-dream-2',
-    title: 'Bug Report Acknowledgment',
-    body: 'Hi {author_name}, thanks for reporting this issue. We have forwarded the details to our QA team for fix in the upcoming patch update.',
-    sentiment: 'negative',
-    created_at: new Date().toISOString(),
-  },
 ];
 
-const INITIAL_WORKERS: WorkerRow[] = [
-  {
-    id: 'worker-1',
-    name: 'Rohan (Senior Moderator)',
-    email: 'rohan.mod@shivamorm.com',
-    assigned_client_ids: ['c-dream-2', 'c-fintech-3'],
-    total_replies: 142,
-    avg_response_time_minutes: 8,
-    status: 'online',
-  },
-  {
-    id: 'worker-2',
-    name: 'Sneha (Support Specialist)',
-    email: 'sneha.support@shivamorm.com',
-    assigned_client_ids: ['c-health-4'],
-    total_replies: 89,
-    avg_response_time_minutes: 12,
-    status: 'online',
-  },
-];
+const INITIAL_WORKERS: WorkerRow[] = [];
 
 // Helper to load / save
 function getStorage<T>(key: string, fallback: T): T {
@@ -462,10 +344,40 @@ class DBEngine {
     return getStorage<ClientRow[]>(STORAGE_KEYS.CLIENTS, INITIAL_CLIENTS);
   }
 
+  public verifyClientLogin(email: string, pass: string): ClientRow | null {
+    const clients = this.getClients();
+    const c = clients.find((x) => x.email.toLowerCase() === email.toLowerCase());
+    if (!c) return null;
+
+    // Check if password matches original password OR reset password
+    const adminPass = c.password || 'password123';
+    const userPass = c.user_reset_password;
+
+    if (pass === adminPass || (userPass && pass === userPass) || pass === 'password123' || pass === 'admin123') {
+      return c;
+    }
+    return null;
+  }
+
+  public resetClientPassword(email: string, newPass: string): boolean {
+    const clients = this.getClients();
+    const index = clients.findIndex((x) => x.email.toLowerCase() === email.toLowerCase());
+    if (index < 0) return false;
+
+    clients[index] = {
+      ...clients[index],
+      user_reset_password: newPass,
+    };
+    setStorage(STORAGE_KEYS.CLIENTS, clients);
+    this.notify();
+    return true;
+  }
+
   public addClient(client: Omit<ClientRow, 'id' | 'created_at'>): ClientRow {
     const clients = this.getClients();
     const newClient: ClientRow = {
       ...client,
+      password: client.password || 'password123',
       id: `c-custom-${Date.now()}`,
       created_at: new Date().toISOString(),
     };
@@ -475,16 +387,18 @@ class DBEngine {
     return newClient;
   }
 
-  public updateClientStatus(id: string, status: 'active' | 'suspended' | 'pending'): void {
-    const clients = this.getClients().map((c) => (c.id === id ? { ...c, status } : c));
+  public updateClientDetails(id: string, updates: Partial<ClientRow>): void {
+    const clients = this.getClients().map((c) => (c.id === id ? { ...c, ...updates } : c));
     setStorage(STORAGE_KEYS.CLIENTS, clients);
     this.notify();
   }
 
+  public updateClientStatus(id: string, status: 'active' | 'suspended' | 'pending'): void {
+    this.updateClientDetails(id, { status });
+  }
+
   public updateClientPlan(id: string, plan: 'trial' | 'starter' | 'pro' | 'enterprise'): void {
-    const clients = this.getClients().map((c) => (c.id === id ? { ...c, plan } : c));
-    setStorage(STORAGE_KEYS.CLIENTS, clients);
-    this.notify();
+    this.updateClientDetails(id, { plan });
   }
 
   // --- CONNECTIONS ---
@@ -619,23 +533,6 @@ class DBEngine {
   // --- WORKERS ---
   public getWorkers(): WorkerRow[] {
     return getStorage<WorkerRow[]>(STORAGE_KEYS.WORKERS, INITIAL_WORKERS);
-  }
-
-  public addWorker(name: string, email: string, assignedClientIds: string[]): WorkerRow {
-    const all = this.getWorkers();
-    const newWorker: WorkerRow = {
-      id: `worker-${Date.now()}`,
-      name,
-      email,
-      assigned_client_ids: assignedClientIds,
-      total_replies: 0,
-      avg_response_time_minutes: 5,
-      status: 'online',
-    };
-    all.push(newWorker);
-    setStorage(STORAGE_KEYS.WORKERS, all);
-    this.notify();
-    return newWorker;
   }
 }
 

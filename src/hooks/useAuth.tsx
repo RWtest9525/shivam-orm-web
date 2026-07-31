@@ -9,6 +9,8 @@ interface AuthState {
 }
 
 interface AuthContextValue extends AuthState {
+  signIn: (email: string, pass: string) => Promise<{ success: boolean; error?: string }>;
+  resetPassword: (email: string, newPass: string) => Promise<{ success: boolean; error?: string }>;
   signOut: () => Promise<void>;
   switchUser: (email: string) => void;
   refreshClient: () => Promise<void>;
@@ -68,6 +70,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return unsubscribe;
   }, [currentEmail]);
 
+  const signIn = async (email: string, pass: string) => {
+    const verifiedClient = dbEngine.verifyClientLogin(email, pass);
+    if (!verifiedClient) {
+      return { success: false, error: 'Invalid email or password. Please check your credentials.' };
+    }
+    localStorage.setItem('shivam_orm_active_user', verifiedClient.email);
+    setCurrentEmail(verifiedClient.email);
+    resolveAuth(verifiedClient.email);
+    return { success: true };
+  };
+
+  const resetPassword = async (email: string, newPass: string) => {
+    const success = dbEngine.resetClientPassword(email, newPass);
+    if (!success) {
+      return { success: false, error: 'Email account not found. Please contact Super Admin.' };
+    }
+    return { success: true };
+  };
+
   const switchUser = (email: string) => {
     localStorage.setItem('shivam_orm_active_user', email);
     setCurrentEmail(email);
@@ -85,7 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ ...state, signOut, switchUser, refreshClient }}>
+    <AuthContext.Provider value={{ ...state, signIn, resetPassword, signOut, switchUser, refreshClient }}>
       {children}
     </AuthContext.Provider>
   );
