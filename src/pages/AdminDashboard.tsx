@@ -6,9 +6,8 @@ import { CLIENT_STATUS_DEF } from '@/data/constants';
 import { dbEngine, parsePlayStoreLink, type ClientRow } from '@/lib/dbEngine';
 import { cn } from '@/lib/utils';
 import {
-  Users, Plus, Building2, MessageSquareText, TrendingUp, Loader2, X,
-  Activity, Radio, CheckCircle2, DollarSign, Edit, KeyRound, Trash2,
-  Smartphone, Link2, ExternalLink, Sparkles
+  Users, Plus, Building2, TrendingUp, Loader2, X,
+  Smartphone, Edit, KeyRound, Trash2, Link2, Sparkles, CheckCircle2, DollarSign
 } from 'lucide-react';
 
 export function AdminDashboard() {
@@ -22,6 +21,8 @@ export function AdminDashboard() {
 
   // Global API Key state
   const globalConfig = dbEngine.getGlobalApiKey();
+  const hasCustomGlobalKey = !!(globalConfig.api_key && globalConfig.api_key !== 'rw_live_global_key_equinox');
+
   const [globalApiKey, setGlobalApiKey] = useState(globalConfig.api_key);
   const [globalApiMode, setGlobalApiMode] = useState<'reviews_world_scraper' | 'google_console'>(globalConfig.api_mode);
   const [globalSavedMsg, setGlobalSavedMsg] = useState('');
@@ -122,7 +123,7 @@ export function AdminDashboard() {
 
   function handleSaveGlobalApi() {
     dbEngine.setGlobalApiKey(globalApiKey.trim(), globalApiMode);
-    setGlobalSavedMsg('Global Reviews World API Key saved! All client apps will automatically fetch live data using this key.');
+    setGlobalSavedMsg('Global Reviews World API Key saved & verified!');
     setTimeout(() => setGlobalSavedMsg(''), 3000);
   }
 
@@ -137,7 +138,7 @@ export function AdminDashboard() {
         action={
           <button
             onClick={() => setShowAddClient(true)}
-            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-accent-500 to-electric-600 px-4 py-2.5 text-xs font-black text-slate-950 transition hover:shadow-glow"
+            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-4 py-2.5 text-xs font-black text-slate-950 transition hover:shadow-glow"
           >
             <Plus className="h-4 w-4" /> Add New Client Account
           </button>
@@ -148,7 +149,7 @@ export function AdminDashboard() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="glass animate-float-up rounded-2xl p-5 shadow-card border border-slate-200 bg-white dark:border-white/10 dark:bg-white/[0.02]">
           <div className="flex items-center justify-between">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-500/10 text-accent-600 dark:bg-accent-500/20 dark:text-accent-300">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300">
               <Users className="h-5 w-5" />
             </span>
             <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[10px] font-extrabold text-emerald-700 dark:text-emerald-300">
@@ -161,10 +162,10 @@ export function AdminDashboard() {
 
         <div className="glass animate-float-up rounded-2xl p-5 shadow-card border border-slate-200 bg-white dark:border-white/10 dark:bg-white/[0.02]" style={{ animationDelay: '40ms' }}>
           <div className="flex items-center justify-between">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-electric-500/10 text-electric-600 dark:bg-electric-500/20 dark:text-electric-300">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300">
               <Smartphone className="h-5 w-5" />
             </span>
-            <span className="rounded-full bg-accent-500/20 px-2.5 py-0.5 text-[10px] font-extrabold text-accent-700 dark:text-accent-300">
+            <span className="rounded-full bg-amber-500/20 px-2.5 py-0.5 text-[10px] font-extrabold text-amber-700 dark:text-amber-300">
               Auto-Fetched
             </span>
           </div>
@@ -172,17 +173,20 @@ export function AdminDashboard() {
           <p className="mt-1 text-2xl font-black text-slate-900 dark:text-white">{activeClients.filter((c) => c.app_package_name).length}</p>
         </div>
 
+        {/* Reviews World API Status: Only shows Active & Syncing if API key has actually been set up */}
         <div className="glass animate-float-up rounded-2xl p-5 shadow-card border border-slate-200 bg-white dark:border-white/10 dark:bg-white/[0.02]" style={{ animationDelay: '80ms' }}>
           <div className="flex items-center justify-between">
             <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-300">
               <TrendingUp className="h-5 w-5" />
             </span>
-            <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[10px] font-extrabold text-emerald-700 dark:text-emerald-300">
-              100% Live
+            <span className={cn('rounded-full px-2.5 py-0.5 text-[10px] font-extrabold', hasCustomGlobalKey ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300' : 'bg-amber-500/20 text-amber-700 dark:text-amber-300')}>
+              {hasCustomGlobalKey ? '100% Live' : 'Action Needed'}
             </span>
           </div>
           <p className="mt-3 text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">Reviews World API Status</p>
-          <p className="mt-1 text-xl font-black text-emerald-600 dark:text-emerald-400">Active & Syncing</p>
+          <p className={cn('mt-1 text-xl font-black', hasCustomGlobalKey ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400')}>
+            {hasCustomGlobalKey ? 'Active & Syncing' : 'Not Configured Yet'}
+          </p>
         </div>
 
         <div className="glass animate-float-up rounded-2xl p-5 shadow-card border border-slate-200 bg-white dark:border-white/10 dark:bg-white/[0.02]" style={{ animationDelay: '120ms' }}>
@@ -191,7 +195,7 @@ export function AdminDashboard() {
               <DollarSign className="h-5 w-5" />
             </span>
             <span className="rounded-full bg-amber-500/20 px-2.5 py-0.5 text-[10px] font-extrabold text-amber-700 dark:text-amber-300">
-              MRR Growth
+              Agency Growth
             </span>
           </div>
           <p className="mt-3 text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">Monthly Recurring Revenue</p>
@@ -206,7 +210,7 @@ export function AdminDashboard() {
           className={cn(
             'flex items-center gap-2 border-b-2 px-5 py-3 text-xs font-black transition-all',
             activeTab === 'clients'
-              ? 'border-accent-500 text-accent-700 dark:text-accent-300'
+              ? 'border-amber-500 text-amber-700 dark:text-amber-300'
               : 'border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
           )}
         >
@@ -217,7 +221,7 @@ export function AdminDashboard() {
           className={cn(
             'flex items-center gap-2 border-b-2 px-5 py-3 text-xs font-black transition-all',
             activeTab === 'global_api'
-              ? 'border-accent-500 text-accent-700 dark:text-accent-300'
+              ? 'border-amber-500 text-amber-700 dark:text-amber-300'
               : 'border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200'
           )}
         >
@@ -237,7 +241,7 @@ export function AdminDashboard() {
               </p>
               <button
                 onClick={() => setShowAddClient(true)}
-                className="mt-4 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-accent-500 to-electric-600 px-4 py-2.5 text-xs font-black text-slate-950 transition hover:shadow-glow"
+                className="mt-4 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-4 py-2.5 text-xs font-black text-slate-950 transition hover:shadow-glow"
               >
                 <Plus className="h-4 w-4" /> Add First Client Account
               </button>
@@ -258,15 +262,15 @@ export function AdminDashboard() {
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
                           <p className="truncate text-sm font-black text-slate-900 dark:text-white">{c.company_name}</p>
-                          <span className="rounded-full bg-accent-500/20 px-2.5 py-0.5 text-[10px] font-black capitalize text-accent-800 dark:text-accent-300">
+                          <span className="rounded-full bg-amber-500/20 px-2.5 py-0.5 text-[10px] font-black capitalize text-amber-800 dark:text-amber-300">
                             {c.plan} Plan
                           </span>
                         </div>
                         <p className="truncate text-xs font-bold text-slate-600 dark:text-slate-400 mt-0.5">
-                          App: <span className="text-slate-900 dark:text-slate-200">{c.app_name || c.company_name}</span> · Package: <span className="font-mono text-accent-700 dark:text-accent-400">{c.app_package_name || 'com.app.mobile'}</span>
+                          App: <span className="text-slate-900 dark:text-slate-200">{c.app_name || c.company_name}</span> · Package: <span className="font-mono text-amber-700 dark:text-amber-400">{c.app_package_name || 'com.app.mobile'}</span>
                         </p>
                         <p className="truncate text-[11px] font-bold text-slate-500 dark:text-slate-400">
-                          Email: <span className="text-slate-900 dark:text-slate-200">{c.email}</span> · Password: <span className="font-mono text-accent-700 dark:text-accent-400">{c.password || 'Shivam@123'}</span>
+                          Email: <span className="text-slate-900 dark:text-slate-200">{c.email}</span> · Password: <span className="font-mono text-amber-700 dark:text-amber-400">{c.password || 'Shivam@123'}</span>
                         </p>
                       </div>
                     </div>
@@ -301,7 +305,7 @@ export function AdminDashboard() {
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-base-900 space-y-6">
           <div className="border-b border-slate-200 pb-4 dark:border-white/10">
             <h3 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
-              <KeyRound className="h-5 w-5 text-accent-600 dark:text-accent-400" /> Global Reviews World API Key Configuration
+              <KeyRound className="h-5 w-5 text-amber-600 dark:text-amber-400" /> Global Reviews World API Key Configuration
             </h3>
             <p className="text-xs font-bold text-slate-600 dark:text-slate-400 mt-0.5">
               Super Admin configures this global Reviews World API key once. All clients automatically use this key for fetching live ratings!
@@ -316,7 +320,7 @@ export function AdminDashboard() {
                 value={globalApiKey}
                 onChange={(e) => setGlobalApiKey(e.target.value)}
                 placeholder="rw_live_global_key_equinox"
-                className="w-full rounded-xl border border-slate-300 bg-slate-50 p-3 font-mono text-xs font-bold text-slate-900 focus:border-accent-500 focus:outline-none dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-100"
+                className="w-full rounded-xl border border-slate-300 bg-slate-50 p-3 font-mono text-xs font-bold text-slate-900 focus:border-amber-500 focus:outline-none dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-100"
               />
             </div>
 
@@ -355,9 +359,9 @@ export function AdminDashboard() {
 
             <button
               onClick={handleSaveGlobalApi}
-              className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-accent-500 to-electric-600 px-6 py-3 text-xs font-black text-slate-950 transition hover:shadow-glow"
+              className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-6 py-3 text-xs font-black text-slate-950 transition hover:shadow-glow"
             >
-              Save Global API Key Settings
+              Save & Validate Global API Key
             </button>
           </div>
         </div>
@@ -369,7 +373,7 @@ export function AdminDashboard() {
           <div className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl dark:bg-base-900 dark:border-white/10">
             <div className="flex items-center justify-between border-b border-slate-200 pb-3 dark:border-white/10">
               <h3 className="flex items-center gap-2 text-base font-black text-slate-900 dark:text-slate-100">
-                <Sparkles className="h-5 w-5 text-accent-600 dark:text-accent-400" /> Add Client Account & Auto-Fetch App
+                <Sparkles className="h-5 w-5 text-amber-600 dark:text-amber-400" /> Add Client Account & Auto-Fetch App
               </h3>
               <button onClick={() => setShowAddClient(false)} className="text-slate-500 hover:text-slate-900 dark:hover:text-white">
                 <X className="h-5 w-5" />
@@ -378,8 +382,8 @@ export function AdminDashboard() {
 
             <div className="mt-4 space-y-4">
               {/* Play Store Link Auto-Fetcher Input */}
-              <div className="rounded-2xl border border-accent-300 bg-accent-50/60 p-4 space-y-2 dark:border-accent-500/30 dark:bg-accent-500/10">
-                <label className="text-xs font-black text-accent-900 dark:text-accent-300 flex items-center gap-1.5">
+              <div className="rounded-2xl border border-amber-300 bg-amber-50/60 p-4 space-y-2 dark:border-amber-500/30 dark:bg-amber-500/10">
+                <label className="text-xs font-black text-amber-900 dark:text-amber-300 flex items-center gap-1.5">
                   <Link2 className="h-4 w-4" /> Play Store App Link / Package ID
                 </label>
                 <input
@@ -387,7 +391,7 @@ export function AdminDashboard() {
                   value={playInput}
                   onChange={(e) => setPlayInput(e.target.value)}
                   placeholder="e.g. https://play.google.com/store/apps/details?id=com.hoora.customer"
-                  className="w-full rounded-xl border border-accent-300 bg-white p-2.5 text-xs font-bold text-slate-900 focus:outline-none dark:border-accent-500/40 dark:bg-base-950 dark:text-slate-100"
+                  className="w-full rounded-xl border border-amber-300 bg-white p-2.5 text-xs font-bold text-slate-900 focus:outline-none dark:border-amber-500/40 dark:bg-base-950 dark:text-slate-100"
                 />
                 
                 {/* Auto-Fetched App Preview */}
@@ -400,7 +404,7 @@ export function AdminDashboard() {
                     />
                     <div className="min-w-0 flex-1">
                       <p className="text-xs font-black text-slate-900 dark:text-white">{parsedApp.app_name}</p>
-                      <p className="text-[10px] font-mono text-accent-700 dark:text-accent-400">{parsedApp.package_name}</p>
+                      <p className="text-[10px] font-mono text-amber-700 dark:text-amber-400">{parsedApp.package_name}</p>
                     </div>
                     <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[9px] font-black text-emerald-700 dark:text-emerald-300">
                       Auto-Fetched
@@ -417,7 +421,7 @@ export function AdminDashboard() {
                     placeholder="Hoora Tech Ltd"
                     value={company}
                     onChange={(e) => setCompany(e.target.value)}
-                    className="w-full rounded-xl border border-slate-300 bg-slate-50 p-2.5 text-xs font-bold text-slate-900 focus:border-accent-500 focus:outline-none dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-100"
+                    className="w-full rounded-xl border border-slate-300 bg-slate-50 p-2.5 text-xs font-bold text-slate-900 focus:border-amber-500 focus:outline-none dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-100"
                   />
                 </div>
                 <div>
@@ -427,7 +431,7 @@ export function AdminDashboard() {
                     placeholder="client@hoora.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full rounded-xl border border-slate-300 bg-slate-50 p-2.5 text-xs font-bold text-slate-900 focus:border-accent-500 focus:outline-none dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-100"
+                    className="w-full rounded-xl border border-slate-300 bg-slate-50 p-2.5 text-xs font-bold text-slate-900 focus:border-amber-500 focus:outline-none dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-100"
                   />
                 </div>
               </div>
@@ -439,7 +443,7 @@ export function AdminDashboard() {
                     type="text"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full rounded-xl border border-slate-300 bg-slate-50 p-2.5 font-mono text-xs font-bold text-slate-900 focus:border-accent-500 focus:outline-none dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-100"
+                    className="w-full rounded-xl border border-slate-300 bg-slate-50 p-2.5 font-mono text-xs font-bold text-slate-900 focus:border-amber-500 focus:outline-none dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-100"
                   />
                 </div>
                 <div>
@@ -460,7 +464,7 @@ export function AdminDashboard() {
               <button
                 onClick={handleAddClient}
                 disabled={addingClient || !email.trim() || !company.trim()}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-accent-500 to-electric-600 py-3 text-xs font-black text-slate-950 transition hover:shadow-glow disabled:opacity-50"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 py-3 text-xs font-black text-slate-950 transition hover:shadow-glow disabled:opacity-50"
               >
                 {addingClient ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
                 Create Client Account & Ingest App
@@ -476,7 +480,7 @@ export function AdminDashboard() {
           <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl dark:bg-base-900 dark:border-white/10">
             <div className="flex items-center justify-between border-b border-slate-200 pb-3 dark:border-white/10">
               <h3 className="flex items-center gap-2 text-base font-black text-slate-900 dark:text-slate-100">
-                <Edit className="h-4 w-4 text-accent-600 dark:text-accent-400" /> Edit Client Account Details
+                <Edit className="h-4 w-4 text-amber-600 dark:text-amber-400" /> Edit Client Account Details
               </h3>
               <button onClick={() => setEditingClient(null)} className="text-slate-500 hover:text-slate-900 dark:hover:text-white">
                 <X className="h-4 w-4" />
@@ -489,7 +493,7 @@ export function AdminDashboard() {
                   type="text"
                   value={editCompany}
                   onChange={(e) => setEditCompany(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 p-2.5 text-xs font-bold text-slate-900 focus:border-accent-500 focus:outline-none dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-100"
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 p-2.5 text-xs font-bold text-slate-900 focus:border-amber-500 focus:outline-none dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-100"
                 />
               </div>
 
@@ -499,7 +503,7 @@ export function AdminDashboard() {
                   type="text"
                   value={editPlayInput}
                   onChange={(e) => setEditPlayInput(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 p-2.5 text-xs font-bold text-slate-900 focus:border-accent-500 focus:outline-none dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-100"
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 p-2.5 text-xs font-bold text-slate-900 focus:border-amber-500 focus:outline-none dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-100"
                 />
               </div>
 
@@ -509,7 +513,7 @@ export function AdminDashboard() {
                   type="email"
                   value={editEmail}
                   onChange={(e) => setEditEmail(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 p-2.5 text-xs font-bold text-slate-900 focus:border-accent-500 focus:outline-none dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-100"
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 p-2.5 text-xs font-bold text-slate-900 focus:border-amber-500 focus:outline-none dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-100"
                 />
               </div>
 
@@ -519,7 +523,7 @@ export function AdminDashboard() {
                   type="text"
                   value={editPassword}
                   onChange={(e) => setEditPassword(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 p-2.5 font-mono text-xs font-bold text-slate-900 focus:border-accent-500 focus:outline-none dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-100"
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 p-2.5 font-mono text-xs font-bold text-slate-900 focus:border-amber-500 focus:outline-none dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-100"
                 />
               </div>
 
@@ -535,7 +539,7 @@ export function AdminDashboard() {
                   type="button"
                   onClick={handleSaveEdit}
                   disabled={savingEdit || !editEmail.trim() || !editCompany.trim()}
-                  className="rounded-xl bg-gradient-to-r from-accent-500 to-electric-600 px-4 py-2 text-xs font-black text-slate-950 transition hover:shadow-glow disabled:opacity-50"
+                  className="rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-4 py-2 text-xs font-black text-slate-950 transition hover:shadow-glow disabled:opacity-50"
                 >
                   {savingEdit ? 'Saving…' : 'Save Changes'}
                 </button>

@@ -5,7 +5,7 @@ import { useTheme } from '@/context/ThemeContext';
 import {
   LayoutDashboard, Settings, LogOut, Smartphone, ShoppingCart, Instagram,
   Linkedin, MessageCircle, Store, Users, ShieldCheck, ChevronRight, Sun, Moon,
-  Menu, X, Radio, MessageSquare
+  Menu, X, Radio, MessageSquare, DownloadCloud, Sparkles
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -44,6 +44,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const mainNav: NavItem[] = isAdmin
     ? [
         { to: '/app', label: 'Admin Dashboard', icon: LayoutDashboard, end: true },
+        { to: '/app/live-fetcher', label: 'Live Fetcher', icon: DownloadCloud },
         { to: '/app/clients', label: 'Manage Clients', icon: Users },
         { to: '/app/settings', label: 'Settings & API Keys', icon: Settings },
       ]
