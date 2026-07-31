@@ -25,7 +25,6 @@ interface NavItem {
   to: string;
   label: string;
   icon: LucideIcon;
-  badge?: string;
   end?: boolean;
 }
 
@@ -42,22 +41,23 @@ export function AppLayout({ children }: { children: ReactNode }) {
     navigate('/login', { replace: true });
   }
 
+  // Clean, uncluttered menu items without extra tags/badges
   const mainNav: NavItem[] = isAdmin
     ? [
         { to: '/app', label: 'Admin Dashboard', icon: LayoutDashboard, end: true },
-        { to: '/app/clients', label: 'Manage Clients', icon: Users, badge: 'Live' },
-        { to: '/app/settings', label: 'System Settings', icon: Settings },
+        { to: '/app/clients', label: 'Manage Clients', icon: Users },
+        { to: '/app/settings', label: 'Settings & API Keys', icon: Settings },
       ]
     : [
         { to: '/app', label: 'Executive Dashboard', icon: LayoutDashboard, end: true },
-        { to: '/app/playstore-live', label: 'Play Store Live & Drops', icon: Radio, badge: 'Live Tracker' },
-        { to: '/app/social-inbox', label: 'Social Messenger', icon: MessageSquare, badge: 'Direct DMs' },
+        { to: '/app/playstore-live', label: 'Play Store Live & Drops', icon: Radio },
+        { to: '/app/social-inbox', label: 'Direct Social DMs', icon: MessageSquare },
         { to: '/app/settings', label: 'Settings & API Keys', icon: Settings },
       ];
 
   const platformNav: NavItem[] = PLATFORMS.map((p) => ({
     to: `/app/platform/${p.id}`,
-    label: p.short,
+    label: p.label,
     icon: ICONS[p.id],
   }));
 
@@ -76,22 +76,15 @@ export function AppLayout({ children }: { children: ReactNode }) {
               onClick={onItemClick}
               className={({ isActive }) =>
                 cn(
-                  'group flex items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-bold transition-all',
+                  'group flex items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-xs font-bold transition-all',
                   isActive
                     ? 'bg-accent-500/15 text-accent-700 dark:bg-accent-500/20 dark:text-accent-300 dark:shadow-[inset_0_0_0_1px_rgba(34,211,238,0.3)]'
                     : 'text-slate-700 hover:bg-slate-200/80 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white'
                 )
               }
             >
-              <div className="flex items-center gap-2.5">
-                <item.icon className="h-4 w-4 shrink-0 text-accent-600 dark:text-accent-400" />
-                <span className="truncate">{item.label}</span>
-              </div>
-              {item.badge && (
-                <span className="rounded-full bg-accent-500/20 px-2 py-0.5 text-[9px] font-extrabold text-accent-700 dark:bg-accent-500/20 dark:text-accent-300">
-                  {item.badge}
-                </span>
-              )}
+              <item.icon className="h-4 w-4 shrink-0 text-accent-600 dark:text-accent-400" />
+              <span className="truncate">{item.label}</span>
             </NavLink>
           ))}
         </div>
