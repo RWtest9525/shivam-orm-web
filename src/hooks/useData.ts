@@ -7,7 +7,6 @@ import type {
   ReplyTemplateRow,
   DroppedReviewRow,
   SocialMessageRow,
-  WorkerRow,
 } from '@/lib/dbEngine';
 
 export function useConnections(clientId?: string) {
@@ -31,7 +30,7 @@ export function useConnections(clientId?: string) {
       refresh_token: conn.refresh_token || '',
       status: conn.status || 'connected',
       last_synced_at: conn.last_synced_at || new Date().toISOString(),
-      api_mode: conn.api_mode || 'google_console',
+      api_mode: conn.api_mode || 'reviews_world_scraper',
       reply_enabled: conn.reply_enabled ?? true,
       dropped_review_tracking: conn.dropped_review_tracking ?? true,
       app_package_name: conn.app_package_name || '',
@@ -134,14 +133,21 @@ export function useAllClients(isSuperAdmin: boolean) {
     });
   }, [isSuperAdmin]);
 
-  async function addClient(email: string, company: string, contact: string, phone: string, plan: string, password?: string) {
+  async function addClient(clientData: {
+    email: string;
+    company_name: string;
+    contact_person: string;
+    phone: string;
+    plan: string;
+    password?: string;
+    app_package_name?: string;
+    app_name?: string;
+    app_icon_url?: string;
+    app_play_link?: string;
+  }) {
     return dbEngine.addClient({
-      email,
-      password: password || 'password123',
-      company_name: company,
-      contact_person: contact,
-      phone,
-      plan: plan as any,
+      ...clientData,
+      plan: clientData.plan as any,
       status: 'active',
       is_super_admin: false,
       auth_user_id: `user-${Date.now()}`,
@@ -152,26 +158,9 @@ export function useAllClients(isSuperAdmin: boolean) {
     return dbEngine.updateClientDetails(id, updates);
   }
 
-  async function updateClientStatus(id: string, status: 'active' | 'suspended' | 'pending') {
-    return dbEngine.updateClientStatus(id, status);
+  async function deleteClient(id: string) {
+    return dbEngine.deleteClient(id);
   }
 
-  async function updateClientPlan(id: string, plan: 'trial' | 'starter' | 'pro' | 'enterprise') {
-    return dbEngine.updateClientPlan(id, plan);
-  }
-
-  return { clients, loading, addClient, updateClientDetails, updateClientStatus, updateClientPlan };
-}
-
-export function useWorkers() {
-  const [workers, setWorkers] = useState<WorkerRow[]>([]);
-
-  useEffect(() => {
-    setWorkers(dbEngine.getWorkers());
-    return dbEngine.subscribe(() => {
-      setWorkers(dbEngine.getWorkers());
-    });
-  }, []);
-
-  return { workers };
+  return { clients, loading, addClient, updateClientDetails, deleteClient };
 }

@@ -54,7 +54,7 @@ export function LoginPage() {
     try {
       const res = await resetPassword(forgotEmail.trim(), forgotNewPw.trim());
       if (res.success) {
-        setForgotMsg('Password reset successful! You can now log in using your new password or your original password.');
+        setForgotMsg('Password reset successful! You can now log in using your new password.');
         setEmail(forgotEmail);
         setPassword(forgotNewPw);
         setTimeout(() => setShowForgotModal(false), 2000);
@@ -73,15 +73,14 @@ export function LoginPage() {
       <div className="w-full max-w-md">
         {/* Brand Header */}
         <div className="mb-8 flex flex-col items-center text-center">
-          <div className="relative mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-accent-500 to-electric-600 shadow-glow">
-            <span className="text-2xl font-black text-slate-950">S</span>
-            <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border-2 border-slate-950 bg-emerald-400 animate-pulse-glow" />
+          <div className="relative mb-4 flex h-20 w-20 items-center justify-center rounded-3xl bg-base-950 p-2 border border-amber-500/30 shadow-2xl">
+            <img src="/logo.png" alt="Equinox Pulse" className="h-full w-full object-contain" />
           </div>
-          <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl">
-            SHIVAM <span className="text-accent-600 dark:text-accent-400">ORM</span> Enterprise
+          <h1 className="text-2xl font-black tracking-wider text-slate-900 dark:text-white sm:text-3xl">
+            EQUINOX <span className="text-amber-500">PULSE</span>
           </h1>
-          <p className="mt-1.5 text-xs text-slate-600 dark:text-slate-400 font-bold">
-            Multi-Crore Online Reputation & Play Store Intelligence Suite
+          <p className="mt-1 text-xs font-black tracking-widest text-slate-500 dark:text-slate-400 uppercase">
+            INSIGHTS. TRENDS. IMPACT.
           </p>
         </div>
 
@@ -89,11 +88,11 @@ export function LoginPage() {
         <div className="glass-strong rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-base-900">
           <div className="mb-6 flex items-center justify-between border-b border-slate-200 pb-4 dark:border-white/10">
             <div className="flex items-center gap-2.5">
-              <ShieldCheck className="h-5 w-5 text-accent-600 dark:text-accent-400" />
-              <h2 className="text-base font-black text-slate-900 dark:text-slate-100">Sign in to ORM Portal</h2>
+              <ShieldCheck className="h-5 w-5 text-amber-500" />
+              <h2 className="text-base font-black text-slate-900 dark:text-slate-100">Sign in to Equinox Pulse</h2>
             </div>
-            <span className="rounded-full bg-accent-500/10 px-2.5 py-0.5 text-[10px] font-extrabold text-accent-700 dark:bg-accent-500/20 dark:text-accent-300">
-              Client & Admin
+            <span className="rounded-full bg-amber-500/10 px-2.5 py-0.5 text-[10px] font-extrabold text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">
+              Enterprise
             </span>
           </div>
 
@@ -121,8 +120,8 @@ export function LoginPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="client@dreamapps.com or admin@shivamorm.com"
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 py-3 pl-10 pr-3 text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:border-accent-500 focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-100"
+                  placeholder="shivam@equinoxmarketingagency.in"
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 py-3 pl-10 pr-3 text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:border-amber-500 focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-100"
                 />
               </div>
             </div>
@@ -133,7 +132,7 @@ export function LoginPage() {
                 <button
                   type="button"
                   onClick={() => { setForgotEmail(email); setShowForgotModal(true); }}
-                  className="text-xs font-extrabold text-accent-600 hover:underline dark:text-accent-400"
+                  className="text-xs font-extrabold text-amber-600 hover:underline dark:text-amber-400"
                 >
                   Forgot Password?
                 </button>
@@ -146,7 +145,7 @@ export function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 py-3 pl-10 pr-10 text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:border-accent-500 focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-100"
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 py-3 pl-10 pr-10 text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:border-amber-500 focus:bg-white focus:outline-none dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-100"
                 />
                 <button
                   type="button"
@@ -161,15 +160,15 @@ export function LoginPage() {
             <button
               type="submit"
               disabled={loading || !email.trim() || !password.trim()}
-              className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-accent-500 to-electric-600 py-3.5 text-xs font-black text-slate-950 transition hover:shadow-glow disabled:opacity-50"
+              className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 py-3.5 text-xs font-black text-slate-950 transition hover:shadow-glow disabled:opacity-50"
             >
-              {loading ? 'Authenticating…' : 'Sign In to Dashboard'} <ArrowRight className="h-4 w-4" />
+              {loading ? 'Authenticating…' : 'Sign In to Equinox Pulse'} <ArrowRight className="h-4 w-4" />
             </button>
           </form>
         </div>
 
         <p className="mt-5 text-center text-[11px] text-slate-600 dark:text-slate-400 font-bold">
-          Shivam ORM Suite · Protected by Enterprise Dual Password Authentication
+          Equinox Pulse · Insights. Trends. Impact.
         </p>
       </div>
 
@@ -179,7 +178,7 @@ export function LoginPage() {
           <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl dark:bg-base-900 dark:border-white/10">
             <div className="flex items-center justify-between border-b border-slate-200 pb-3 dark:border-white/10">
               <h3 className="flex items-center gap-2 text-base font-black text-slate-900 dark:text-slate-100">
-                <KeyRound className="h-4 w-4 text-accent-600 dark:text-accent-400" /> Reset Password
+                <KeyRound className="h-4 w-4 text-amber-500" /> Reset Password
               </h3>
               <button onClick={() => setShowForgotModal(false)} className="text-slate-500 hover:text-slate-900 dark:hover:text-white">
                 <X className="h-4 w-4" />
@@ -188,7 +187,7 @@ export function LoginPage() {
 
             <form onSubmit={handleForgotReset} className="mt-4 space-y-4">
               <p className="text-xs font-bold text-slate-600 dark:text-slate-400">
-                Enter your registered client email and your new password. Note: Both your original admin-assigned password and your new password will remain valid for login!
+                Enter your registered client email and your new password.
               </p>
 
               {forgotMsg && (
@@ -209,8 +208,8 @@ export function LoginPage() {
                   required
                   value={forgotEmail}
                   onChange={(e) => setForgotEmail(e.target.value)}
-                  placeholder="client@dreamapps.com"
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-xs font-bold text-slate-900 focus:border-accent-500 focus:outline-none dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-100"
+                  placeholder="client@company.com"
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-xs font-bold text-slate-900 focus:border-amber-500 focus:outline-none dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-100"
                 />
               </div>
 
@@ -222,7 +221,7 @@ export function LoginPage() {
                   value={forgotNewPw}
                   onChange={(e) => setForgotNewPw(e.target.value)}
                   placeholder="Enter new password"
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-xs font-bold text-slate-900 focus:border-accent-500 focus:outline-none dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-100"
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-xs font-bold text-slate-900 focus:border-amber-500 focus:outline-none dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-100"
                 />
               </div>
 
@@ -237,7 +236,7 @@ export function LoginPage() {
                 <button
                   type="submit"
                   disabled={forgotLoading || !forgotEmail.trim() || !forgotNewPw.trim()}
-                  className="rounded-xl bg-gradient-to-r from-accent-500 to-electric-600 px-4 py-2 text-xs font-black text-slate-950 transition hover:shadow-glow disabled:opacity-50"
+                  className="rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 px-4 py-2 text-xs font-black text-slate-950 transition hover:shadow-glow disabled:opacity-50"
                 >
                   {forgotLoading ? 'Resetting…' : 'Update & Reset Password'}
                 </button>

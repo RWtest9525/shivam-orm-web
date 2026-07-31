@@ -20,7 +20,7 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [currentEmail, setCurrentEmail] = useState<string | null>(() => {
-    return localStorage.getItem('shivam_orm_active_user') || null;
+    return localStorage.getItem('equinox_pulse_active_user') || null;
   });
 
   const [state, setState] = useState<AuthState>({
@@ -42,8 +42,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const clients = dbEngine.getClients();
-    const foundClient = clients.find((c) => c.email.toLowerCase() === email.toLowerCase()) || clients[1] || clients[0];
+    const foundClient = clients.find((c) => c.email.toLowerCase() === email.toLowerCase()) || clients[0];
     
+    if (!foundClient) {
+      setState({ session: null, client: null, userRole: 'client', loading: false });
+      return;
+    }
+
     let role: 'super_admin' | 'client' = 'client';
     if (foundClient.is_super_admin) {
       role = 'super_admin';
@@ -75,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!verifiedClient) {
       return { success: false, error: 'Invalid email or password. Please check your credentials.' };
     }
-    localStorage.setItem('shivam_orm_active_user', verifiedClient.email);
+    localStorage.setItem('equinox_pulse_active_user', verifiedClient.email);
     setCurrentEmail(verifiedClient.email);
     resolveAuth(verifiedClient.email);
     return { success: true };
@@ -90,7 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const switchUser = (email: string) => {
-    localStorage.setItem('shivam_orm_active_user', email);
+    localStorage.setItem('equinox_pulse_active_user', email);
     setCurrentEmail(email);
     resolveAuth(email);
   };
@@ -100,7 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    localStorage.removeItem('shivam_orm_active_user');
+    localStorage.removeItem('equinox_pulse_active_user');
     setCurrentEmail(null);
     setState({ session: null, client: null, userRole: 'client', loading: false });
   };

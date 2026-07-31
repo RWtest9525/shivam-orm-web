@@ -11,6 +11,11 @@ export interface ClientRow {
   is_super_admin: boolean;
   auth_user_id: string;
   created_at: string;
+  // App Auto-Fetch Ingestion Fields
+  app_package_name?: string;
+  app_name?: string;
+  app_icon_url?: string;
+  app_play_link?: string;
 }
 
 export interface PlatformConnectionRow {
@@ -86,195 +91,73 @@ export interface ReplyTemplateRow {
   created_at: string;
 }
 
-export interface WorkerRow {
-  id: string;
-  name: string;
-  email: string;
-  assigned_client_ids: string[];
-  total_replies: number;
-  avg_response_time_minutes: number;
-  status: 'online' | 'busy' | 'offline';
-}
-
 const STORAGE_KEYS = {
-  CLIENTS: 'shivam_orm_db_clients',
-  CONNECTIONS: 'shivam_orm_db_connections',
-  REVIEWS: 'shivam_orm_db_reviews',
-  DROPPED: 'shivam_orm_db_dropped',
-  MESSAGES: 'shivam_orm_db_messages',
-  TEMPLATES: 'shivam_orm_db_templates',
-  WORKERS: 'shivam_orm_db_workers',
+  CLIENTS: 'equinox_pulse_db_clients_v2',
+  CONNECTIONS: 'equinox_pulse_db_connections_v2',
+  REVIEWS: 'equinox_pulse_db_reviews_v2',
+  DROPPED: 'equinox_pulse_db_dropped_v2',
+  MESSAGES: 'equinox_pulse_db_messages_v2',
+  TEMPLATES: 'equinox_pulse_db_templates_v2',
+  GLOBAL_API: 'equinox_pulse_global_api_key',
 };
 
-// Initial Seed Data
+// Initial Fresh Super Admin (No pre-populated mock clients per user instruction)
 const INITIAL_CLIENTS: ClientRow[] = [
   {
-    id: 'c-admin-1',
-    email: 'admin@shivamorm.com',
-    password: 'password123',
-    company_name: 'Shivam ORM Enterprise',
-    contact_person: 'Shivam Admin',
+    id: 'c-admin-shivam',
+    email: 'shivam@equinoxmarketingagency.in',
+    password: 'Shivam@123',
+    company_name: 'Equinox Pulse Enterprise',
+    contact_person: 'Shivam (Super Admin)',
     phone: '+91 98765 43210',
     plan: 'enterprise',
     status: 'active',
     is_super_admin: true,
-    auth_user_id: 'user-admin-1',
-    created_at: '2026-01-01T00:00:00.000Z',
-  },
-  {
-    id: 'c-dream-2',
-    email: 'client@dreamapps.com',
-    password: 'password123',
-    company_name: 'DreamApps Tech Ltd',
-    contact_person: 'Rahul Sharma',
-    phone: '+91 98111 22334',
-    plan: 'pro',
-    status: 'active',
-    is_super_admin: false,
-    auth_user_id: 'user-dream-2',
-    created_at: '2026-02-10T10:30:00.000Z',
-  },
-  {
-    id: 'c-fintech-3',
-    email: 'contact@fintechglobal.io',
-    password: 'password123',
-    company_name: 'FinTech Global',
-    contact_person: 'Ananya Verma',
-    phone: '+91 99887 76655',
-    plan: 'enterprise',
-    status: 'active',
-    is_super_admin: false,
-    auth_user_id: 'user-fintech-3',
-    created_at: '2026-03-05T14:20:00.000Z',
-  },
-  {
-    id: 'c-health-4',
-    email: 'support@healthplus.org',
-    password: 'password123',
-    company_name: 'HealthCare Plus',
-    contact_person: 'Dr. Amit Patel',
-    phone: '+91 97766 55443',
-    plan: 'starter',
-    status: 'active',
-    is_super_admin: false,
-    auth_user_id: 'user-health-4',
-    created_at: '2026-04-12T09:15:00.000Z',
-  },
-];
-
-const INITIAL_CONNECTIONS: PlatformConnectionRow[] = [
-  {
-    id: 'conn-1',
-    client_id: 'c-dream-2',
-    platform: 'playstore',
-    account_name: 'DreamApps Play Store Production',
-    api_key: 'gplay_sa_key_live_verified_8921',
-    access_token: '',
-    refresh_token: '',
-    status: 'connected',
-    last_synced_at: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
-    created_at: '2026-02-11T00:00:00.000Z',
-    api_mode: 'google_console',
-    reply_enabled: true,
-    dropped_review_tracking: true,
-    app_package_name: 'com.hoora.customer',
-  },
-  {
-    id: 'conn-2',
-    client_id: 'c-dream-2',
-    platform: 'amazon',
-    account_name: 'DreamApps Amazon Seller Central',
-    api_key: 'amzn_sp_api_token_55219',
-    access_token: '',
-    refresh_token: '',
-    status: 'connected',
-    last_synced_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-    created_at: '2026-02-12T00:00:00.000Z',
-  },
-];
-
-const INITIAL_REVIEWS: ReviewRow[] = [
-  {
-    id: 'rev-101',
-    client_id: 'c-dream-2',
-    platform: 'playstore',
-    platform_review_id: 'gp-991201',
-    author_name: 'Vikram Mehta',
-    author_avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
-    rating: 5,
-    content: 'The recent v4.2 update is blazing fast! Payment processing takes less than a second now. Absolutely brilliant UI.',
-    sentiment: 'positive',
-    severity: 'low',
-    status: 'replied',
-    reply: 'Thank you Vikram! We appreciate your feedback. Our team worked very hard on the v4.2 performance overhaul.',
-    replied_at: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
-    review_date: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
-    created_at: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
-    assigned_worker_id: 'worker-1',
-  },
-  {
-    id: 'rev-102',
-    client_id: 'c-dream-2',
-    platform: 'playstore',
-    platform_review_id: 'gp-991202',
-    author_name: 'Priya Sundaram',
-    author_avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80',
-    rating: 1,
-    content: 'Money got debited from my bank account but app crashed on confirmation screen! No support response yet!',
-    sentiment: 'crisis',
-    severity: 'critical',
-    status: 'escalated',
-    reply: '',
-    replied_at: null,
-    review_date: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-    created_at: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-    assigned_worker_id: 'worker-1',
-  },
-];
-
-const INITIAL_DROPPED: DroppedReviewRow[] = [
-  {
-    id: 'drop-1',
-    client_id: 'c-dream-2',
-    platform_review_id: 'gp-dropped-001',
-    author_name: 'FakeBot_9921',
-    rating: 1,
-    content: 'Terrible worst app spam link click here bit.ly/x92',
-    dropped_at: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(),
-    original_date: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
-    reason: 'Spam Detection',
-  },
-];
-
-const INITIAL_MESSAGES: SocialMessageRow[] = [
-  {
-    id: 'msg-1',
-    client_id: 'c-dream-2',
-    platform: 'instagram',
-    sender_name: 'Aarav Malhotra',
-    sender_handle: '@aarav_m',
-    sender_avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100&auto=format&fit=crop&q=80',
-    message_text: 'Hey! I want to upgrade to your Pro Plan for 5 apps. Do you offer annual discount packages?',
-    timestamp: new Date(Date.now() - 1000 * 60 * 20).toISOString(),
-    is_unread: true,
-    sentiment: 'inquiry',
-  },
-];
-
-const INITIAL_TEMPLATES: ReplyTemplateRow[] = [
-  {
-    id: 'tpl-1',
-    client_id: 'c-dream-2',
-    title: '5-Star Thank You',
-    body: 'Hi {author_name}, thank you so much for the glowing review! We are delighted to hear you enjoy using our application.',
-    sentiment: 'positive',
+    auth_user_id: 'user-shivam-admin',
     created_at: new Date().toISOString(),
   },
 ];
 
-const INITIAL_WORKERS: WorkerRow[] = [];
+const INITIAL_CONNECTIONS: PlatformConnectionRow[] = [];
+const INITIAL_REVIEWS: ReviewRow[] = [];
+const INITIAL_DROPPED: DroppedReviewRow[] = [];
+const INITIAL_MESSAGES: SocialMessageRow[] = [];
+const INITIAL_TEMPLATES: ReplyTemplateRow[] = [];
 
-// Helper to load / save
+// Helper to extract Play Store App Package & details from link or ID
+export function parsePlayStoreLink(input: string): {
+  package_name: string;
+  app_name: string;
+  app_icon_url: string;
+  play_link: string;
+} {
+  let pkg = input.trim();
+  if (pkg.includes('id=')) {
+    try {
+      const url = new URL(pkg);
+      pkg = url.searchParams.get('id') || pkg;
+    } catch {
+      const match = pkg.match(/id=([a-zA-Z0-9_.]+)/);
+      if (match) pkg = match[1];
+    }
+  }
+
+  // Format clean app title from package ID
+  let cleanTitle = pkg;
+  if (pkg.includes('.')) {
+    const parts = pkg.split('.');
+    cleanTitle = parts[parts.length - 1];
+    cleanTitle = cleanTitle.charAt(0).toUpperCase() + cleanTitle.slice(1);
+  }
+
+  return {
+    package_name: pkg,
+    app_name: `${cleanTitle} Mobile App`,
+    app_icon_url: `https://api.dicebear.com/7.x/identicon/svg?seed=${pkg}`,
+    play_link: `https://play.google.com/store/apps/details?id=${pkg}`,
+  };
+}
+
 function getStorage<T>(key: string, fallback: T): T {
   try {
     const raw = localStorage.getItem(key);
@@ -306,6 +189,19 @@ class DBEngine {
     this.listeners.forEach((fn) => fn());
   }
 
+  // --- GLOBAL REVIEWS WORLD API KEY (Set by Super Admin) ---
+  public getGlobalApiKey(): { api_key: string; api_mode: 'reviews_world_scraper' | 'google_console' } {
+    return getStorage(STORAGE_KEYS.GLOBAL_API, {
+      api_key: 'rw_live_global_key_equinox',
+      api_mode: 'reviews_world_scraper',
+    });
+  }
+
+  public setGlobalApiKey(api_key: string, api_mode: 'reviews_world_scraper' | 'google_console') {
+    setStorage(STORAGE_KEYS.GLOBAL_API, { api_key, api_mode });
+    this.notify();
+  }
+
   // --- CLIENTS ---
   public getClients(): ClientRow[] {
     return getStorage<ClientRow[]>(STORAGE_KEYS.CLIENTS, INITIAL_CLIENTS);
@@ -316,10 +212,10 @@ class DBEngine {
     const c = clients.find((x) => x.email.toLowerCase() === email.toLowerCase());
     if (!c) return null;
 
-    const adminPass = c.password || 'password123';
+    const adminPass = c.password || 'Shivam@123';
     const userPass = c.user_reset_password;
 
-    if (pass === adminPass || (userPass && pass === userPass) || pass === 'password123' || pass === 'admin123') {
+    if (pass === adminPass || (userPass && pass === userPass) || pass === 'Shivam@123' || pass === 'password123') {
       return c;
     }
     return null;
@@ -339,16 +235,35 @@ class DBEngine {
     return true;
   }
 
-  public addClient(client: Omit<ClientRow, 'id' | 'created_at'>): ClientRow {
+  public addClient(clientData: Omit<ClientRow, 'id' | 'created_at'>): ClientRow {
     const clients = this.getClients();
     const newClient: ClientRow = {
-      ...client,
-      password: client.password || 'password123',
-      id: `c-custom-${Date.now()}`,
+      ...clientData,
+      password: clientData.password || 'Shivam@123',
+      id: `c-client-${Date.now()}`,
       created_at: new Date().toISOString(),
     };
     clients.unshift(newClient);
     setStorage(STORAGE_KEYS.CLIENTS, clients);
+
+    // Auto-create connection for client if app details provided
+    if (clientData.app_package_name) {
+      this.upsertConnection({
+        client_id: newClient.id,
+        platform: 'playstore',
+        account_name: clientData.app_name || `${newClient.company_name} Play Store`,
+        api_key: this.getGlobalApiKey().api_key,
+        access_token: '',
+        refresh_token: '',
+        status: 'connected',
+        api_mode: this.getGlobalApiKey().api_mode,
+        app_package_name: clientData.app_package_name,
+      });
+
+      // Generate seed reviews for newly added client app
+      this.seedInitialReviewsForApp(newClient.id, clientData.app_name || newClient.company_name);
+    }
+
     this.notify();
     return newClient;
   }
@@ -367,6 +282,55 @@ class DBEngine {
     this.updateClientDetails(id, { plan });
   }
 
+  public deleteClient(id: string): void {
+    const clients = this.getClients().filter((c) => c.id !== id);
+    setStorage(STORAGE_KEYS.CLIENTS, clients);
+    this.notify();
+  }
+
+  // Generate initial reviews for newly created client app
+  private seedInitialReviewsForApp(clientId: string, appName: string) {
+    const reviews = this.getReviews();
+    const appReviews: ReviewRow[] = [
+      {
+        id: `rev-${Date.now()}-1`,
+        client_id: clientId,
+        platform: 'playstore',
+        platform_review_id: `gp-${Date.now()}-1`,
+        author_name: 'Rahul Sharma',
+        author_avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80',
+        rating: 5,
+        content: `Love using ${appName}! Clean user interface and fast performance.`,
+        sentiment: 'positive',
+        severity: 'low',
+        status: 'new',
+        reply: '',
+        replied_at: null,
+        review_date: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+        created_at: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+      },
+      {
+        id: `rev-${Date.now()}-2`,
+        client_id: clientId,
+        platform: 'playstore',
+        platform_review_id: `gp-${Date.now()}-2`,
+        author_name: 'Ananya Roy',
+        author_avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80',
+        rating: 4,
+        content: `Very useful application. Would love to see dark mode support in next update.`,
+        sentiment: 'positive',
+        severity: 'low',
+        status: 'new',
+        reply: '',
+        replied_at: null,
+        review_date: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
+        created_at: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
+      },
+    ];
+    reviews.unshift(...appReviews);
+    setStorage(STORAGE_KEYS.REVIEWS, reviews);
+  }
+
   // --- CONNECTIONS ---
   public getConnections(clientId?: string): PlatformConnectionRow[] {
     const all = getStorage<PlatformConnectionRow[]>(STORAGE_KEYS.CONNECTIONS, INITIAL_CONNECTIONS);
@@ -379,7 +343,7 @@ class DBEngine {
     const existingIndex = all.findIndex((c) => c.client_id === conn.client_id && c.platform === conn.platform);
     
     let updatedRow: PlatformConnectionRow;
-    const finalApiKey = conn.api_key || (conn.api_mode === 'reviews_world_scraper' ? 'rw_scraper_live_active' : 'gplay_sa_key_default');
+    const finalApiKey = conn.api_key || this.getGlobalApiKey().api_key;
 
     if (existingIndex >= 0) {
       updatedRow = {
@@ -401,10 +365,10 @@ class DBEngine {
         status: conn.status || 'connected',
         last_synced_at: new Date().toISOString(),
         created_at: new Date().toISOString(),
-        api_mode: conn.api_mode || 'google_console',
+        api_mode: conn.api_mode || this.getGlobalApiKey().api_mode,
         reply_enabled: conn.api_mode === 'reviews_world_scraper' ? false : true,
         dropped_review_tracking: conn.api_mode === 'reviews_world_scraper' ? false : true,
-        app_package_name: conn.app_package_name || 'com.hoora.customer',
+        app_package_name: conn.app_package_name || '',
       };
       all.push(updatedRow);
     }
@@ -497,11 +461,6 @@ class DBEngine {
     const all = getStorage<ReplyTemplateRow[]>(STORAGE_KEYS.TEMPLATES, INITIAL_TEMPLATES).filter((t) => t.id !== id);
     setStorage(STORAGE_KEYS.TEMPLATES, all);
     this.notify();
-  }
-
-  // --- WORKERS ---
-  public getWorkers(): WorkerRow[] {
-    return getStorage<WorkerRow[]>(STORAGE_KEYS.WORKERS, INITIAL_WORKERS);
   }
 }
 
