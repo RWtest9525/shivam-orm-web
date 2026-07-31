@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/hooks/useAuth';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { LoginPage } from '@/pages/LoginPage';
@@ -9,7 +9,6 @@ import { SettingsPage } from '@/pages/SettingsPage';
 import { AdminDashboard } from '@/pages/AdminDashboard';
 import { PlayStoreLivePage } from '@/pages/PlayStoreLivePage';
 import { SocialInboxPage } from '@/pages/SocialInboxPage';
-import { WorkerDashboard } from '@/pages/WorkerDashboard';
 import { Loader2 } from 'lucide-react';
 
 function ProtectedRoutes() {
@@ -34,15 +33,8 @@ function ProtectedRoutes() {
           <>
             <Route path="/app" element={<AdminDashboard />} />
             <Route path="/app/clients" element={<AdminDashboard />} />
-            <Route path="/app/workers" element={<AdminDashboard />} />
             <Route path="/app/settings" element={<SettingsPage />} />
             <Route path="/app/platform/:platformId" element={<PlatformPage />} />
-          </>
-        ) : userRole === 'worker' ? (
-          <>
-            <Route path="/app" element={<WorkerDashboard />} />
-            <Route path="/app/worker" element={<WorkerDashboard />} />
-            <Route path="/app/settings" element={<SettingsPage />} />
           </>
         ) : (
           <>

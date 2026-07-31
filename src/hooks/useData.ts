@@ -20,9 +20,23 @@ export function useConnections(clientId?: string) {
     });
   }, [clientId]);
 
-  async function upsertConnection(conn: Omit<PlatformConnectionRow, 'id' | 'created_at'> & { id?: string }) {
+  async function upsertConnection(conn: Partial<PlatformConnectionRow> & { platform: string; account_name: string }) {
     if (!clientId) return;
-    return dbEngine.upsertConnection({ ...conn, client_id: clientId });
+    return dbEngine.upsertConnection({
+      client_id: clientId,
+      platform: conn.platform,
+      account_name: conn.account_name,
+      api_key: conn.api_key || '',
+      access_token: conn.access_token || '',
+      refresh_token: conn.refresh_token || '',
+      status: conn.status || 'connected',
+      last_synced_at: conn.last_synced_at || new Date().toISOString(),
+      api_mode: conn.api_mode || 'google_console',
+      reply_enabled: conn.reply_enabled ?? true,
+      dropped_review_tracking: conn.dropped_review_tracking ?? true,
+      app_package_name: conn.app_package_name || '',
+      id: conn.id,
+    });
   }
 
   async function deleteConnection(id: string) {
@@ -34,6 +48,7 @@ export function useConnections(clientId?: string) {
 
 export function useReviews(clientId?: string, platform?: string) {
   const [reviews, setReviews] = useState<ReviewRow[]>([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     setReviews(dbEngine.getReviews(clientId, platform));
@@ -50,7 +65,7 @@ export function useReviews(clientId?: string, platform?: string) {
     return dbEngine.updateReviewStatus(reviewId, status);
   }
 
-  return { reviews, replyToReview, updateReviewStatus };
+  return { reviews, loading, replyToReview, updateReviewStatus };
 }
 
 export function useDroppedReviews(clientId?: string) {

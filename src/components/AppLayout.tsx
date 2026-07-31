@@ -5,7 +5,7 @@ import { useTheme } from '@/context/ThemeContext';
 import {
   LayoutDashboard, Settings, LogOut, Smartphone, ShoppingCart, Instagram,
   Linkedin, MessageCircle, Store, Users, ShieldCheck, ChevronRight, Sun, Moon,
-  Menu, X, Radio, MessageSquare, Briefcase, Zap
+  Menu, X, Radio, MessageSquare
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -36,7 +36,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
   const isAdmin = userRole === 'super_admin';
-  const isWorker = userRole === 'worker';
 
   async function handleSignOut() {
     await signOut();
@@ -47,13 +46,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
     ? [
         { to: '/app', label: 'Admin Dashboard', icon: LayoutDashboard, end: true },
         { to: '/app/clients', label: 'Manage Clients', icon: Users, badge: 'Live' },
-        { to: '/app/workers', label: 'Worker Moderation', icon: Briefcase },
         { to: '/app/settings', label: 'System Settings', icon: Settings },
-      ]
-    : isWorker
-    ? [
-        { to: '/app/worker', label: 'Rapid Reply Queue', icon: Zap, badge: 'Action Needed', end: true },
-        { to: '/app/settings', label: 'Settings', icon: Settings },
       ]
     : [
         { to: '/app', label: 'Executive Dashboard', icon: LayoutDashboard, end: true },
@@ -70,51 +63,40 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
   const renderNavList = (onItemClick?: () => void) => (
     <div className="space-y-4">
-      {/* Role switch pill for quick testing */}
+      {/* Role Switcher Pill (Super Admin vs Client) */}
       <div className="rounded-xl border border-slate-200 bg-slate-100 p-2.5 dark:border-white/10 dark:bg-white/[0.04]">
-        <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-          Role Switcher (Demo)
+        <p className="mb-1.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+          Account Panel Switcher
         </p>
-        <div className="grid grid-cols-3 gap-1">
+        <div className="grid grid-cols-2 gap-1.5">
           <button
             onClick={() => { switchUser('client@dreamapps.com'); onItemClick?.(); }}
             className={cn(
-              'rounded-md py-1 text-[10px] font-bold transition',
+              'rounded-lg py-1.5 text-[11px] font-extrabold transition',
               userRole === 'client'
-                ? 'bg-accent-500 text-slate-950 shadow'
-                : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+                ? 'bg-accent-500 text-slate-950 shadow-sm'
+                : 'text-slate-700 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-white/10'
             )}
           >
-            Client
+            Client Panel
           </button>
           <button
             onClick={() => { switchUser('admin@shivamorm.com'); onItemClick?.(); }}
             className={cn(
-              'rounded-md py-1 text-[10px] font-bold transition',
+              'rounded-lg py-1.5 text-[11px] font-extrabold transition',
               userRole === 'super_admin'
-                ? 'bg-accent-500 text-slate-950 shadow'
-                : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+                ? 'bg-accent-500 text-slate-950 shadow-sm'
+                : 'text-slate-700 hover:bg-slate-200 dark:text-slate-300 dark:hover:bg-white/10'
             )}
           >
-            Admin
-          </button>
-          <button
-            onClick={() => { switchUser('rohan.mod@shivamorm.com'); onItemClick?.(); }}
-            className={cn(
-              'rounded-md py-1 text-[10px] font-bold transition',
-              userRole === 'worker'
-                ? 'bg-accent-500 text-slate-950 shadow'
-                : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
-            )}
-          >
-            Worker
+            Super Admin
           </button>
         </div>
       </div>
 
       <div>
-        <p className="px-2 pb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-          {isAdmin ? 'Super Admin Workspace' : isWorker ? 'Moderator Portal' : 'Main Workspace'}
+        <p className="px-2 pb-1.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          {isAdmin ? 'Super Admin Workspace' : 'Main Client Workspace'}
         </p>
         <div className="space-y-1">
           {mainNav.map((item) => (
@@ -125,19 +107,19 @@ export function AppLayout({ children }: { children: ReactNode }) {
               onClick={onItemClick}
               className={({ isActive }) =>
                 cn(
-                  'group flex items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-semibold transition-all',
+                  'group flex items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-bold transition-all',
                   isActive
-                    ? 'bg-accent-500/15 text-accent-700 dark:bg-accent-500/20 dark:text-accent-300 dark:shadow-[inset_0_0_0_1px_rgba(34,211,238,0.3)] font-bold'
-                    : 'text-slate-700 hover:bg-slate-200/70 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white'
+                    ? 'bg-accent-500/15 text-accent-700 dark:bg-accent-500/20 dark:text-accent-300 dark:shadow-[inset_0_0_0_1px_rgba(34,211,238,0.3)]'
+                    : 'text-slate-700 hover:bg-slate-200/80 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white'
                 )
               }
             >
               <div className="flex items-center gap-2.5">
-                <item.icon className="h-4 w-4 shrink-0 text-accent-500 dark:text-accent-400" />
+                <item.icon className="h-4 w-4 shrink-0 text-accent-600 dark:text-accent-400" />
                 <span className="truncate">{item.label}</span>
               </div>
               {item.badge && (
-                <span className="rounded-full bg-accent-500/20 px-2 py-0.5 text-[9px] font-bold text-accent-700 dark:bg-accent-500/20 dark:text-accent-300">
+                <span className="rounded-full bg-accent-500/20 px-2 py-0.5 text-[9px] font-extrabold text-accent-700 dark:bg-accent-500/20 dark:text-accent-300">
                   {item.badge}
                 </span>
               )}
@@ -146,9 +128,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
         </div>
       </div>
 
-      {!isAdmin && !isWorker && (
+      {!isAdmin && (
         <div>
-          <p className="px-2 pb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          <p className="px-2 pb-1.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
             Monitored Platforms
           </p>
           <div className="space-y-1">
@@ -159,10 +141,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 onClick={onItemClick}
                 className={({ isActive }) =>
                   cn(
-                    'group flex items-center gap-2.5 rounded-xl px-3.5 py-2 text-xs font-medium transition-all',
+                    'group flex items-center gap-2.5 rounded-xl px-3.5 py-2 text-xs font-bold transition-all',
                     isActive
-                      ? 'bg-accent-500/15 text-accent-700 dark:bg-accent-500/20 dark:text-accent-300 font-bold'
-                      : 'text-slate-700 hover:bg-slate-200/70 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white'
+                      ? 'bg-accent-500/15 text-accent-700 dark:bg-accent-500/20 dark:text-accent-300'
+                      : 'text-slate-700 hover:bg-slate-200/80 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-white'
                   )
                 }
               >
@@ -179,7 +161,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen transition-colors duration-200 bg-slate-50 text-slate-900 dark:bg-base-950 dark:text-slate-100">
       {/* Desktop Sidebar */}
-      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 border-r border-slate-200 bg-white/95 backdrop-blur-2xl md:flex md:flex-col dark:border-white/[0.08] dark:bg-base-950/80">
+      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 border-r border-slate-200 bg-white backdrop-blur-2xl md:flex md:flex-col dark:border-white/[0.08] dark:bg-base-950/80">
         {/* Brand Header */}
         <div className="flex h-16 items-center justify-between border-b border-slate-200 px-4 dark:border-white/[0.08]">
           <div className="flex items-center gap-3">
@@ -188,10 +170,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
             </div>
             <div className="flex flex-col leading-tight">
               <span className="text-sm font-black tracking-wide text-slate-900 dark:text-white">
-                SHIVAM <span className="text-accent-500 dark:text-accent-400">ORM</span>
+                SHIVAM <span className="text-accent-600 dark:text-accent-400">ORM</span>
               </span>
-              <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">
-                {isAdmin ? 'Super Admin Control' : isWorker ? 'Moderator Panel' : 'Enterprise Client'}
+              <span className="text-[10px] font-extrabold text-slate-500 dark:text-slate-400">
+                {isAdmin ? 'Super Admin Control' : 'Enterprise Client'}
               </span>
             </div>
           </div>
@@ -205,12 +187,12 @@ export function AppLayout({ children }: { children: ReactNode }) {
             {theme === 'dark' ? (
               <>
                 <Sun className="h-4 w-4 text-amber-400" />
-                <span>White Theme</span>
+                <span>White</span>
               </>
             ) : (
               <>
                 <Moon className="h-4 w-4 text-slate-700" />
-                <span>Black Theme</span>
+                <span>Black</span>
               </>
             )}
           </button>
@@ -231,7 +213,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
               <p className="truncate text-xs font-bold text-slate-900 dark:text-slate-200">{client?.company_name}</p>
               <p className="truncate text-[10px] text-slate-500 dark:text-slate-400">{client?.email}</p>
             </div>
-            {isAdmin && <ShieldCheck className="h-4 w-4 text-accent-500 dark:text-accent-400" />}
+            {isAdmin && <ShieldCheck className="h-4 w-4 text-accent-600 dark:text-accent-400" />}
           </div>
 
           <button
@@ -264,9 +246,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
             className="flex items-center gap-1 rounded-lg border border-slate-300 bg-slate-100 px-2 py-1 text-xs font-bold text-slate-800 dark:border-white/10 dark:bg-white/10 dark:text-slate-200"
           >
             {theme === 'dark' ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-slate-700" />}
-            <span className="text-[10px]">{theme === 'dark' ? 'White' : 'Black'}</span>
+            <span className="text-[10px] font-bold">{theme === 'dark' ? 'White' : 'Black'}</span>
           </button>
-          <button onClick={handleSignOut} className="text-slate-500 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400">
+          <button onClick={handleSignOut} className="text-slate-600 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400">
             <LogOut className="h-4 w-4" />
           </button>
         </div>
@@ -342,15 +324,15 @@ export function PageHeader({
   return (
     <div className="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
       <div>
-        <div className="flex items-center gap-2 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+        <div className="flex items-center gap-2 text-[11px] font-bold text-slate-500 dark:text-slate-400">
           <span>Shivam ORM</span>
           <ChevronRight className="h-3 w-3" />
-          <span className="text-accent-600 dark:text-accent-400 font-bold">{title}</span>
+          <span className="text-accent-600 dark:text-accent-400">{title}</span>
         </div>
         <h1 className="mt-1 text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl">
           {title}
         </h1>
-        {subtitle && <p className="mt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-400">{subtitle}</p>}
+        {subtitle && <p className="mt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium">{subtitle}</p>}
       </div>
       {action && <div className="shrink-0">{action}</div>}
     </div>

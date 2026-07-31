@@ -4,7 +4,7 @@ import { dbEngine, type ClientRow } from '@/lib/dbEngine';
 interface AuthState {
   session: { user: { id: string; email: string } } | null;
   client: ClientRow | null;
-  userRole: 'super_admin' | 'client' | 'worker';
+  userRole: 'super_admin' | 'client';
   loading: boolean;
 }
 
@@ -42,11 +42,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const clients = dbEngine.getClients();
     const foundClient = clients.find((c) => c.email.toLowerCase() === email.toLowerCase()) || clients[1] || clients[0];
     
-    let role: 'super_admin' | 'client' | 'worker' = 'client';
+    let role: 'super_admin' | 'client' = 'client';
     if (foundClient.is_super_admin) {
       role = 'super_admin';
-    } else if (email.includes('mod') || email.includes('worker') || email.includes('support')) {
-      role = 'worker';
     }
 
     setState({
