@@ -14,15 +14,6 @@ export default defineConfig({
     exclude: ['lucide-react'],
   },
   build: {
-    chunkSizeWarningLimit: 700,
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          recharts: ['recharts'],
-          react: ['react', 'react-dom'],
-          icons: ['lucide-react'],
-        },
-      },
-    },
+    chunkSizeWarningLimit: 1000,
   },
 });
