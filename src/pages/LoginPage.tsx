@@ -69,18 +69,16 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-4 py-10 bg-slate-950 text-slate-100 selection:bg-amber-500/30">
+    <div className="flex min-h-screen flex-col items-center justify-center px-4 py-8 bg-slate-950 text-slate-100 selection:bg-amber-500/30">
       <div className="w-full max-w-md space-y-6">
         
-        {/* Prominent High-Resolution Logo Display */}
-        <div className="flex flex-col items-center text-center">
-          <div className="relative w-full max-w-sm rounded-3xl bg-black/80 p-4 border border-amber-500/20 shadow-[0_0_50px_rgba(245,158,11,0.15)] backdrop-blur-2xl">
-            <img
-              src="/logo.png"
-              alt="Equinox Pulse Logo"
-              className="w-full h-36 sm:h-40 object-contain mx-auto transition-transform duration-300 hover:scale-105"
-            />
-          </div>
+        {/* Direct Natural Logo Image - No TV Box or outer container */}
+        <div className="flex justify-center pb-2">
+          <img
+            src="/logo.png"
+            alt="Equinox Pulse"
+            className="w-full max-w-[280px] sm:max-w-[320px] h-auto object-contain drop-shadow-2xl"
+          />
         </div>
 
         {/* Premium Dark Glassmorphism Login Card */}
@@ -166,7 +164,7 @@ export function LoginPage() {
           </form>
         </div>
 
-        <p className="text-center text-[11px] font-bold text-slate-400">
+        <p className="text-center text-[11px] font-bold text-slate-500">
           Equinox Pulse Enterprise Platform
         </p>
       </div>
