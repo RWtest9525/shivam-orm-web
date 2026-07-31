@@ -92,13 +92,13 @@ export interface ReplyTemplateRow {
 }
 
 const STORAGE_KEYS = {
-  CLIENTS: 'equinox_pulse_db_clients_v6',
-  CONNECTIONS: 'equinox_pulse_db_connections_v6',
-  REVIEWS: 'equinox_pulse_db_reviews_v6',
-  DROPPED: 'equinox_pulse_db_dropped_v6',
-  MESSAGES: 'equinox_pulse_db_messages_v6',
-  TEMPLATES: 'equinox_pulse_db_templates_v6',
-  GLOBAL_API: 'equinox_pulse_global_api_key_v6',
+  CLIENTS: 'equinox_pulse_db_clients_v7',
+  CONNECTIONS: 'equinox_pulse_db_connections_v7',
+  REVIEWS: 'equinox_pulse_db_reviews_v7',
+  DROPPED: 'equinox_pulse_db_dropped_v7',
+  MESSAGES: 'equinox_pulse_db_messages_v7',
+  TEMPLATES: 'equinox_pulse_db_templates_v7',
+  GLOBAL_API: 'equinox_pulse_global_api_key_v7',
 };
 
 // Initial Fresh Super Admin ONLY
@@ -147,9 +147,13 @@ export function validateReviewsWorldApiKey(key: string): { isValid: boolean; err
 
 // App Icon mapping for popular Play Store apps & high quality fallback
 const POPULAR_APP_ICONS: Record<string, { name: string; icon: string }> = {
+  'lbindia.android.app': {
+    name: 'LBB - Little Black Book India',
+    icon: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=150&auto=format&fit=crop&q=80',
+  },
   'com.hoora.customer': {
-    name: 'Hoora App',
-    icon: 'https://ui-avatars.com/api/?name=Hoora+App&background=f59e0b&color=fff&size=150',
+    name: 'Hoora Car Care & Cleaning',
+    icon: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=150&auto=format&fit=crop&q=80',
   },
   'com.whatsapp': {
     name: 'WhatsApp Messenger',
@@ -160,7 +164,7 @@ const POPULAR_APP_ICONS: Record<string, { name: string; icon: string }> = {
     icon: 'https://upload.wikimedia.org/wikipedia/commons/e/e7/Instagram_logo_2016.svg',
   },
   'com.flipkart.android': {
-    name: 'Flipkart Online Shopping',
+    name: 'Flipkart Shopping',
     icon: 'https://ui-avatars.com/api/?name=Flipkart&background=2563eb&color=fff&size=150',
   },
 };
@@ -188,8 +192,9 @@ export function parsePlayStoreLink(input: string): {
   }
 
   // Check known app icons
-  if (POPULAR_APP_ICONS[pkg.toLowerCase()]) {
-    const known = POPULAR_APP_ICONS[pkg.toLowerCase()];
+  const lowerPkg = pkg.toLowerCase();
+  if (POPULAR_APP_ICONS[lowerPkg]) {
+    const known = POPULAR_APP_ICONS[lowerPkg];
     return {
       package_name: pkg,
       app_name: known.name,
@@ -198,18 +203,28 @@ export function parsePlayStoreLink(input: string): {
     };
   }
 
-  // Format clean app title from package ID
-  let cleanTitle = pkg;
-  if (pkg.includes('.')) {
-    const parts = pkg.split('.');
-    cleanTitle = parts[parts.length - 1];
-    cleanTitle = cleanTitle.charAt(0).toUpperCase() + cleanTitle.slice(1);
+  // Smart Segment Title Generator (Filters out generic words like 'com', 'android', 'app', etc.)
+  const ignoreWords = ['com', 'org', 'net', 'in', 'co', 'android', 'app', 'mobile', 'official', 'inc', 'ltd', 'pvt', 'customer', 'client'];
+  const parts = pkg.split('.').filter((p) => p && !ignoreWords.includes(p.toLowerCase()));
+  
+  let brandName = '';
+  if (parts.length > 0) {
+    brandName = parts.map((p) => (p.toUpperCase() === p ? p : p.charAt(0).toUpperCase() + p.slice(1))).join(' ');
+  } else {
+    const rawParts = pkg.split('.').filter(p => p);
+    brandName = rawParts.length > 0 ? rawParts[0].toUpperCase() : pkg;
+  }
+
+  // Ensure "App App" is never generated
+  let finalAppName = brandName;
+  if (!finalAppName.toLowerCase().includes('app') && !finalAppName.toLowerCase().includes('book') && !finalAppName.toLowerCase().includes('service')) {
+    finalAppName = `${brandName} Application`;
   }
 
   return {
     package_name: pkg,
-    app_name: `${cleanTitle} App`,
-    app_icon_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanTitle)}&background=f59e0b&color=fff&size=150`,
+    app_name: finalAppName,
+    app_icon_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(brandName || pkg)}&background=f59e0b&color=fff&size=150&bold=true`,
     play_link: `https://play.google.com/store/apps/details?id=${pkg}`,
   };
 }
