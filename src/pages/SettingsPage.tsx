@@ -18,7 +18,6 @@ export function SettingsPage() {
   // Super Admin API Verification State (Starts empty if not configured)
   const globalConfig = dbEngine.getGlobalApiKey();
   const [adminApiKey, setAdminApiKey] = useState(globalConfig.api_key || '');
-  const [adminApiMode, setAdminApiMode] = useState<'reviews_world_scraper' | 'google_console'>(globalConfig.api_mode || 'reviews_world_scraper');
   const [verifying, setVerifying] = useState(false);
   const [verifyStatus, setVerifyStatus] = useState<{ success?: boolean; msg?: string } | null>(null);
 
@@ -42,17 +41,15 @@ export function SettingsPage() {
     // Simulate real provider API handshake & signature verification
     await new Promise((r) => setTimeout(r, 1200));
 
-    dbEngine.setGlobalApiKey(trimmedKey, adminApiMode, true);
+    dbEngine.setGlobalApiKey(trimmedKey, 'reviews_world_scraper', true);
     setVerifyStatus({
       success: true,
-      msg: `✅ Reviews World Master API Key Verified & Activated Successfully! Mode: ${
-        adminApiMode === 'reviews_world_scraper' ? 'Reviews World Scraper Mode' : 'Play Console Service Account'
-      }`,
+      msg: '✅ Reviews World Master API Key Verified & Activated Successfully!',
     });
     setVerifying(false);
   }
 
-  // --- SUPER ADMIN VIEW: Master API Key Management ONLY ---
+  // --- SUPER ADMIN VIEW: Master Reviews World API Key Management ONLY ---
   if (isAdmin) {
     return (
       <div className="space-y-6 max-w-3xl mx-auto">
@@ -76,58 +73,10 @@ export function SettingsPage() {
             </span>
           </div>
 
-          {/* Mode Selector */}
-          <div className="space-y-3">
-            <label className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">
-              Select API Operating Mode
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div
-                onClick={() => setAdminApiMode('reviews_world_scraper')}
-                className={cn(
-                  'cursor-pointer rounded-2xl border p-4 transition-all duration-200',
-                  adminApiMode === 'reviews_world_scraper'
-                    ? 'border-amber-500 bg-amber-50/80 shadow-sm dark:border-amber-400 dark:bg-amber-500/20'
-                    : 'border-slate-200 bg-slate-50 hover:bg-slate-100 dark:border-white/10 dark:bg-white/[0.02]'
-                )}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-2">
-                    <Zap className="h-4 w-4 text-amber-500" /> Reviews World Scraper API Mode
-                  </span>
-                  <input type="radio" checked={adminApiMode === 'reviews_world_scraper'} readOnly className="accent-amber-500" />
-                </div>
-                <p className="mt-2 text-xs font-bold text-slate-600 dark:text-slate-400">
-                  Fetches live public Play Store reviews automatically for all added client apps.
-                </p>
-              </div>
-
-              <div
-                onClick={() => setAdminApiMode('google_console')}
-                className={cn(
-                  'cursor-pointer rounded-2xl border p-4 transition-all duration-200',
-                  adminApiMode === 'google_console'
-                    ? 'border-emerald-500 bg-emerald-50/80 shadow-sm dark:border-emerald-400 dark:bg-emerald-500/20'
-                    : 'border-slate-200 bg-slate-50 hover:bg-slate-100 dark:border-white/10 dark:bg-white/[0.02]'
-                )}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-2">
-                    <ShieldCheck className="h-4 w-4 text-emerald-500" /> Play Console Service Account
-                  </span>
-                  <input type="radio" checked={adminApiMode === 'google_console'} readOnly className="accent-emerald-500" />
-                </div>
-                <p className="mt-2 text-xs font-bold text-slate-600 dark:text-slate-400">
-                  Full review sync, direct reply posting, and dropped review detection.
-                </p>
-              </div>
-            </div>
-          </div>
-
           {/* API Key Input & Verifier */}
           <div className="space-y-3">
             <label className="block text-xs font-extrabold text-slate-900 dark:text-slate-100">
-              Reviews World API Key
+              Reviews World Master API Key
             </label>
             <input
               type="text"

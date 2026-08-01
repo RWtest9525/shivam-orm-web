@@ -52,7 +52,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const mainNav: NavItem[] = isAdmin
     ? [
         { to: '/app', label: 'Admin Dashboard', icon: LayoutDashboard, end: true },
-        { to: '/app/reports', label: 'Analytics & Reports', icon: BarChart3 },
         { to: '/app/live-fetcher', label: 'Live Fetcher', icon: DownloadCloud },
         { to: '/app/clients', label: 'Manage Clients', icon: Users },
         { to: '/app/settings', label: 'Settings & API Keys', icon: Settings },
