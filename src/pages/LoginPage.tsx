@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { Eye, EyeOff, Lock, Mail, ShieldCheck, ArrowRight, KeyRound, AlertCircle, CheckCircle2, X } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Eye, EyeOff, Lock, Mail, ArrowRight, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const { session, signIn, resetPassword } = useAuth();
+  const { session, signIn } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -14,13 +13,6 @@ export function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
-
-  // Forgot password modal state
-  const [showForgotModal, setShowForgotModal] = useState(false);
-  const [forgotEmail, setForgotEmail] = useState('');
-  const [forgotNewPw, setForgotNewPw] = useState('');
-  const [forgotLoading, setForgotLoading] = useState(false);
-  const [forgotMsg, setForgotMsg] = useState('');
 
   if (session) {
     navigate('/app', { replace: true });
@@ -46,35 +38,13 @@ export function LoginPage() {
     }
   }
 
-  async function handleForgotReset(e: React.FormEvent) {
-    e.preventDefault();
-    setForgotMsg('');
-    setForgotLoading(true);
-
-    try {
-      const res = await resetPassword(forgotEmail.trim(), forgotNewPw.trim());
-      if (res.success) {
-        setForgotMsg('Password reset successful! You can now log in using your new password.');
-        setEmail(forgotEmail);
-        setPassword(forgotNewPw);
-        setTimeout(() => setShowForgotModal(false), 2000);
-      } else {
-        setForgotMsg(`Error: ${res.error}`);
-      }
-    } catch (err: any) {
-      setForgotMsg(`Error: ${err.message}`);
-    } finally {
-      setForgotLoading(false);
-    }
-  }
-
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-4 py-10 bg-slate-950 text-slate-100 selection:bg-amber-500/30">
       
-      {/* Unified Premium Master Card (Contains Logo, Brand Title, & Login Form inside ONE Border) */}
+      {/* Unified Premium Master Card */}
       <div className="w-full max-w-md rounded-3xl border border-amber-500/30 bg-slate-900/90 p-6 sm:p-8 shadow-[0_0_60px_rgba(245,158,11,0.12)] backdrop-blur-2xl space-y-6">
         
-        {/* Large Unclipped Circular Gold Logo Badge */}
+        {/* Unclipped Circular Gold Logo Badge */}
         <div className="flex flex-col items-center text-center pt-2">
           <div className="relative flex h-28 w-28 sm:h-32 sm:w-32 items-center justify-center rounded-full border-2 border-amber-500/50 bg-black p-2 shadow-[0_0_40px_rgba(245,158,11,0.25)] transition-transform duration-300 hover:scale-105">
             <img
@@ -90,17 +60,6 @@ export function LoginPage() {
           <p className="mt-1 text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase">
             INSIGHTS. TRENDS. IMPACT.
           </p>
-        </div>
-
-        {/* Form Divider & Header */}
-        <div className="flex items-center justify-between border-t border-b border-white/10 py-3">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4 text-amber-400" />
-            <h2 className="text-xs font-black tracking-wide text-white">Enterprise Sign In</h2>
-          </div>
-          <span className="rounded-full bg-amber-500/20 px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-amber-300 border border-amber-500/30">
-            Super Admin & Clients
-          </span>
         </div>
 
         {errorMsg && (
@@ -134,16 +93,7 @@ export function LoginPage() {
           </div>
 
           <div>
-            <div className="mb-1.5 flex items-center justify-between">
-              <label className="text-xs font-extrabold text-slate-300">Password</label>
-              <button
-                type="button"
-                onClick={() => { setForgotEmail(email); setShowForgotModal(true); }}
-                className="text-xs font-extrabold text-amber-400 hover:text-amber-300 hover:underline"
-              >
-                Forgot Password?
-              </button>
-            </div>
+            <label className="mb-1.5 block text-xs font-extrabold text-slate-300">Password</label>
             <div className="relative">
               <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
@@ -177,80 +127,6 @@ export function LoginPage() {
           Equinox Pulse Enterprise Platform
         </p>
       </div>
-
-      {/* Forgot Password Modal */}
-      {showForgotModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-          <div className="w-full max-w-md rounded-3xl border border-white/10 bg-slate-900 p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
-              <h3 className="flex items-center gap-2 text-base font-black text-white">
-                <KeyRound className="h-4 w-4 text-amber-400" /> Reset Password
-              </h3>
-              <button onClick={() => setShowForgotModal(false)} className="text-slate-400 hover:text-white">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleForgotReset} className="space-y-4">
-              <p className="text-xs font-bold text-slate-300">
-                Enter your registered client email and your new password.
-              </p>
-
-              {forgotMsg && (
-                <div className={cn(
-                  'p-3 text-xs font-bold rounded-xl border',
-                  forgotMsg.startsWith('Error')
-                    ? 'border-rose-500/30 bg-rose-500/10 text-rose-300'
-                    : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
-                )}>
-                  {forgotMsg}
-                </div>
-              )}
-
-              <div>
-                <label className="mb-1 block text-xs font-extrabold text-slate-300">Registered Email</label>
-                <input
-                  type="email"
-                  required
-                  value={forgotEmail}
-                  onChange={(e) => setForgotEmail(e.target.value)}
-                  placeholder="client@company.com"
-                  className="w-full rounded-xl border border-white/10 bg-white/[0.04] p-3 text-xs font-bold text-white focus:border-amber-400 focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-xs font-extrabold text-slate-300">New Password</label>
-                <input
-                  type="password"
-                  required
-                  value={forgotNewPw}
-                  onChange={(e) => setForgotNewPw(e.target.value)}
-                  placeholder="Enter new password"
-                  className="w-full rounded-xl border border-white/10 bg-white/[0.04] p-3 text-xs font-bold text-white focus:border-amber-400 focus:outline-none"
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowForgotModal(false)}
-                  className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-slate-300 hover:bg-white/10"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={forgotLoading || !forgotEmail.trim() || !forgotNewPw.trim()}
-                  className="rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 px-4 py-2 text-xs font-black text-slate-950 hover:shadow-lg disabled:opacity-50"
-                >
-                  {forgotLoading ? 'Resetting…' : 'Update & Reset Password'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
