@@ -169,6 +169,19 @@ app.get('/api/v1/subscriptions/invoices', authenticateJWT, listInvoicesHandler);
 app.get('/api/v1/subscriptions/invoices/:id/pdf', getInvoicePdfHtmlHandler);
 app.post('/api/v1/subscriptions/coupons/validate', authenticateJWT, validateCouponHandler);
 
+import {
+  generateReportHandler,
+  getReportHistoryHandler,
+  deleteReportHandler,
+  exportReportHandler,
+} from './controllers/reports.controller.js';
+
+// Analytics & Reports Endpoints
+app.post('/api/v1/reports/generate', authenticateJWT, generateReportHandler);
+app.get('/api/v1/reports/history', authenticateJWT, getReportHistoryHandler);
+app.delete('/api/v1/reports/history/:id', authenticateJWT, deleteReportHandler);
+app.get('/api/v1/reports/export/:id/:format', exportReportHandler);
+
 // Uploads (R2 / Local Disk)
 app.post('/api/v1/uploads', authenticateJWT, upload.single('file'), handleFileUpload);
 

@@ -6,8 +6,9 @@ import { dbEngine } from '@/lib/dbEngine';
 import {
   LayoutDashboard, Settings, LogOut, Smartphone, ShoppingCart, Instagram,
   Linkedin, MessageCircle, Store, Users, ShieldCheck, ChevronRight, Sun, Moon,
-  Menu, X, Radio, MessageSquare, DownloadCloud, User, Building2, Phone, Mail, Award
+  Menu, X, Radio, MessageSquare, DownloadCloud, User, Building2, Phone, Mail, Award, BarChart3
 } from 'lucide-react';
+
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PLATFORMS } from '@/data/constants';
@@ -51,12 +52,14 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const mainNav: NavItem[] = isAdmin
     ? [
         { to: '/app', label: 'Admin Dashboard', icon: LayoutDashboard, end: true },
+        { to: '/app/reports', label: 'Analytics & Reports', icon: BarChart3 },
         { to: '/app/live-fetcher', label: 'Live Fetcher', icon: DownloadCloud },
         { to: '/app/clients', label: 'Manage Clients', icon: Users },
         { to: '/app/settings', label: 'Settings & API Keys', icon: Settings },
       ]
     : [
         { to: '/app', label: 'Executive Dashboard', icon: LayoutDashboard, end: true },
+        { to: '/app/reports', label: 'Analytics & Reports', icon: BarChart3 },
         { to: '/app/playstore-live', label: 'Play Store Live & Drops', icon: Radio },
         { to: '/app/social-inbox', label: 'Direct Social DMs', icon: MessageSquare },
         { to: '/app/settings', label: 'Settings & API Keys', icon: Settings },

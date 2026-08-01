@@ -38,6 +38,9 @@ export type ConversationStatus = 'OPEN' | 'PENDING' | 'RESOLVED' | 'CLOSED' | 'E
 
 export type AIReplyTone = 'Professional' | 'Friendly' | 'Formal' | 'Short' | 'Detailed';
 
+export type ReportType = 'REVIEW' | 'RATING' | 'EMPLOYEE' | 'PLATFORM' | 'CUSTOMER';
+export type ExportFormat = 'PDF' | 'EXCEL' | 'CSV';
+
 export interface SentimentDef {
   text: string;
   bg: string;
@@ -235,5 +238,36 @@ export interface InvoiceItem {
   currency: string;
   status: 'PAID' | 'PENDING' | 'FAILED';
   paymentMethod: string;
+  createdAt: string;
+}
+
+export interface ReportFilterState {
+  reportType: ReportType;
+  startDate?: string;
+  endDate?: string;
+  platform: string;
+  employee: string;
+  rating: string;
+  companyId?: string;
+}
+
+export interface ReportSummaryMetrics {
+  totalVolume: number;
+  avgRating: number;
+  responseRatePct: number;
+  positiveSentimentPct: number;
+  growthRatePct: number;
+}
+
+export interface ReportLogItem {
+  id: string;
+  companyId: string;
+  reportType: ReportType;
+  title: string;
+  format: ExportFormat;
+  filtersUsed: string;
+  metricsSummary: string;
+  fileSizeKb: number;
+  downloadUrl?: string;
   createdAt: string;
 }

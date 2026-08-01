@@ -11,7 +11,7 @@ import { PlayStoreLivePage } from '@/pages/PlayStoreLivePage';
 import { SocialInboxPage } from '@/pages/SocialInboxPage';
 import { SettingsPage } from '@/pages/SettingsPage';
 import { LiveFetcherPage } from '@/pages/LiveFetcherPage';
-
+import { ReportsPage } from '@/pages/ReportsPage';
 import { OAuthCallbackPage } from '@/pages/OAuthCallbackPage';
 
 function ProtectedRoute({ children }: { children: JSX.Element }) {
@@ -55,6 +55,7 @@ export default function App() {
                       <Route path="/live-fetcher" element={<LiveFetcherPage />} />
                       <Route path="/playstore-live" element={<PlayStoreLivePage />} />
                       <Route path="/social-inbox" element={<SocialInboxPage />} />
+                      <Route path="/reports" element={<ReportsPage />} />
                       <Route path="/platform/:platformId" element={<PlatformPage />} />
                       <Route path="/settings" element={<SettingsPage />} />
                       <Route path="*" element={<Navigate to="/app" replace />} />

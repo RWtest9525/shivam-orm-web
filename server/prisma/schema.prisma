@@ -458,3 +458,19 @@ model AIPromptLog {
 
   @@index([companyId])
 }
+
+model ReportLog {
+  id             String   @id @default(uuid())
+  companyId      String
+  reportType     String   // REVIEW, RATING, EMPLOYEE, PLATFORM, CUSTOMER
+  title          String
+  format         String   // PDF, EXCEL, CSV
+  filtersUsed    String   @db.Text
+  metricsSummary String   @db.Text
+  fileSizeKb     Float    @default(142.5)
+  downloadUrl    String?
+  createdAt      DateTime @default(now())
+
+  @@index([companyId])
+  @@index([reportType])
+}
