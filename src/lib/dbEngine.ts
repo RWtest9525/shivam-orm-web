@@ -23,16 +23,34 @@ export interface PlatformConnectionRow {
   client_id: string;
   platform: string;
   account_name: string;
-  api_key: string;
-  access_token: string;
-  refresh_token: string;
-  status: 'connected' | 'error' | 'disconnected';
+  business_name?: string;
+  page_name?: string;
+  external_account_id?: string;
+  api_key?: string;
+  access_token?: string;
+  refresh_token?: string;
+  status: 'connected' | 'error' | 'disconnected' | 'expired';
+  health_status?: 'healthy' | 'token_expiring_soon' | 'token_expired' | 'permissions_revoked' | 'disconnected';
   last_synced_at: string | null;
+  connected_at?: string;
   created_at: string;
+  token_expires_at?: string | null;
+  avatar_url?: string;
   api_mode?: 'google_console' | 'reviews_world_scraper';
   reply_enabled?: boolean;
   dropped_review_tracking?: boolean;
   app_package_name?: string;
+}
+
+export interface ConnectionHistoryRow {
+  id: string;
+  socialAccountId: string;
+  companyId: string;
+  event: 'CONNECTED' | 'MANUAL_SYNC' | 'RECONNECTED' | 'DISCONNECTED' | 'TOKEN_REFRESHED' | 'ERROR';
+  status: 'SUCCESS' | 'FAILED' | 'WARNING';
+  details: string;
+  triggeredBy: string;
+  createdAt: string;
 }
 
 export interface ReviewRow {

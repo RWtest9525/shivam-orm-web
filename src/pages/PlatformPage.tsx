@@ -18,13 +18,18 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
-const ICONS: Record<PlatformId, LucideIcon> = {
+const ICONS: Partial<Record<PlatformId, LucideIcon>> = {
   playstore: Smartphone,
   amazon: ShoppingCart,
   social: Instagram,
   linkedin: Linkedin,
   reddit: MessageCircle,
   indiamart: Store,
+  google_business: Store,
+  facebook: MessageCircle,
+  instagram: Instagram,
+  x: MessageCircle,
+  youtube: Smartphone,
 };
 
 const SENTIMENT_FILTERS: { id: 'all' | SentimentType; label: string }[] = [

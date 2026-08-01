@@ -13,13 +13,18 @@ import { cn } from '@/lib/utils';
 import { PLATFORMS } from '@/data/constants';
 import type { PlatformId } from '@/types';
 
-const ICONS: Record<PlatformId, LucideIcon> = {
+const ICONS: Partial<Record<PlatformId, LucideIcon>> = {
   playstore: Smartphone,
   amazon: ShoppingCart,
   social: Instagram,
   linkedin: Linkedin,
   reddit: MessageCircle,
   indiamart: Store,
+  google_business: Store,
+  facebook: MessageCircle,
+  instagram: Instagram,
+  x: MessageCircle,
+  youtube: Smartphone,
 };
 
 interface NavItem {
@@ -60,7 +65,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const platformNav: NavItem[] = PLATFORMS.map((p) => ({
     to: `/app/platform/${p.id}`,
     label: p.label,
-    icon: ICONS[p.id],
+    icon: ICONS[p.id] || Smartphone,
   }));
 
   const renderNavList = (onItemClick?: () => void) => (

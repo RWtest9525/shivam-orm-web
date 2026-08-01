@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { dbEngine } from '@/lib/dbEngine';
+import type { PlatformConnectionExtended } from '@/types';
 import type {
   ClientRow,
   PlatformConnectionRow,
@@ -12,12 +13,34 @@ import type {
 export function useConnections(clientId?: string) {
   const [connections, setConnections] = useState<PlatformConnectionRow[]>([]);
 
-  useEffect(() => {
+  const loadConnections = () => {
     setConnections(dbEngine.getConnections(clientId));
+  };
+
+  useEffect(() => {
+    loadConnections();
     return dbEngine.subscribe(() => {
-      setConnections(dbEngine.getConnections(clientId));
+      loadConnections();
     });
   }, [clientId]);
+
+  const extendedConnections: PlatformConnectionExtended[] = connections.map((c) => ({
+    id: c.id,
+    client_id: c.client_id,
+    platform: c.platform as any,
+    account_name: c.account_name,
+    business_name: c.business_name || `${c.account_name} Business`,
+    page_name: c.page_name || `${c.account_name} Page`,
+    external_account_id: c.external_account_id || c.id,
+    status: (c.status as any) || 'connected',
+    health_status: (c.health_status as any) || (c.status === 'disconnected' ? 'disconnected' : 'healthy'),
+    connected_at: c.connected_at || c.created_at || new Date().toISOString(),
+    last_synced_at: c.last_synced_at,
+    token_expires_at: c.token_expires_at,
+    avatar_url: c.avatar_url,
+    api_mode: c.api_mode,
+    app_package_name: c.app_package_name,
+  }));
 
   async function upsertConnection(conn: Partial<PlatformConnectionRow> & { platform: string; account_name: string }) {
     if (!clientId) return;
@@ -25,11 +48,16 @@ export function useConnections(clientId?: string) {
       client_id: clientId,
       platform: conn.platform,
       account_name: conn.account_name,
+      business_name: conn.business_name,
+      page_name: conn.page_name,
+      external_account_id: conn.external_account_id,
       api_key: conn.api_key || '',
       access_token: conn.access_token || '',
       refresh_token: conn.refresh_token || '',
       status: conn.status || 'connected',
-      last_synced_at: conn.last_synced_at || new Date().toISOString(),
+      health_status: conn.health_status || 'healthy',
+      last_synced_at: conn.last_synced_at || null,
+      connected_at: conn.connected_at || new Date().toISOString(),
       api_mode: conn.api_mode || 'reviews_world_scraper',
       reply_enabled: conn.reply_enabled ?? true,
       dropped_review_tracking: conn.dropped_review_tracking ?? true,
@@ -42,7 +70,13 @@ export function useConnections(clientId?: string) {
     return dbEngine.deleteConnection(id);
   }
 
-  return { connections, upsertConnection, deleteConnection };
+  return {
+    connections: extendedConnections,
+    rawConnections: connections,
+    upsertConnection,
+    deleteConnection,
+    refreshConnections: loadConnections,
+  };
 }
 
 export function useReviews(clientId?: string, platform?: string) {

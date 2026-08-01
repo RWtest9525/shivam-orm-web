@@ -12,6 +12,8 @@ import { SocialInboxPage } from '@/pages/SocialInboxPage';
 import { SettingsPage } from '@/pages/SettingsPage';
 import { LiveFetcherPage } from '@/pages/LiveFetcherPage';
 
+import { OAuthCallbackPage } from '@/pages/OAuthCallbackPage';
+
 function ProtectedRoute({ children }: { children: JSX.Element }) {
   const { session, loading } = useAuth();
   if (loading) {
@@ -40,6 +42,7 @@ export default function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
 
             <Route
               path="/app/*"

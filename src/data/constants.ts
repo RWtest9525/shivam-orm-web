@@ -1,18 +1,16 @@
-export type PlatformId =
-  | 'playstore' | 'amazon' | 'social' | 'linkedin' | 'reddit' | 'indiamart';
+import type {
+  PlatformId,
+  SentimentType,
+  Severity,
+  ReviewStatus,
+  PlanId,
+  ClientStatus,
+  PlatformDef,
+  SentimentDef,
+  ConnectionHealthStatus,
+} from '@/types';
 
-export type SentimentType = 'positive' | 'neutral' | 'negative' | 'crisis';
-export type Severity = 'low' | 'medium' | 'high' | 'critical';
-export type ReviewStatus = 'new' | 'replied' | 'escalated' | 'flagged';
-export type PlanId = 'trial' | 'starter' | 'pro' | 'enterprise';
-export type ClientStatus = 'active' | 'suspended' | 'pending';
-
-export interface SentimentDef {
-  text: string;
-  bg: string;
-  border: string;
-  dot: string;
-}
+export { PlatformId, SentimentType, Severity, ReviewStatus, PlanId, ClientStatus, PlatformDef, SentimentDef };
 
 export const SENTIMENTS: Record<SentimentType, SentimentDef> = {
   positive: { text: 'text-emerald-300', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', dot: 'bg-emerald-400' },
@@ -28,26 +26,52 @@ export const SENTIMENT_COLORS: Record<SentimentType, string> = {
   crisis: '#f43f5e',
 };
 
-export interface PlatformDef {
-  id: PlatformId;
-  label: string;
-  short: string;
-  group: string;
-}
-
 export const PLATFORMS: PlatformDef[] = [
-  { id: 'playstore', label: 'Play Store / App Store', short: 'Play Store', group: 'App Reviews' },
-  { id: 'amazon', label: 'Amazon / Flipkart', short: 'Marketplaces', group: 'E-Commerce' },
-  { id: 'social', label: 'Instagram / Facebook', short: 'Instagram', group: 'Social Media' },
-  { id: 'linkedin', label: 'LinkedIn', short: 'LinkedIn', group: 'Social Media' },
-  { id: 'reddit', label: 'Reddit', short: 'Reddit', group: 'Forums' },
-  { id: 'indiamart', label: 'IndiaMART / JustDial', short: 'IndiaMART', group: 'Listings' },
+  { id: 'google_business', label: 'Google Business Profile', short: 'Google Business', group: 'Listings & Reviews', officialOAuth: true },
+  { id: 'facebook', label: 'Facebook Pages', short: 'Facebook', group: 'Social Media', officialOAuth: true },
+  { id: 'instagram', label: 'Instagram Business', short: 'Instagram', group: 'Social Media', officialOAuth: true },
+  { id: 'linkedin', label: 'LinkedIn Company Pages', short: 'LinkedIn', group: 'Social Media', officialOAuth: true },
+  { id: 'x', label: 'X (Twitter)', short: 'X (Twitter)', group: 'Social Media', officialOAuth: true },
+  { id: 'youtube', label: 'YouTube Channels', short: 'YouTube', group: 'Video & Community', officialOAuth: true },
+  { id: 'playstore', label: 'Play Store / App Store', short: 'Play Store', group: 'App Reviews', officialOAuth: false },
+  { id: 'amazon', label: 'Amazon / Flipkart', short: 'Marketplaces', group: 'E-Commerce', officialOAuth: false },
+  { id: 'social', label: 'Legacy Social Feed', short: 'Social Feed', group: 'Social Media', officialOAuth: false },
+  { id: 'reddit', label: 'Reddit', short: 'Reddit', group: 'Forums', officialOAuth: false },
+  { id: 'indiamart', label: 'IndiaMART / JustDial', short: 'IndiaMART', group: 'Listings', officialOAuth: false },
 ];
 
 export const PLATFORM_MAP: Record<PlatformId, PlatformDef> = PLATFORMS.reduce(
   (acc, p) => ({ ...acc, [p.id]: p }),
   {} as Record<PlatformId, PlatformDef>,
 );
+
+export const HEALTH_STATUS_DEF: Record<ConnectionHealthStatus, { label: string; tone: string; description: string }> = {
+  healthy: {
+    label: 'Healthy',
+    tone: 'text-emerald-700 bg-emerald-50 border-emerald-300 dark:text-emerald-300 dark:bg-emerald-500/10 dark:border-emerald-500/30',
+    description: 'OAuth token is valid and connection is fully operational.',
+  },
+  token_expiring_soon: {
+    label: 'Expiring Soon',
+    tone: 'text-amber-700 bg-amber-50 border-amber-300 dark:text-amber-300 dark:bg-amber-500/10 dark:border-amber-500/30',
+    description: 'OAuth access token expires within 7 days. Reconnect to renew.',
+  },
+  token_expired: {
+    label: 'Token Expired',
+    tone: 'text-rose-700 bg-rose-50 border-rose-300 dark:text-rose-300 dark:bg-rose-500/10 dark:border-rose-500/30',
+    description: 'Token expired. Click Reconnect to authenticate again.',
+  },
+  permissions_revoked: {
+    label: 'Permissions Revoked',
+    tone: 'text-rose-800 bg-rose-100 border-rose-400 dark:text-rose-200 dark:bg-rose-900/40 dark:border-rose-500/50',
+    description: 'Access revoked on platform. Reconnect required.',
+  },
+  disconnected: {
+    label: 'Disconnected',
+    tone: 'text-slate-600 bg-slate-100 border-slate-300 dark:text-slate-400 dark:bg-slate-800/40 dark:border-slate-700',
+    description: 'Account manually disconnected.',
+  },
+};
 
 export const SEVERITY_DEF: Record<Severity, { label: string; tone: string }> = {
   low: { label: 'Low', tone: 'text-slate-300 border-slate-500/30 bg-slate-500/10' },

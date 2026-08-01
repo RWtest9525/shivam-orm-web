@@ -85,6 +85,25 @@ app.patch('/api/v1/companies/:companyId/status', authenticateJWT, requireRole(['
 app.get('/api/v1/reviews', authenticateJWT, enforceTenantIsolation, getReviewsHandler);
 app.post('/api/v1/reviews/:reviewId/reply', authenticateJWT, enforceTenantIsolation, replyToReviewHandler);
 
+import {
+  getOAuthUrlHandler,
+  oauthCallbackHandler,
+  listConnectionsHandler,
+  syncConnectionNowHandler,
+  disconnectConnectionHandler,
+  reconnectConnectionHandler,
+  getConnectionHistoryHandler,
+} from './controllers/socialIntegration.controller.js';
+
+// Social & Official Platform Integration Routes
+app.get('/api/v1/integrations/oauth-url', authenticateJWT, getOAuthUrlHandler);
+app.get('/api/v1/integrations/oauth-callback', oauthCallbackHandler);
+app.get('/api/v1/integrations/connections', authenticateJWT, listConnectionsHandler);
+app.post('/api/v1/integrations/connections/:id/sync', authenticateJWT, syncConnectionNowHandler);
+app.post('/api/v1/integrations/connections/:id/disconnect', authenticateJWT, disconnectConnectionHandler);
+app.post('/api/v1/integrations/connections/:id/reconnect', authenticateJWT, reconnectConnectionHandler);
+app.get('/api/v1/integrations/connections/:id/history', authenticateJWT, getConnectionHistoryHandler);
+
 // Uploads (R2 / Local Disk)
 app.post('/api/v1/uploads', authenticateJWT, upload.single('file'), handleFileUpload);
 

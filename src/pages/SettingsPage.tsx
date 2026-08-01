@@ -8,6 +8,8 @@ import {
   KeyRound, CheckCircle2, Loader2, AlertCircle, ShieldCheck, Zap
 } from 'lucide-react';
 
+import { IntegrationsListCard } from '@/components/IntegrationsListCard';
+
 export function SettingsPage() {
   const { client, userRole } = useAuth();
   const isAdmin = userRole === 'super_admin';
@@ -20,7 +22,7 @@ export function SettingsPage() {
   const [verifyStatus, setVerifyStatus] = useState<{ success?: boolean; msg?: string } | null>(null);
 
   // Client settings state
-  const { connections } = useConnections(client?.id);
+  const { connections, refreshConnections } = useConnections(client?.id);
 
   // Super Admin API Key Validation Function
   async function handleAdminValidateAndSave() {
@@ -217,6 +219,13 @@ export function SettingsPage() {
           </div>
         </div>
       </div>
+
+      {/* Official Platform Integrations Card */}
+      <IntegrationsListCard
+        connections={connections}
+        onRefreshConnections={refreshConnections}
+        clientId={client?.id}
+      />
     </div>
   );
 }

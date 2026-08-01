@@ -193,19 +193,50 @@ model ReplyTemplate {
 // Social Media Accounts & Unified Inbox
 // --------------------------------------------------
 model SocialAccount {
-  id           String   @id @default(uuid())
-  companyId    String
-  company      Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  platform     Platform
-  accountName  String
-  apiKey       String?
-  accessToken  String?  @db.Text
-  refreshToken String?  @db.Text
-  status       String   @default("CONNECTED")
-  lastSyncedAt DateTime?
-  createdAt    DateTime @default(now())
+  id                    String              @id @default(uuid())
+  companyId             String
+  company               Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  platform              Platform
+  accountName           String
+  businessName          String?
+  pageName              String?
+  externalAccountId     String?
+  apiKey                String?
+  accessToken           String?             @db.Text
+  refreshToken          String?             @db.Text
+  encryptedAccessToken  String?             @db.Text
+  encryptedRefreshToken String?             @db.Text
+  tokenExpiresAt        DateTime?
+  status                String              @default("CONNECTED") // CONNECTED, EXPIRED, DISCONNECTED, ERROR
+  healthStatus          String              @default("HEALTHY")   // HEALTHY, TOKEN_EXPIRING_SOON, TOKEN_EXPIRED, PERMISSIONS_REVOKED, DISCONNECTED
+  scopes                String?
+  errorMessage          String?
+  avatarUrl             String?
+  lastSyncedAt          DateTime?
+  connectedAt           DateTime            @default(now())
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
 
+  history               ConnectionHistory[]
+
+  @@unique([companyId, platform, externalAccountId])
   @@index([companyId, platform])
+  @@index([healthStatus])
+}
+
+model ConnectionHistory {
+  id              String        @id @default(uuid())
+  socialAccountId String
+  socialAccount   SocialAccount @relation(fields: [socialAccountId], references: [id], onDelete: Cascade)
+  companyId       String
+  event           String        // CONNECTED, MANUAL_SYNC, RECONNECTED, DISCONNECTED, TOKEN_REFRESHED, ERROR
+  status          String        // SUCCESS, FAILED, WARNING
+  details         String?       @db.Text
+  triggeredBy     String?       // User name or email
+  createdAt       DateTime      @default(now())
+
+  @@index([socialAccountId])
+  @@index([companyId])
 }
 
 model Conversation {
