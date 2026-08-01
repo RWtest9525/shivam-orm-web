@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useAllClients } from '@/hooks/useData';
 import { PageHeader } from '@/components/AppLayout';
 import { CLIENT_STATUS_DEF } from '@/data/constants';
-import { parsePlayStoreLink, type ClientRow } from '@/lib/dbEngine';
+import { parsePlayStoreLink, fetchPlayStoreAppInfo, type ClientRow } from '@/lib/dbEngine';
 import { cn } from '@/lib/utils';
 import {
   Users, Plus, Building2, Loader2, X,
@@ -27,8 +27,41 @@ export function ClientsPage() {
   const [playInput, setPlayInput] = useState('');
   const [addingClient, setAddingClient] = useState(false);
 
-  // Auto-parsed app details preview
-  const parsedApp = parsePlayStoreLink(playInput);
+  // Real Play Store app info (async fetched)
+  const [fetchedAppInfo, setFetchedAppInfo] = useState<{ package_name: string; app_name: string; app_icon_url: string; play_link: string } | null>(null);
+  const [fetchingAppInfo, setFetchingAppInfo] = useState(false);
+  const fetchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Auto-fetch real app info when Play Store link changes
+  useEffect(() => {
+    const parsed = parsePlayStoreLink(playInput);
+    if (!parsed.package_name) {
+      setFetchedAppInfo(null);
+      setFetchingAppInfo(false);
+      return;
+    }
+
+    setFetchingAppInfo(true);
+    setFetchedAppInfo(null);
+
+    // Debounce 500ms to avoid fetching on every keystroke
+    if (fetchTimerRef.current) clearTimeout(fetchTimerRef.current);
+    fetchTimerRef.current = setTimeout(async () => {
+      try {
+        const info = await fetchPlayStoreAppInfo(playInput);
+        setFetchedAppInfo(info);
+      } catch {
+        // fallback to package name
+        setFetchedAppInfo({ package_name: parsed.package_name, app_name: parsed.package_name, app_icon_url: '', play_link: parsed.play_link });
+      } finally {
+        setFetchingAppInfo(false);
+      }
+    }, 500);
+
+    return () => { if (fetchTimerRef.current) clearTimeout(fetchTimerRef.current); };
+  }, [playInput]);
+
+  const parsedApp = fetchedAppInfo || parsePlayStoreLink(playInput);
 
   // Edit Client Form state
   const [editEmail, setEditEmail] = useState('');
@@ -57,7 +90,8 @@ export function ClientsPage() {
     if (!email.trim() || !company.trim()) return;
     setAddingClient(true);
     try {
-      const appInfo = parsePlayStoreLink(playInput);
+      // Use the real fetched data, or fetch now if not cached yet
+      const appInfo = fetchedAppInfo || await fetchPlayStoreAppInfo(playInput);
       await addClient({
         email: email.trim(),
         company_name: company.trim(),
@@ -83,7 +117,7 @@ export function ClientsPage() {
     if (!editingClient || !editEmail.trim() || !editCompany.trim()) return;
     setSavingEdit(true);
     try {
-      const appInfo = parsePlayStoreLink(editPlayInput);
+      const appInfo = await fetchPlayStoreAppInfo(editPlayInput);
       await updateClientDetails(editingClient.id, {
         email: editEmail.trim(),
         company_name: editCompany.trim(),
@@ -230,20 +264,34 @@ export function ClientsPage() {
                   className="w-full rounded-xl border border-amber-300 bg-white p-3 text-xs font-bold text-slate-900 focus:outline-none dark:border-amber-500/40 dark:bg-base-950 dark:text-slate-100"
                 />
                 
-                {/* PROMINENT LIVE FETCHED APP LOGO & METADATA PREVIEW */}
+                {/* LIVE FETCHED APP LOGO & METADATA PREVIEW */}
                 {parsedApp.package_name ? (
                   <div className="mt-3 flex items-center gap-4 rounded-2xl border border-amber-400/40 bg-white p-4 shadow-sm dark:border-amber-500/30 dark:bg-base-900">
-                    <img
-                      src={parsedApp.app_icon_url}
-                      alt={parsedApp.app_name}
-                      className="h-16 w-16 shrink-0 rounded-2xl border-2 border-amber-500/40 object-cover shadow-md"
-                    />
+                    {fetchingAppInfo ? (
+                      <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border-2 border-amber-500/40 bg-amber-50 dark:bg-amber-500/10">
+                        <Loader2 className="h-6 w-6 animate-spin text-amber-500" />
+                      </div>
+                    ) : parsedApp.app_icon_url ? (
+                      <img
+                        src={parsedApp.app_icon_url}
+                        alt={parsedApp.app_name}
+                        className="h-16 w-16 shrink-0 rounded-2xl border-2 border-amber-500/40 object-cover shadow-md"
+                      />
+                    ) : (
+                      <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border-2 border-amber-500/40 bg-amber-50 text-amber-500 font-black text-lg dark:bg-amber-500/10">
+                        {parsedApp.package_name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-black text-slate-900 dark:text-white">{parsedApp.app_name}</p>
-                        <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[9px] font-black text-emerald-700 dark:text-emerald-300 flex items-center gap-1">
-                          <CheckCircle2 className="h-3 w-3" /> Auto-Fetched
-                        </span>
+                        <p className="text-sm font-black text-slate-900 dark:text-white">
+                          {fetchingAppInfo ? 'Fetching app info...' : (parsedApp.app_name || parsedApp.package_name)}
+                        </p>
+                        {!fetchingAppInfo && parsedApp.app_name && (
+                          <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[9px] font-black text-emerald-700 dark:text-emerald-300 flex items-center gap-1">
+                            <CheckCircle2 className="h-3 w-3" /> Fetched
+                          </span>
+                        )}
                       </div>
                       <p className="text-xs font-mono font-bold text-amber-600 dark:text-amber-400 mt-0.5">{parsedApp.package_name}</p>
                     </div>

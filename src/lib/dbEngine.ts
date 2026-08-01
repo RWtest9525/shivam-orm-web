@@ -244,31 +244,7 @@ export async function validateReviewsWorldHandshake(
   }
 }
 
-// App Icon mapping for popular Play Store apps & high quality fallback
-const POPULAR_APP_ICONS: Record<string, { name: string; icon: string }> = {
-  'lbindia.android.app': {
-    name: 'LBB - Little Black Book India',
-    icon: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=150&auto=format&fit=crop&q=80',
-  },
-  'com.hoora.customer': {
-    name: 'Hoora Car Care & Cleaning',
-    icon: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=150&auto=format&fit=crop&q=80',
-  },
-  'com.whatsapp': {
-    name: 'WhatsApp Messenger',
-    icon: 'https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg',
-  },
-  'com.instagram.android': {
-    name: 'Instagram',
-    icon: 'https://upload.wikimedia.org/wikipedia/commons/e/e7/Instagram_logo_2016.svg',
-  },
-  'com.flipkart.android': {
-    name: 'Flipkart Shopping',
-    icon: 'https://ui-avatars.com/api/?name=Flipkart&background=2563eb&color=fff&size=150',
-  },
-};
-
-// Helper to extract Play Store App Package & details from link or ID
+// Helper to extract Play Store Package ID from any input (sync, instant)
 export function parsePlayStoreLink(input: string): {
   package_name: string;
   app_name: string;
@@ -290,42 +266,138 @@ export function parsePlayStoreLink(input: string): {
     }
   }
 
-  // Check known app icons
-  const lowerPkg = pkg.toLowerCase();
-  if (POPULAR_APP_ICONS[lowerPkg]) {
-    const known = POPULAR_APP_ICONS[lowerPkg];
-    return {
-      package_name: pkg,
-      app_name: known.name,
-      app_icon_url: known.icon,
-      play_link: `https://play.google.com/store/apps/details?id=${pkg}`,
-    };
-  }
-
-  // Smart Segment Title Generator (Filters out generic words like 'com', 'android', 'app', etc.)
-  const ignoreWords = ['com', 'org', 'net', 'in', 'co', 'android', 'app', 'mobile', 'official', 'inc', 'ltd', 'pvt', 'customer', 'client'];
-  const parts = pkg.split('.').filter((p) => p && !ignoreWords.includes(p.toLowerCase()));
-  
-  let brandName = '';
-  if (parts.length > 0) {
-    brandName = parts.map((p) => (p.toUpperCase() === p ? p : p.charAt(0).toUpperCase() + p.slice(1))).join(' ');
-  } else {
-    const rawParts = pkg.split('.').filter(p => p);
-    brandName = rawParts.length > 0 ? rawParts[0].toUpperCase() : pkg;
-  }
-
-  // Ensure "App App" is never generated
-  let finalAppName = brandName;
-  if (!finalAppName.toLowerCase().includes('app') && !finalAppName.toLowerCase().includes('book') && !finalAppName.toLowerCase().includes('service')) {
-    finalAppName = `${brandName} Application`;
+  // If input looks like a package name (contains dots, no spaces)
+  if (!pkg.includes(' ') && pkg.includes('.')) {
+    // just return package_name, actual data will come from async fetch
   }
 
   return {
     package_name: pkg,
-    app_name: finalAppName,
-    app_icon_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(brandName || pkg)}&background=f59e0b&color=fff&size=150&bold=true`,
-    play_link: `https://play.google.com/store/apps/details?id=${pkg}`,
+    app_name: '', // will be filled by async fetch
+    app_icon_url: '', // will be filled by async fetch
+    play_link: pkg ? `https://play.google.com/store/apps/details?id=${pkg}` : '',
   };
+}
+
+// Async: Fetch REAL app name & icon from Google Play Store
+const _playStoreCache: Record<string, { app_name: string; app_icon_url: string; play_link: string }> = {};
+
+export async function fetchPlayStoreAppInfo(packageName: string): Promise<{
+  package_name: string;
+  app_name: string;
+  app_icon_url: string;
+  play_link: string;
+}> {
+  const trimmed = packageName.trim();
+  if (!trimmed) {
+    return { package_name: '', app_name: '', app_icon_url: '', play_link: '' };
+  }
+
+  // Extract package from URL if needed
+  let pkg = trimmed;
+  if (pkg.includes('id=')) {
+    try { pkg = new URL(pkg).searchParams.get('id') || pkg; } catch {
+      const m = pkg.match(/id=([a-zA-Z0-9_.]+)/);
+      if (m) pkg = m[1];
+    }
+  }
+
+  // Return from cache if available
+  if (_playStoreCache[pkg]) {
+    return { package_name: pkg, ..._playStoreCache[pkg] };
+  }
+
+  const playLink = `https://play.google.com/store/apps/details?id=${pkg}`;
+
+  try {
+    // Use multiple CORS proxy approaches for reliability
+    const proxyUrls = [
+      `https://api.allorigins.win/raw?url=${encodeURIComponent(playLink + '&hl=en')}`,
+      `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(playLink + '&hl=en')}`,
+    ];
+
+    let html = '';
+    for (const proxyUrl of proxyUrls) {
+      try {
+        const resp = await fetch(proxyUrl, { signal: AbortSignal.timeout(8000) });
+        if (resp.ok) {
+          html = await resp.text();
+          if (html.length > 500 && html.includes('play.google.com')) break;
+        }
+      } catch {
+        continue;
+      }
+    }
+
+    if (html && html.length > 500) {
+      // Extract app name from <title> or itemprop="name"
+      let appName = '';
+      
+      // Try <title>AppName - Apps on Google Play</title>
+      const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+      if (titleMatch) {
+        appName = titleMatch[1]
+          .replace(/\s*-\s*Apps on Google Play.*$/i, '')
+          .replace(/\s*-\s*Google Play.*$/i, '')
+          .replace(/\s*\|.*$/, '')
+          .trim();
+      }
+
+      // Fallback: try og:title
+      if (!appName) {
+        const ogMatch = html.match(/property="og:title"\s+content="([^"]+)"/i) || html.match(/content="([^"]+)"\s+property="og:title"/i);
+        if (ogMatch) {
+          appName = ogMatch[1]
+            .replace(/\s*-\s*Apps on Google Play.*$/i, '')
+            .trim();
+        }
+      }
+
+      // Extract app icon from og:image or itemprop="image"
+      let appIcon = '';
+      
+      // Try og:image
+      const ogImgMatch = html.match(/property="og:image"\s+content="([^"]+)"/i) || html.match(/content="([^"]+)"\s+property="og:image"/i);
+      if (ogImgMatch) {
+        appIcon = ogImgMatch[1];
+      }
+
+      // Fallback: try to find Play Store icon pattern
+      if (!appIcon) {
+        const iconMatch = html.match(/src="(https:\/\/play-lh\.googleusercontent\.com\/[^"]+)"/i);
+        if (iconMatch) {
+          appIcon = iconMatch[1];
+        }
+      }
+
+      if (appName || appIcon) {
+        const result = {
+          app_name: appName || pkg,
+          app_icon_url: appIcon || `https://ui-avatars.com/api/?name=${encodeURIComponent(pkg)}&background=f59e0b&color=fff&size=150&bold=true`,
+          play_link: playLink,
+        };
+        _playStoreCache[pkg] = result;
+        return { package_name: pkg, ...result };
+      }
+    }
+  } catch {
+    // Fall through to fallback
+  }
+
+  // Fallback: use package name segments as display name
+  const ignoreWords = ['com', 'org', 'net', 'in', 'co', 'android', 'app', 'mobile', 'official', 'inc', 'ltd', 'pvt', 'customer', 'client'];
+  const parts = pkg.split('.').filter((p) => p && !ignoreWords.includes(p.toLowerCase()));
+  const brandName = parts.length > 0
+    ? parts.map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(' ')
+    : pkg;
+
+  const fallback = {
+    app_name: brandName,
+    app_icon_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(brandName)}&background=f59e0b&color=fff&size=150&bold=true`,
+    play_link: playLink,
+  };
+  _playStoreCache[pkg] = fallback;
+  return { package_name: pkg, ...fallback };
 }
 
 function getStorage<T>(key: string, fallback: T): T {
