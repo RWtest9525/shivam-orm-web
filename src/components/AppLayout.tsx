@@ -290,7 +290,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
                         reader.onload = (event) => {
                           const base64Url = event.target?.result as string;
                           dbEngine.updateClientProfileLogo(client.id, base64Url);
-                          window.location.reload();
                         };
                         reader.readAsDataURL(file);
                       }
@@ -314,7 +313,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
                         reader.onload = (event) => {
                           const base64Url = event.target?.result as string;
                           dbEngine.updateClientProfileLogo(client.id, base64Url);
-                          window.location.reload();
                         };
                         reader.readAsDataURL(file);
                       }

@@ -84,7 +84,7 @@ export function LoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="shivam@equinoxmarketingagency.in"
+                placeholder="Enter email address"
                 className="w-full rounded-xl border border-white/10 bg-white/[0.04] py-3 pl-10 pr-3 text-xs font-bold text-white placeholder:text-slate-500 focus:border-amber-400 focus:bg-white/[0.08] focus:outline-none transition-all"
               />
             </div>

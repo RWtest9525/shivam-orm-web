@@ -310,7 +310,6 @@ export function SettingsPage() {
                     reader.onload = (event) => {
                       const base64Url = event.target?.result as string;
                       dbEngine.updateClientProfileLogo(client.id, base64Url);
-                      window.location.reload();
                     };
                     reader.readAsDataURL(file);
                   }
