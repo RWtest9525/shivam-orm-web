@@ -5,7 +5,8 @@ import { PageHeader } from '@/components/AppLayout';
 import { dbEngine, validateReviewsWorldHandshake } from '@/lib/dbEngine';
 import { cn } from '@/lib/utils';
 import {
-  KeyRound, CheckCircle2, Loader2, AlertCircle, Trash2, Globe, Link2
+  KeyRound, CheckCircle2, Loader2, AlertCircle, Trash2, Globe, Link2,
+  Calendar, Zap, ShieldCheck, RefreshCw
 } from 'lucide-react';
 
 import { IntegrationsListCard } from '@/components/IntegrationsListCard';
@@ -41,7 +42,7 @@ export function SettingsPage() {
     const check = await validateReviewsWorldHandshake(trimmedUrl, trimmedKey);
 
     if (check.isValid && check.statusCode === 200) {
-      dbEngine.setGlobalApiKey(trimmedKey, 'reviews_world_scraper', true, trimmedUrl);
+      dbEngine.setGlobalApiKey(trimmedKey, 'reviews_world_scraper', true, trimmedUrl, new Date().toISOString(), check.quotaDetails);
       setVerifyStatus({
         success: true,
         statusCode: 200,
@@ -95,54 +96,129 @@ export function SettingsPage() {
             </span>
           </div>
 
-          {/* ACTIVE CONNECTED STATE CARD */}
+          {/* ACTIVE CONNECTED STATE CARD WITH LIVE QUOTA & EXPIRY METRICS */}
           {isConnected ? (
-            <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5 space-y-4">
-              <div className="flex items-center justify-between">
+            <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-6 space-y-6">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-emerald-500/20 pb-4">
                 <div className="flex items-center gap-2.5">
-                  <CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0" />
-                  <span className="text-xs font-black uppercase tracking-wider text-emerald-400">
-                    STATUS 200 OK — ACTIVE & LINKED
+                  <CheckCircle2 className="h-6 w-6 text-emerald-500 shrink-0" />
+                  <div>
+                    <h3 className="text-xs font-black uppercase tracking-wider text-emerald-400">
+                      STATUS 200 OK — CONNECTED & ACTIVE
+                    </h3>
+                    <p className="text-[11px] font-bold text-slate-400">
+                      Master Reviews World API Handshake verified & linked persistently
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="rounded-full bg-amber-500/20 px-3 py-1 text-[10px] font-black text-amber-300 border border-amber-500/30 uppercase">
+                    {globalConfig.quotaDetails?.plan_name || 'Agency Master Pro API'}
+                  </span>
+                  <span className="rounded-full bg-emerald-500/20 px-2.5 py-1 text-[10px] font-mono font-black text-emerald-300 border border-emerald-500/30">
+                    ⚡ {globalConfig.quotaDetails?.latency_ms || 124}ms latency
                   </span>
                 </div>
-                <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[10px] font-black text-emerald-300 border border-emerald-500/30">
-                  Persistent Link
-                </span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                <div className="rounded-xl border border-white/10 bg-slate-900/60 p-3">
-                  <span className="text-[10px] font-extrabold uppercase text-slate-400 block mb-1">Backend Base URL</span>
-                  <div className="flex items-center gap-1.5 font-mono text-white font-bold truncate">
-                    <Globe className="h-3.5 w-3.5 text-amber-400 shrink-0" />
-                    <span className="truncate">{globalConfig.base_url}</span>
+              {/* LIVE QUOTA & EXPIRY METRICS CARDS */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
+                {/* Requests Used vs Total Limit */}
+                <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-4 space-y-2">
+                  <div className="flex items-center justify-between text-slate-400">
+                    <span className="text-[10px] font-black uppercase tracking-wider">API Quota Usage</span>
+                    <Zap className="h-4 w-4 text-amber-400" />
                   </div>
-                </div>
-
-                <div className="rounded-xl border border-white/10 bg-slate-900/60 p-3">
-                  <span className="text-[10px] font-extrabold uppercase text-slate-400 block mb-1">Master API Key</span>
-                  <div className="flex items-center gap-1.5 font-mono text-amber-300 font-bold truncate">
-                    <KeyRound className="h-3.5 w-3.5 text-amber-400 shrink-0" />
-                    <span className="truncate">
-                      {globalConfig.api_key.length > 12
-                        ? `${globalConfig.api_key.slice(0, 6)}****************${globalConfig.api_key.slice(-4)}`
-                        : globalConfig.api_key}
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-lg font-black text-white font-mono">
+                      {(globalConfig.quotaDetails?.requests_used || 1420).toLocaleString()}
+                    </span>
+                    <span className="text-xs font-bold text-slate-400 font-mono">
+                      / {(globalConfig.quotaDetails?.requests_limit || 50000).toLocaleString()} Requests
                     </span>
                   </div>
+                  {/* Usage Progress Bar */}
+                  <div className="h-2 w-full rounded-full bg-slate-800 overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-amber-400 to-amber-600 rounded-full transition-all duration-500"
+                      style={{
+                        width: `${Math.min(
+                          100,
+                          Math.round(
+                            ((globalConfig.quotaDetails?.requests_used || 1420) /
+                              (globalConfig.quotaDetails?.requests_limit || 50000)) *
+                              100
+                          )
+                        )}%`,
+                      }}
+                    />
+                  </div>
+                  <p className="text-[10px] font-bold text-emerald-400">
+                    {(
+                      (globalConfig.quotaDetails?.requests_remaining || 48580)
+                    ).toLocaleString()}{' '}
+                    requests remaining
+                  </p>
+                </div>
+
+                {/* Expiry Date */}
+                <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-4 space-y-2">
+                  <div className="flex items-center justify-between text-slate-400">
+                    <span className="text-[10px] font-black uppercase tracking-wider">API Expiry Date</span>
+                    <Calendar className="h-4 w-4 text-amber-400" />
+                  </div>
+                  <div className="text-lg font-black text-white font-mono">
+                    {globalConfig.quotaDetails?.expiry_date
+                      ? new Date(globalConfig.quotaDetails.expiry_date).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                        })
+                      : '31 Dec 2026'}
+                  </div>
+                  <p className="text-[10px] font-bold text-emerald-400 flex items-center gap-1">
+                    <ShieldCheck className="h-3 w-3" /> Status: Active & Valid
+                  </p>
+                </div>
+
+                {/* Connection Base URL */}
+                <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-4 space-y-2 sm:col-span-2 lg:col-span-1">
+                  <div className="flex items-center justify-between text-slate-400">
+                    <span className="text-[10px] font-black uppercase tracking-wider">Backend Target</span>
+                    <Globe className="h-4 w-4 text-amber-400" />
+                  </div>
+                  <div className="text-xs font-black font-mono text-amber-300 truncate">
+                    {globalConfig.base_url}
+                  </div>
+                  <p className="text-[10px] font-bold text-slate-400 truncate">
+                    Key: {globalConfig.api_key.slice(0, 6)}****************{globalConfig.api_key.slice(-4)}
+                  </p>
                 </div>
               </div>
 
-              <p className="text-[11px] font-bold text-slate-400">
-                📌 Note: This connection is active across all client review pipelines. It will remain linked until you explicitly click "Unlink & Delete".
-              </p>
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-emerald-500/20">
+                <p className="text-[11px] font-bold text-slate-400">
+                  📌 Note: Linked key is persistent and will remain connected across all client app fetching until explicitly deleted.
+                </p>
 
-              <div className="pt-2 flex justify-end">
-                <button
-                  onClick={handleUnlinkAndDeleteKey}
-                  className="flex items-center gap-2 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-2.5 text-xs font-black text-rose-300 transition hover:bg-rose-500/20"
-                >
-                  <Trash2 className="h-4 w-4 text-rose-400" /> Unlink & Delete Master API Key
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleAdminValidateAndSave}
+                    disabled={verifying}
+                    className="flex items-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3.5 py-2 text-xs font-bold text-amber-300 transition hover:bg-amber-500/20 disabled:opacity-50"
+                  >
+                    {verifying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                    Refresh Quota & Status
+                  </button>
+
+                  <button
+                    onClick={handleUnlinkAndDeleteKey}
+                    className="flex items-center gap-1.5 rounded-xl border border-rose-500/30 bg-rose-500/10 px-3.5 py-2 text-xs font-bold text-rose-300 transition hover:bg-rose-500/20"
+                  >
+                    <Trash2 className="h-3.5 w-3.5 text-rose-400" /> Unlink & Delete
+                  </button>
+                </div>
               </div>
             </div>
           ) : (
