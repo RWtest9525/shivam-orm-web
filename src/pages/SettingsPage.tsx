@@ -183,14 +183,37 @@ export function SettingsPage() {
         </div>
 
         <div className="flex items-center gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.02]">
-          <img
-            src={client?.app_icon_url || `https://api.dicebear.com/7.x/identicon/svg?seed=${client?.company_name}`}
-            alt={client?.company_name}
-            className="h-12 w-12 rounded-xl object-cover border border-slate-200"
-          />
-          <div>
+          <div className="relative group">
+            <img
+              src={client?.app_icon_url || `https://api.dicebear.com/7.x/identicon/svg?seed=${client?.company_name}`}
+              alt={client?.company_name}
+              className="h-16 w-16 rounded-full object-cover border-2 border-amber-500/70 shadow-sm"
+            />
+          </div>
+          <div className="flex-1 min-w-0">
             <p className="text-sm font-black text-slate-900 dark:text-white">{client?.app_name || client?.company_name}</p>
             <p className="text-xs font-mono text-amber-600 dark:text-amber-400">{client?.app_package_name || 'Not set'}</p>
+            
+            <label className="mt-2 inline-flex items-center gap-2 rounded-xl bg-amber-500/20 px-3 py-1.5 text-xs font-black text-amber-700 dark:text-amber-300 cursor-pointer transition hover:bg-amber-500/30">
+              📸 Upload Profile Logo from Gallery
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file && client) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                      const base64Url = event.target?.result as string;
+                      dbEngine.updateClientProfileLogo(client.id, base64Url);
+                      window.location.reload();
+                    };
+                    reader.readAsDataURL(file);
+                  }
+                }}
+              />
+            </label>
           </div>
         </div>
       </div>

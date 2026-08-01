@@ -1,0 +1,306 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  SUPER_ADMIN
+  COMPANY_OWNER
+  COMPANY_ADMIN
+  MANAGER
+  SUPPORT_AGENT
+  EMPLOYEE
+  VIEWER
+}
+
+enum Platform {
+  PLAYSTORE
+  AMAZON
+  SOCIAL
+  LINKEDIN
+  REDDIT
+  INDIAMART
+  GOOGLE_BUSINESS
+  FACEBOOK
+  INSTAGRAM
+  X
+  YOUTUBE
+}
+
+enum ReviewStatus {
+  NEW
+  REPLIED
+  ESCALATED
+  FLAGGED
+}
+
+enum Sentiment {
+  POSITIVE
+  NEUTRAL
+  NEGATIVE
+  CRISIS
+}
+
+enum Severity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum SubscriptionTier {
+  TRIAL
+  STARTER
+  PRO
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  SUSPENDED
+}
+
+// --------------------------------------------------
+// Multi-Tenant Isolation: Company Entity
+// --------------------------------------------------
+model Company {
+  id              String             @id @default(uuid())
+  name            String
+  contactPerson   String
+  email           String             @unique
+  phone           String?
+  plan            SubscriptionTier   @default(STARTER)
+  status          SubscriptionStatus @default(ACTIVE)
+  appPackageName  String?
+  appName         String?
+  appIconUrl      String?
+  appPlayLink     String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  users           User[]
+  reviews         Review[]
+  socialAccounts  SocialAccount[]
+  conversations   Conversation[]
+  customers       Customer[]
+  subscriptions   Subscription[]
+  auditLogs       AuditLog[]
+  droppedReviews  DroppedReview[]
+  replyTemplates  ReplyTemplate[]
+
+  @@index([status])
+  @@index([plan])
+}
+
+// --------------------------------------------------
+// User Entity with RBAC & Auth
+// --------------------------------------------------
+model User {
+  id           String         @id @default(uuid())
+  email        String         @unique
+  passwordHash String
+  name         String
+  role         Role           @default(EMPLOYEE)
+  companyId    String?
+  company      Company?       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  avatarUrl    String?
+  isActive     Boolean        @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  refreshTokens RefreshToken[]
+  assignedReviews Review[]    @relation("AssignedWorker")
+  auditLogs    AuditLog[]
+
+  @@index([companyId])
+  @@index([role])
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+// --------------------------------------------------
+// Review Management
+// --------------------------------------------------
+model Review {
+  id               String       @id @default(uuid())
+  companyId        String
+  company          Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  platform         Platform
+  platformReviewId String?
+  authorName       String
+  authorAvatar     String?
+  rating           Int?
+  content          String       @db.Text
+  sentiment        Sentiment    @default(NEUTRAL)
+  severity         Severity     @default(LOW)
+  status           ReviewStatus @default(NEW)
+  replyText        String?      @db.Text
+  repliedAt        DateTime?
+  assignedWorkerId String?
+  assignedWorker   User?        @relation("AssignedWorker", fields: [assignedWorkerId], references: [id], onDelete: SetNull)
+  isDropped        Boolean      @default(false)
+  reviewDate       DateTime     @default(now())
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  @@index([companyId, platform])
+  @@index([sentiment])
+  @@index([status])
+}
+
+model DroppedReview {
+  id               String   @id @default(uuid())
+  companyId        String
+  company          Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  authorName       String
+  rating           Int
+  content          String   @db.Text
+  droppedDetectedAt DateTime @default(now())
+  reason           String?
+
+  @@index([companyId])
+}
+
+model ReplyTemplate {
+  id        String     @id @default(uuid())
+  companyId String
+  company   Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  title     String
+  body      String     @db.Text
+  sentiment Sentiment?
+  createdAt DateTime   @default(now())
+
+  @@index([companyId])
+}
+
+// --------------------------------------------------
+// Social Media Accounts & Unified Inbox
+// --------------------------------------------------
+model SocialAccount {
+  id           String   @id @default(uuid())
+  companyId    String
+  company      Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  platform     Platform
+  accountName  String
+  apiKey       String?
+  accessToken  String?  @db.Text
+  refreshToken String?  @db.Text
+  status       String   @default("CONNECTED")
+  lastSyncedAt DateTime?
+  createdAt    DateTime @default(now())
+
+  @@index([companyId, platform])
+}
+
+model Conversation {
+  id          String    @id @default(uuid())
+  companyId   String
+  company     Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  platform    Platform
+  senderName  String
+  senderHandle String?
+  isUnread    Boolean   @default(true)
+  messages    Message[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([companyId])
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderType     String       // 'USER' or 'CLIENT'
+  text           String       @db.Text
+  replyText      String?      @db.Text
+  isUnread       Boolean      @default(true)
+  repliedAt      DateTime?
+  sentAt         DateTime     @default(now())
+
+  @@index([conversationId])
+}
+
+// --------------------------------------------------
+// CRM Customer Management
+// --------------------------------------------------
+model Customer {
+  id        String   @id @default(uuid())
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name      String
+  email     String?
+  phone     String?
+  tags      String[]
+  notes     String?  @db.Text
+  createdAt DateTime @default(now())
+
+  @@index([companyId])
+}
+
+// --------------------------------------------------
+// Subscriptions & Invoicing
+// --------------------------------------------------
+model Subscription {
+  id             String             @id @default(uuid())
+  companyId      String
+  company        Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  tier           SubscriptionTier
+  status         SubscriptionStatus @default(ACTIVE)
+  currentPeriodStart DateTime       @default(now())
+  currentPeriodEnd   DateTime
+  invoices       Invoice[]
+
+  @@index([companyId])
+}
+
+model Invoice {
+  id             String       @id @default(uuid())
+  subscriptionId String
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  amount         Float
+  currency       String       @default("USD")
+  status         String       @default("PAID")
+  issuedAt       DateTime     @default(now())
+}
+
+// --------------------------------------------------
+// Audit & System Logging
+// --------------------------------------------------
+model AuditLog {
+  id        String   @id @default(uuid())
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String
+  details   String?  @db.Text
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  @@index([companyId])
+  @@index([action])
+}
+
+model SystemConfig {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
+}

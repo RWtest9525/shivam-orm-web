@@ -535,6 +535,13 @@ class DBEngine {
     setStorage(STORAGE_KEYS.TEMPLATES, all);
     this.notify();
   }
+
+  public updateClientProfileLogo(clientId: string, logoUrl: string): void {
+    const all = getStorage<ClientRow[]>(STORAGE_KEYS.CLIENTS, INITIAL_CLIENTS);
+    const updated = all.map((c) => (c.id === clientId ? { ...c, app_icon_url: logoUrl } : c));
+    setStorage(STORAGE_KEYS.CLIENTS, updated);
+    this.notify();
+  }
 }
 
 export const dbEngine = new DBEngine();

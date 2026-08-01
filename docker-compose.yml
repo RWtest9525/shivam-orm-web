@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: equinox_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: equinox
+      POSTGRES_PASSWORD: secretpassword
+      POSTGRES_DB: equinox_pulse
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: equinox_redis
+    restart: always
+    ports:
+      - "6379:6379"
+
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: equinox_backend
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      PORT: 5000
+      NODE_ENV: production
+      DATABASE_URL: postgresql://equinox:secretpassword@postgres:5432/equinox_pulse?schema=public
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: equinox_pulse_super_secret_jwt_key_2026
+      JWT_REFRESH_SECRET: equinox_pulse_refresh_jwt_key_2026
+    depends_on:
+      - postgres
+      - redis
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: equinox_frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:

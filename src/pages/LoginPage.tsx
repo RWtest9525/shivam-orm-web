@@ -78,7 +78,7 @@ export function LoginPage() {
         <div className="flex flex-col items-center text-center pt-2">
           <div className="relative flex h-28 w-28 sm:h-32 sm:w-32 items-center justify-center rounded-full border-2 border-amber-500/50 bg-black p-2 shadow-[0_0_40px_rgba(245,158,11,0.25)] transition-transform duration-300 hover:scale-105">
             <img
-              src="/logo.png"
+              src="/logo.svg"
               alt="Equinox Pulse Logo"
               className="h-full w-full object-contain"
             />

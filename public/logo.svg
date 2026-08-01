@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bgGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.25"/>
+      <stop offset="70%" stop-color="#b45309" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="#020617" stop-opacity="1"/>
+    </radialGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a"/>
+      <stop offset="30%" stop-color="#f59e0b"/>
+      <stop offset="70%" stop-color="#d97706"/>
+      <stop offset="100%" stop-color="#78350f"/>
+    </linearGradient>
+    <linearGradient id="brightGold" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="40%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Background Dark Circle -->
+  <circle cx="250" cy="250" r="240" fill="url(#bgGlow)"/>
+
+  <!-- Outer Ring with Dash Effect -->
+  <circle cx="250" cy="250" r="220" fill="none" stroke="url(#goldGrad)" stroke-width="2.5" stroke-opacity="0.5" stroke-dasharray="8 6"/>
+
+  <!-- Main Crescent Golden Outer Ring -->
+  <path d="M 170 85 A 185 185 0 1 1 170 415 L 140 405 A 155 155 0 1 0 140 95 Z" fill="url(#goldGrad)" filter="url(#glow)"/>
+
+  <!-- Inner Golden Arc Accent -->
+  <path d="M 220 135 A 130 130 0 0 1 370 250 A 130 130 0 0 1 220 365" fill="none" stroke="url(#goldGrad)" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
+
+  <!-- Golden E Bars -->
+  <rect x="110" y="165" width="135" height="28" rx="8" fill="url(#goldGrad)"/>
+  <rect x="110" y="307" width="135" height="28" rx="8" fill="url(#goldGrad)"/>
+
+  <!-- Horizontal Glow Pulse Beam -->
+  <line x1="20" y1="250" x2="480" y2="250" stroke="url(#brightGold)" stroke-width="2" opacity="0.4"/>
+
+  <!-- Sharp Pulse Center Waveform -->
+  <path d="M 70 250 L 225 250 L 240 195 L 255 295 L 270 185 L 285 315 L 300 235 L 315 260 L 330 250 L 430 250" 
+        fill="none" stroke="url(#brightGold)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
+</svg>

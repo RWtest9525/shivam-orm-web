@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/context/ThemeContext';
+import { dbEngine } from '@/lib/dbEngine';
 import {
   LayoutDashboard, Settings, LogOut, Smartphone, ShoppingCart, Instagram,
   Linkedin, MessageCircle, Store, Users, ShieldCheck, ChevronRight, Sun, Moon,
@@ -151,9 +152,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
         {/* Seamless Theme-Aware Brand Header */}
         <div className="flex h-16 items-center border-b border-slate-200 px-4 bg-white dark:bg-base-950 dark:border-white/[0.08]">
           <div className="flex items-center gap-3">
-            <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-amber-500/40 bg-slate-950 p-0.5 shadow-sm">
+            <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-amber-500/60 bg-slate-950 p-1 shadow-md shadow-amber-500/20">
               <img
-                src="/logo.png"
+                src="/logo.svg"
                 alt="Equinox Pulse"
                 className="h-full w-full object-contain"
               />
@@ -183,7 +184,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             <img
               src={client?.app_icon_url || `https://api.dicebear.com/7.x/identicon/svg?seed=${client?.company_name}`}
               alt={client?.company_name}
-              className="h-8 w-8 rounded-lg object-cover border border-slate-200 dark:border-white/10"
+              className="h-8 w-8 rounded-full object-cover border-2 border-amber-500/50 shadow-sm"
             />
             <div className="min-w-0 flex-1">
               <p className="truncate text-xs font-bold text-slate-900 dark:text-slate-200">{client?.company_name}</p>
@@ -211,8 +212,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
             <Menu className="h-5 w-5" />
           </button>
           <div className="flex items-center gap-2">
-            <div className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-amber-500/40 bg-slate-950 p-0.5">
-              <img src="/logo.png" alt="Equinox Pulse" className="h-full w-full object-contain" />
+            <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-amber-500/60 bg-slate-950 p-0.5 shadow-sm">
+              <img src="/logo.svg" alt="Equinox Pulse" className="h-full w-full object-contain" />
             </div>
             <span className="text-sm font-black text-slate-900 dark:text-white">EQUINOX PULSE</span>
           </div>
@@ -233,8 +234,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
           <div className="relative flex w-4/5 max-w-xs flex-col border-r border-slate-200 bg-white p-4 shadow-2xl dark:border-white/10 dark:bg-base-950">
             <div className="mb-4 flex items-center justify-between border-b border-slate-200 pb-3 dark:border-white/10">
               <div className="flex items-center gap-2">
-                <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-amber-500/40 bg-slate-950 p-0.5">
-                  <img src="/logo.png" alt="Equinox Pulse" className="h-full w-full object-contain" />
+                <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-amber-500/60 bg-slate-950 p-0.5">
+                  <img src="/logo.svg" alt="Equinox Pulse" className="h-full w-full object-contain" />
                 </div>
                 <span className="text-sm font-bold text-slate-900 dark:text-white">Equinox Pulse</span>
               </div>
@@ -267,14 +268,56 @@ export function AppLayout({ children }: { children: ReactNode }) {
             </div>
 
             <div className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/[0.02]">
-              <img
-                src={client?.app_icon_url || `https://api.dicebear.com/7.x/identicon/svg?seed=${client?.company_name}`}
-                alt={client?.company_name}
-                className="h-14 w-14 rounded-2xl object-cover border border-slate-200 shadow-sm"
-              />
-              <div>
-                <p className="text-base font-black text-slate-900 dark:text-white">{client?.company_name}</p>
+              <div className="relative group">
+                <img
+                  src={client?.app_icon_url || `https://api.dicebear.com/7.x/identicon/svg?seed=${client?.company_name}`}
+                  alt={client?.company_name}
+                  className="h-16 w-16 rounded-full object-cover border-2 border-amber-500/70 shadow-md"
+                />
+                <label className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-white text-[10px] font-bold">
+                  Change
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file && client) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                          const base64Url = event.target?.result as string;
+                          dbEngine.updateClientProfileLogo(client.id, base64Url);
+                          window.location.reload();
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                  />
+                </label>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-base font-black text-slate-900 dark:text-white truncate">{client?.company_name}</p>
                 <p className="text-xs font-bold text-amber-600 dark:text-amber-400 capitalize">{isAdmin ? 'Super Admin Account' : `${client?.plan} Subscription`}</p>
+                <label className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] font-extrabold text-amber-600 hover:text-amber-500 dark:text-amber-400 cursor-pointer">
+                  <span>📸 Upload Profile Logo from Gallery</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file && client) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                          const base64Url = event.target?.result as string;
+                          dbEngine.updateClientProfileLogo(client.id, base64Url);
+                          window.location.reload();
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                  />
+                </label>
               </div>
             </div>
 
