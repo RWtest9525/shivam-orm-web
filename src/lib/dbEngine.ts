@@ -143,16 +143,16 @@ const INITIAL_MESSAGES: SocialMessageRow[] = [];
 const INITIAL_TEMPLATES: ReplyTemplateRow[] = [];
 
 export interface ReviewsWorldQuotaDetails {
-  requests_used: number;
-  requests_limit: number;
-  requests_remaining: number;
-  expiry_date: string | null;
-  plan_name: string;
-  status: string;
-  latency_ms: number;
+  requests_used?: number | null;
+  requests_limit?: number | null;
+  requests_remaining?: number | null;
+  expiry_date?: string | null;
+  plan_name?: string | null;
+  status?: string | null;
+  latency_ms?: number | null;
 }
 
-// Strict Reviews World API Key & Base URL Handshake Helper (Status 200 Check & Quota Extraction)
+// Strict Reviews World API Key & Base URL Handshake Helper (Strict HTTP 200 Check - No Mock Fallbacks)
 export async function validateReviewsWorldHandshake(
   baseUrl: string,
   apiKey: string
@@ -166,82 +166,80 @@ export async function validateReviewsWorldHandshake(
   const trimmedUrl = (baseUrl || 'https://yash9525-rw-live-checker.hf.space').trim();
 
   if (!trimmedKey) {
-    return { isValid: false, statusCode: 400, error: '❌ API Key is required for connection.' };
+    return {
+      isValid: false,
+      statusCode: 401,
+      error: 'HTTP 401 Unauthorized: API key is missing or empty.',
+    };
   }
 
   const startTime = Date.now();
 
   try {
-    const targetUrl = `${trimmedUrl.replace(/\/$/, '')}/api/v1/health?key=${encodeURIComponent(trimmedKey)}`;
+    const cleanUrl = trimmedUrl.replace(/\/$/, '');
+    const targetUrl = `${cleanUrl}/api/v1/health?key=${encodeURIComponent(trimmedKey)}`;
+
     const response = await fetch(targetUrl, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${trimmedKey}`,
         'x-api-key': trimmedKey,
+        Accept: 'application/json',
       },
     }).catch(() => null);
 
     const latency_ms = Date.now() - startTime;
 
-    if (response && response.status === 200) {
-      const data = await response.json().catch(() => ({}));
-
-      // Extract real quota headers or payload fields
-      const limitHeader = response.headers.get('x-ratelimit-limit');
-      const remHeader = response.headers.get('x-ratelimit-remaining');
-
-      const requests_limit = data.requests_limit || data.limit || (limitHeader ? parseInt(limitHeader, 10) : 50000);
-      const requests_remaining = data.requests_remaining || data.remaining || (remHeader ? parseInt(remHeader, 10) : 48580);
-      const requests_used = data.requests_used || (requests_limit - requests_remaining > 0 ? requests_limit - requests_remaining : 1420);
-      const expiry_date = data.expiry_date || data.expires_at || '2026-12-31T23:59:59Z';
-      const plan_name = data.plan_name || data.plan || 'Agency Enterprise Live';
-      const status = data.status || 'active';
+    // Reject immediately if HTTP status is not 200 or connection failed
+    if (!response || response.status !== 200) {
+      const status = response ? response.status : 401;
+      let errorMsg = `HTTP ${status} Unauthorized: Invalid API key or unverified provider endpoint.`;
+      if (response && response.status === 403) {
+        errorMsg = 'HTTP 403 Forbidden: Access denied for this API key.';
+      } else if (response && response.status === 404) {
+        errorMsg = 'HTTP 404 Not Found: Verification endpoint unreachable on target base URL.';
+      } else if (!response) {
+        errorMsg = 'Connection Error: Unable to establish connection to target Reviews World backend URL.';
+      }
 
       return {
-        isValid: true,
-        statusCode: 200,
-        quotaDetails: {
-          requests_used,
-          requests_limit,
-          requests_remaining,
-          expiry_date,
-          plan_name,
-          status,
-          latency_ms,
-        },
+        isValid: false,
+        statusCode: status,
+        error: errorMsg,
       };
     }
 
-    // Dynamic Live Handshake check for valid key length (extract real live usage metric)
-    if (trimmedKey.length >= 6) {
-      // Calculate dynamic active reviews count from dbEngine state
-      const totalReviewsCount = getStorage<any[]>('shivam_orm_reviews_v1', []).length;
+    // Extract ONLY values explicitly returned by the verified backend
+    const data = await response.json().catch(() => ({}));
 
-      return {
-        isValid: true,
-        statusCode: 200,
-        quotaDetails: {
-          requests_used: Math.max(1420, totalReviewsCount * 25),
-          requests_limit: 50000,
-          requests_remaining: 50000 - Math.max(1420, totalReviewsCount * 25),
-          expiry_date: '2026-12-31T23:59:59Z',
-          plan_name: 'Agency Master Pro API',
-          status: 'active',
-          latency_ms: latency_ms || 124,
-        },
-      };
-    }
+    const limitHeader = response.headers.get('x-ratelimit-limit');
+    const remHeader = response.headers.get('x-ratelimit-remaining');
+
+    const requests_limit = typeof data.requests_limit === 'number' ? data.requests_limit : (typeof data.limit === 'number' ? data.limit : (limitHeader ? parseInt(limitHeader, 10) : null));
+    const requests_remaining = typeof data.requests_remaining === 'number' ? data.requests_remaining : (typeof data.remaining === 'number' ? data.remaining : (remHeader ? parseInt(remHeader, 10) : null));
+    const requests_used = typeof data.requests_used === 'number' ? data.requests_used : (typeof data.used === 'number' ? data.used : (requests_limit !== null && requests_remaining !== null ? requests_limit - requests_remaining : null));
+    const expiry_date = data.expiry_date || data.expires_at || data.expiry || null;
+    const plan_name = data.plan_name || data.plan || data.tier || null;
+    const status = data.status || 'active';
 
     return {
-      isValid: false,
-      statusCode: response ? response.status : 500,
-      error: `❌ Handshake Failed: Base URL / API Key server returned HTTP Status ${response ? response.status : 'Connection Error'}.`,
+      isValid: true,
+      statusCode: 200,
+      quotaDetails: {
+        requests_used,
+        requests_limit,
+        requests_remaining,
+        expiry_date,
+        plan_name,
+        status,
+        latency_ms,
+      },
     };
   } catch (e: any) {
     return {
       isValid: false,
       statusCode: 500,
-      error: `❌ Connection Error: ${e.message || 'Failed to reach Reviews World backend'}.`,
+      error: `Connection Failure: ${e.message || 'Handshake failed'}.`,
     };
   }
 }
