@@ -3,11 +3,11 @@ import { useAuth } from '@/hooks/useAuth';
 import { useAllClients } from '@/hooks/useData';
 import { PageHeader } from '@/components/AppLayout';
 import { CLIENT_STATUS_DEF } from '@/data/constants';
-import { parsePlayStoreLink, fetchPlayStoreAppInfo, type ClientRow } from '@/lib/dbEngine';
+import { extractPackageName, parsePlayStoreLink, fetchPlayStoreAppInfo, type ClientRow, type PlayStoreAppMetadata } from '@/lib/dbEngine';
 import { cn } from '@/lib/utils';
 import {
   Users, Plus, Building2, Loader2, X,
-  Smartphone, Edit, Trash2, Link2, Sparkles, CheckCircle2, ShieldCheck, Mail, Phone, Lock
+  Smartphone, Edit, Trash2, Link2, Sparkles, CheckCircle2, AlertCircle
 } from 'lucide-react';
 
 export function ClientsPage() {
@@ -27,15 +27,15 @@ export function ClientsPage() {
   const [playInput, setPlayInput] = useState('');
   const [addingClient, setAddingClient] = useState(false);
 
-  // Real Play Store app info (async fetched)
-  const [fetchedAppInfo, setFetchedAppInfo] = useState<{ package_name: string; app_name: string; app_icon_url: string; play_link: string } | null>(null);
+  // Real Play Store app info state
+  const [fetchedAppInfo, setFetchedAppInfo] = useState<PlayStoreAppMetadata | null>(null);
   const [fetchingAppInfo, setFetchingAppInfo] = useState(false);
   const fetchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Auto-fetch real app info when Play Store link changes
+  // Auto-fetch real Play Store app metadata when Play Store link changes
   useEffect(() => {
-    const parsed = parsePlayStoreLink(playInput);
-    if (!parsed.package_name) {
+    const pkg = extractPackageName(playInput);
+    if (!pkg) {
       setFetchedAppInfo(null);
       setFetchingAppInfo(false);
       return;
@@ -44,19 +44,25 @@ export function ClientsPage() {
     setFetchingAppInfo(true);
     setFetchedAppInfo(null);
 
-    // Debounce 500ms to avoid fetching on every keystroke
+    // Debounce 400ms
     if (fetchTimerRef.current) clearTimeout(fetchTimerRef.current);
     fetchTimerRef.current = setTimeout(async () => {
       try {
         const info = await fetchPlayStoreAppInfo(playInput);
         setFetchedAppInfo(info);
       } catch {
-        // fallback to package name
-        setFetchedAppInfo({ package_name: parsed.package_name, app_name: parsed.package_name, app_icon_url: '', play_link: parsed.play_link });
+        setFetchedAppInfo({
+          package_name: pkg,
+          app_name: '',
+          app_icon_url: '',
+          play_link: `https://play.google.com/store/apps/details?id=${pkg}`,
+          isValid: false,
+          error: 'Unable to fetch app details.',
+        });
       } finally {
         setFetchingAppInfo(false);
       }
-    }, 500);
+    }, 400);
 
     return () => { if (fetchTimerRef.current) clearTimeout(fetchTimerRef.current); };
   }, [playInput]);
@@ -264,38 +270,45 @@ export function ClientsPage() {
                   className="w-full rounded-xl border border-amber-300 bg-white p-3 text-xs font-bold text-slate-900 focus:outline-none dark:border-amber-500/40 dark:bg-base-950 dark:text-slate-100"
                 />
                 
-                {/* LIVE FETCHED APP LOGO & METADATA PREVIEW */}
-                {parsedApp.package_name ? (
-                  <div className="mt-3 flex items-center gap-4 rounded-2xl border border-amber-400/40 bg-white p-4 shadow-sm dark:border-amber-500/30 dark:bg-base-900">
-                    {fetchingAppInfo ? (
-                      <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border-2 border-amber-500/40 bg-amber-50 dark:bg-amber-500/10">
-                        <Loader2 className="h-6 w-6 animate-spin text-amber-500" />
-                      </div>
-                    ) : parsedApp.app_icon_url ? (
+                {/* REAL PLAY STORE APP METADATA PREVIEW */}
+                {playInput.trim() ? (
+                  fetchingAppInfo ? (
+                    <div className="mt-3 flex items-center gap-3 rounded-2xl border border-amber-400/30 bg-amber-500/10 p-4 text-xs font-bold text-amber-900 dark:text-amber-200">
+                      <Loader2 className="h-5 w-5 animate-spin text-amber-500 shrink-0" />
+                      <span>Fetching Play Store metadata...</span>
+                    </div>
+                  ) : fetchedAppInfo && fetchedAppInfo.isValid && fetchedAppInfo.app_icon_url ? (
+                    <div className="mt-3 flex items-center gap-4 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 shadow-sm">
                       <img
-                        src={parsedApp.app_icon_url}
-                        alt={parsedApp.app_name}
-                        className="h-16 w-16 shrink-0 rounded-2xl border-2 border-amber-500/40 object-cover shadow-md"
+                        src={fetchedAppInfo.app_icon_url}
+                        alt={fetchedAppInfo.app_name}
+                        className="h-16 w-16 shrink-0 rounded-2xl border-2 border-emerald-500/40 object-cover shadow-md"
                       />
-                    ) : (
-                      <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border-2 border-amber-500/40 bg-amber-50 text-amber-500 font-black text-lg dark:bg-amber-500/10">
-                        {parsedApp.package_name.charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-black text-slate-900 dark:text-white">
-                          {fetchingAppInfo ? 'Fetching app info...' : (parsedApp.app_name || parsedApp.package_name)}
-                        </p>
-                        {!fetchingAppInfo && parsedApp.app_name && (
-                          <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[9px] font-black text-emerald-700 dark:text-emerald-300 flex items-center gap-1">
-                            <CheckCircle2 className="h-3 w-3" /> Fetched
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-black text-slate-900 dark:text-white truncate">
+                            {fetchedAppInfo.app_name}
+                          </p>
+                          <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[9px] font-black text-emerald-700 dark:text-emerald-300 flex items-center gap-1 shrink-0">
+                            <CheckCircle2 className="h-3 w-3" /> Official App
                           </span>
+                        </div>
+                        <p className="text-xs font-mono font-bold text-amber-600 dark:text-amber-400 mt-0.5 truncate">
+                          {fetchedAppInfo.package_name}
+                        </p>
+                        {fetchedAppInfo.developer && (
+                          <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+                            Developer: {fetchedAppInfo.developer}
+                          </p>
                         )}
                       </div>
-                      <p className="text-xs font-mono font-bold text-amber-600 dark:text-amber-400 mt-0.5">{parsedApp.package_name}</p>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="mt-3 flex items-center gap-2.5 rounded-2xl border border-rose-500/40 bg-rose-500/10 p-3.5 text-xs font-bold text-rose-800 dark:text-rose-200">
+                      <AlertCircle className="h-4 w-4 text-rose-500 shrink-0" />
+                      <span>{fetchedAppInfo?.error || 'Unable to fetch app details.'}</span>
+                    </div>
+                  )
                 ) : (
                   <p className="text-[11px] font-bold text-amber-700 dark:text-amber-400 italic">
                     Paste any Play Store link above.

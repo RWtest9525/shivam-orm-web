@@ -244,96 +244,176 @@ export async function validateReviewsWorldHandshake(
   }
 }
 
-// Helper to extract Play Store Package ID from any input (sync, instant)
+export interface PlayStoreAppMetadata {
+  package_name: string;
+  app_name: string;
+  app_icon_url: string;
+  play_link: string;
+  developer?: string;
+  category?: string;
+  rating?: number | string;
+  reviews_count?: string;
+  description?: string;
+  isValid: boolean;
+  error?: string;
+}
+
+// Helper to extract Play Store Package ID from any URL or string input
+export function extractPackageName(input: string): string {
+  const trimmed = input.trim();
+  if (!trimmed) return '';
+
+  if (trimmed.includes('id=')) {
+    try {
+      const url = new URL(trimmed);
+      const id = url.searchParams.get('id');
+      if (id) return id.trim();
+    } catch {
+      const match = trimmed.match(/[?&]id=([a-zA-Z0-9_.]+)/);
+      if (match) return match[1].trim();
+    }
+  }
+
+  const match = trimmed.match(/([a-zA-Z][a-zA-Z0-9_]*\.[a-zA-Z0-9_.]+)/);
+  if (match) return match[1].trim();
+
+  return trimmed;
+}
+
+// Sync helper for quick URL parsing (backwards compatibility)
 export function parsePlayStoreLink(input: string): {
   package_name: string;
   app_name: string;
   app_icon_url: string;
   play_link: string;
 } {
-  let pkg = input.trim();
-  if (!pkg) {
-    return { package_name: '', app_name: '', app_icon_url: '', play_link: '' };
-  }
-
-  if (pkg.includes('id=')) {
-    try {
-      const url = new URL(pkg);
-      pkg = url.searchParams.get('id') || pkg;
-    } catch {
-      const match = pkg.match(/id=([a-zA-Z0-9_.]+)/);
-      if (match) pkg = match[1];
-    }
-  }
-
-  // If input looks like a package name (contains dots, no spaces)
-  if (!pkg.includes(' ') && pkg.includes('.')) {
-    // just return package_name, actual data will come from async fetch
-  }
-
+  const pkg = extractPackageName(input);
   return {
     package_name: pkg,
-    app_name: '', // will be filled by async fetch
-    app_icon_url: '', // will be filled by async fetch
+    app_name: '',
+    app_icon_url: '',
     play_link: pkg ? `https://play.google.com/store/apps/details?id=${pkg}` : '',
   };
 }
 
-// Async: Fetch REAL app name & icon from Google Play Store
-const _playStoreCache: Record<string, { app_name: string; app_icon_url: string; play_link: string }> = {};
+// Persistent Storage Cache Key for App Metadata
+const APP_METADATA_CACHE_KEY = 'shivam_orm_app_metadata_cache_v1';
 
-export async function fetchPlayStoreAppInfo(packageName: string): Promise<{
-  package_name: string;
-  app_name: string;
-  app_icon_url: string;
-  play_link: string;
-}> {
-  const trimmed = packageName.trim();
-  if (!trimmed) {
-    return { package_name: '', app_name: '', app_icon_url: '', play_link: '' };
+function getAppMetadataCache(): Record<string, PlayStoreAppMetadata> {
+  return getStorage<Record<string, PlayStoreAppMetadata>>(APP_METADATA_CACHE_KEY, {});
+}
+
+function saveAppMetadataCache(pkg: string, metadata: PlayStoreAppMetadata): void {
+  try {
+    const cache = getAppMetadataCache();
+    cache[pkg] = metadata;
+    setStorage(APP_METADATA_CACHE_KEY, cache);
+  } catch (e) {
+    console.error('Error saving app metadata cache:', e);
+  }
+}
+
+// Async: Fetch REAL Play Store app metadata using Reviews World Backend & Play Store verification
+export async function fetchPlayStoreAppInfo(inputUrlOrPackage: string): Promise<PlayStoreAppMetadata> {
+  const pkg = extractPackageName(inputUrlOrPackage);
+  if (!pkg || !pkg.includes('.')) {
+    return {
+      package_name: pkg || '',
+      app_name: '',
+      app_icon_url: '',
+      play_link: '',
+      isValid: false,
+      error: 'Invalid Play Store URL or Package Name.',
+    };
   }
 
-  // Extract package from URL if needed
-  let pkg = trimmed;
-  if (pkg.includes('id=')) {
-    try { pkg = new URL(pkg).searchParams.get('id') || pkg; } catch {
-      const m = pkg.match(/id=([a-zA-Z0-9_.]+)/);
-      if (m) pkg = m[1];
-    }
-  }
-
-  // Return from cache if available
-  if (_playStoreCache[pkg]) {
-    return { package_name: pkg, ..._playStoreCache[pkg] };
+  // 1. Check Persistent Storage Cache (Instant Load)
+  const cache = getAppMetadataCache();
+  if (cache[pkg] && cache[pkg].isValid && cache[pkg].app_name && cache[pkg].app_icon_url) {
+    return cache[pkg];
   }
 
   const playLink = `https://play.google.com/store/apps/details?id=${pkg}&hl=en`;
+  const globalConfig = getStorage(STORAGE_KEYS.GLOBAL_API, {
+    api_key: '',
+    base_url: 'https://yash9525-rw-live-checker.hf.space',
+  });
 
-  // Try multiple CORS proxies in order of reliability
+  // 2. Try fetching metadata from Reviews World Python Backend
+  if (globalConfig.base_url) {
+    try {
+      const cleanBaseUrl = globalConfig.base_url.replace(/\/$/, '');
+      const backendUrls = [
+        `${cleanBaseUrl}/api/v1/app-details?package_name=${encodeURIComponent(pkg)}`,
+        `${cleanBaseUrl}/api/v1/app-info?package_name=${encodeURIComponent(pkg)}`,
+        `${cleanBaseUrl}/api/v1/app?id=${encodeURIComponent(pkg)}`,
+      ];
+
+      for (const targetUrl of backendUrls) {
+        try {
+          const resp = await fetch(targetUrl, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${globalConfig.api_key || ''}`,
+              'x-api-key': globalConfig.api_key || '',
+              'Accept': 'application/json',
+            },
+          }).catch(() => null);
+
+          if (resp && resp.status === 200) {
+            const data = await resp.json().catch(() => ({}));
+            const appName = data.app_name || data.title || data.name;
+            const appIcon = data.app_icon_url || data.icon || data.app_icon;
+
+            if (appName && appIcon) {
+              const metadata: PlayStoreAppMetadata = {
+                package_name: pkg,
+                app_name: appName,
+                app_icon_url: appIcon,
+                play_link: playLink,
+                developer: data.developer || data.developer_name || undefined,
+                category: data.category || undefined,
+                rating: data.rating || undefined,
+                reviews_count: data.reviews_count || data.reviews || undefined,
+                description: data.description || data.short_description || undefined,
+                isValid: true,
+              };
+              saveAppMetadataCache(pkg, metadata);
+              return metadata;
+            }
+          }
+        } catch {
+          continue;
+        }
+      }
+    } catch {
+      // Continue to direct HTML parse if backend endpoint doesn't respond
+    }
+  }
+
+  // 3. Fallback: Parse Official Google Play Store Page HTML via Reliable CORS Proxies
   const proxyTemplates = [
     (url: string) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
     (url: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
     (url: string) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
-    (url: string) => `https://thingproxy.freeboard.io/fetch/${url}`,
   ];
 
   let html = '';
-
   for (const makeProxy of proxyTemplates) {
     try {
       const proxyUrl = makeProxy(playLink);
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 10000);
+      const timeout = setTimeout(() => controller.abort(), 9000);
 
       const resp = await fetch(proxyUrl, {
         signal: controller.signal,
-        headers: { 'Accept': 'text/html' },
-      });
+        headers: { Accept: 'text/html' },
+      }).catch(() => null);
+
       clearTimeout(timeout);
 
-      if (resp.ok) {
+      if (resp && resp.ok) {
         const text = await resp.text();
-        // Validate we actually got a Play Store page
         if (text.length > 1000 && (text.includes('Google Play') || text.includes('play-lh.googleusercontent.com') || text.includes(pkg))) {
           html = text;
           break;
@@ -347,9 +427,10 @@ export async function fetchPlayStoreAppInfo(packageName: string): Promise<{
   if (html) {
     let appName = '';
     let appIcon = '';
+    let developer = '';
+    let category = '';
 
-    // --- EXTRACT APP NAME ---
-    // Method 1: <title>AppName - Apps on Google Play</title>
+    // Extract App Name
     const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
     if (titleMatch) {
       appName = titleMatch[1]
@@ -360,70 +441,61 @@ export async function fetchPlayStoreAppInfo(packageName: string): Promise<{
         .trim();
     }
 
-    // Method 2: og:title meta tag
     if (!appName) {
-      const ogTitle = html.match(/property=["']og:title["']\s+content=["']([^"']+)["']/i)
-        || html.match(/content=["']([^"']+)["']\s+property=["']og:title["']/i);
+      const ogTitle = html.match(/property=["']og:title["']\s+content=["']([^"']+)["']/i) || html.match(/content=["']([^"']+)["']\s+property=["']og:title["']/i);
       if (ogTitle) {
         appName = ogTitle[1].replace(/\s*[-–]\s*Apps on Google Play.*$/i, '').trim();
       }
     }
 
-    // Method 3: itemprop="name"
-    if (!appName) {
-      const itemName = html.match(/itemprop=["']name["'][^>]*>([^<]+)</i);
-      if (itemName) appName = itemName[1].trim();
-    }
-
-    // --- EXTRACT APP ICON ---
-    // Method 1: og:image meta tag (most reliable)
-    const ogImg = html.match(/property=["']og:image["']\s+content=["'](https:\/\/play-lh\.googleusercontent\.com\/[^"']+)["']/i)
-      || html.match(/content=["'](https:\/\/play-lh\.googleusercontent\.com\/[^"']+)["']\s+property=["']og:image["']/i);
+    // Extract Official App Icon
+    const ogImg = html.match(/property=["']og:image["']\s+content=["'](https:\/\/play-lh\.googleusercontent\.com\/[^"']+)["']/i) || html.match(/content=["'](https:\/\/play-lh\.googleusercontent\.com\/[^"']+)["']\s+property=["']og:image["']/i);
     if (ogImg) {
       appIcon = ogImg[1];
     }
 
-    // Method 2: Any play-lh.googleusercontent.com src (first large one)
     if (!appIcon) {
       const allIcons = html.match(/src=["'](https:\/\/play-lh\.googleusercontent\.com\/[^"']+)["']/gi);
       if (allIcons && allIcons.length > 0) {
-        // Get the first one (usually the app icon)
         const firstMatch = allIcons[0].match(/src=["'](https:\/\/play-lh\.googleusercontent\.com\/[^"']+)["']/i);
         if (firstMatch) appIcon = firstMatch[1];
       }
     }
 
-    // Method 3: Any googleusercontent image
-    if (!appIcon) {
-      const gcImg = html.match(/src=["'](https:\/\/lh3\.googleusercontent\.com\/[^"']+)["']/i);
-      if (gcImg) appIcon = gcImg[1];
-    }
+    // Extract Developer Name
+    const devMatch = html.match(/itemprop=["']author["'][^>]*>([^<]+)</i) || html.match(/class=["'][^"']*dev-link[^"']*["'][^>]*>([^<]+)</i);
+    if (devMatch) developer = devMatch[1].trim();
 
-    if (appName || appIcon) {
-      const result = {
-        app_name: appName || pkg,
-        app_icon_url: appIcon || `https://ui-avatars.com/api/?name=${encodeURIComponent(appName || pkg)}&background=f59e0b&color=fff&size=150&bold=true`,
+    // Extract Category
+    const catMatch = html.match(/itemprop=["']genre["'][^>]*>([^<]+)</i);
+    if (catMatch) category = catMatch[1].trim();
+
+    if (appName && appIcon) {
+      const metadata: PlayStoreAppMetadata = {
+        package_name: pkg,
+        app_name: appName,
+        app_icon_url: appIcon,
         play_link: `https://play.google.com/store/apps/details?id=${pkg}`,
+        developer: developer || undefined,
+        category: category || undefined,
+        isValid: true,
       };
-      _playStoreCache[pkg] = result;
-      return { package_name: pkg, ...result };
+      saveAppMetadataCache(pkg, metadata);
+      return metadata;
     }
   }
 
-  // Fallback: use package name segments as display name
-  const ignoreWords = ['com', 'org', 'net', 'in', 'co', 'android', 'app', 'mobile', 'official', 'inc', 'ltd', 'pvt', 'customer', 'client'];
-  const parts = pkg.split('.').filter((p) => p && !ignoreWords.includes(p.toLowerCase()));
-  const brandName = parts.length > 0
-    ? parts.map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(' ')
-    : pkg;
-
-  const fallback = {
-    app_name: brandName,
-    app_icon_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(brandName)}&background=f59e0b&color=fff&size=150&bold=true`,
-    play_link: `https://play.google.com/store/apps/details?id=${pkg}`,
+  // 4. Strict Requirement: If metadata cannot be fetched, return failure state WITHOUT generating fake names or initials
+  const failureState: PlayStoreAppMetadata = {
+    package_name: pkg,
+    app_name: '',
+    app_icon_url: '',
+    play_link: playLink,
+    isValid: false,
+    error: 'Unable to fetch app details.',
   };
-  _playStoreCache[pkg] = fallback;
-  return { package_name: pkg, ...fallback };
+
+  return failureState;
 }
 
 function getStorage<T>(key: string, fallback: T): T {
