@@ -35,7 +35,7 @@ export function LiveFetcherPage() {
     }
 
     if (!hasValidApiKey) {
-      setErrorMsg('API Key Not Verified: Please configure and validate your master Reviews World API Key in Settings first.');
+      setErrorMsg('API key not configured. Please set your API key in Settings first.');
       return;
     }
 
@@ -126,26 +126,7 @@ export function LiveFetcherPage() {
         subtitle="Extract ALL live Play Store reviews for an exact target date and star rating using Reviews World API"
       />
 
-      {/* Weekly Unlimited API Quota Status Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-3xl border border-amber-300 bg-amber-50 p-5 shadow-sm dark:border-amber-500/30 dark:bg-amber-500/10">
-        <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-500/20 text-amber-600 dark:text-amber-300">
-            <Zap className="h-6 w-6" />
-          </div>
-          <div>
-            <p className="text-sm font-black text-amber-900 dark:text-amber-200 flex items-center gap-2">
-              Weekly Unlimited Scraper Engine Active <Infinity className="h-4 w-4 text-amber-500" />
-            </p>
-            <p className="text-xs font-bold text-amber-700 dark:text-amber-400 mt-0.5">
-              Full Uncapped Extraction Enabled · No count limits · Exact Date Filter Active
-            </p>
-          </div>
-        </div>
 
-        <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-black text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5 self-start sm:self-center">
-          <CheckCircle2 className="h-4 w-4 text-emerald-600" /> Weekly Unlimited Plan
-        </span>
-      </div>
 
       {/* Live Controls Card */}
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-base-900 space-y-5">

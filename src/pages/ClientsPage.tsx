@@ -141,7 +141,7 @@ export function ClientsPage() {
             <Building2 className="mx-auto mb-3 h-12 w-12 text-slate-400" />
             <h3 className="text-base font-black text-slate-900 dark:text-white">No Client Accounts Added Yet</h3>
             <p className="mt-1 text-xs font-bold text-slate-600 dark:text-slate-400 max-w-md mx-auto">
-              Super Admin can add fresh client accounts below. Simply paste their Play Store App Link, and Equinox Pulse will automatically fetch their app logo, app name, and package ID!
+              Super Admin can add fresh client accounts below.
             </p>
             <button
               onClick={() => setShowAddClient(true)}
@@ -209,7 +209,7 @@ export function ClientsPage() {
           <div className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-2xl dark:bg-base-900 dark:border-white/10 space-y-5">
             <div className="flex items-center justify-between border-b border-slate-200 pb-3.5 dark:border-white/10">
               <h3 className="flex items-center gap-2 text-base font-black text-slate-900 dark:text-slate-100">
-                <Sparkles className="h-5 w-5 text-amber-500" /> Add Client Account & Auto-Fetch App
+                <Sparkles className="h-5 w-5 text-amber-500" /> Add Client id
               </h3>
               <button onClick={() => setShowAddClient(false)} className="text-slate-500 hover:text-slate-900 dark:hover:text-white">
                 <X className="h-5 w-5" />
@@ -250,7 +250,7 @@ export function ClientsPage() {
                   </div>
                 ) : (
                   <p className="text-[11px] font-bold text-amber-700 dark:text-amber-400 italic">
-                    Paste any Play Store link above to automatically fetch the app logo avatar, title, and package ID.
+                    Paste any Play Store link above.
                   </p>
                 )}
               </div>
@@ -311,7 +311,7 @@ export function ClientsPage() {
                 className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 py-3.5 text-xs font-black text-slate-950 transition hover:shadow-glow disabled:opacity-50"
               >
                 {addingClient ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                Create Client Account & Ingest App
+                Create client id
               </button>
             </div>
           </div>

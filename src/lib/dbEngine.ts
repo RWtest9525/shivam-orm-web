@@ -125,7 +125,7 @@ const INITIAL_CLIENTS: ClientRow[] = [
     id: 'c-admin-shivam',
     email: 'shivam@equinoxmarketingagency.in',
     password: 'Shivam@123',
-    company_name: 'Equinox Pulse Enterprise',
+    company_name: 'Shivam',
     contact_person: 'Shivam (Super Admin)',
     phone: '+91 98765 43210',
     plan: 'enterprise',

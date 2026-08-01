@@ -25,16 +25,8 @@ export function AdminDashboard() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Super Admin Executive Control"
-        subtitle="Real-time agency analytics, Play Store app fleet performance, and system health overview"
-        action={
-          <Link
-            to="/app/clients"
-            className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 px-5 py-3 text-xs font-black text-slate-950 transition hover:shadow-glow"
-          >
-            <Users className="h-4 w-4" /> Manage Client Accounts →
-          </Link>
-        }
+        title="Welcome Shivam !"
+        subtitle="Manage all social media and apps at one place."
       />
 
       {/* Admin Executive KPIs */}
@@ -115,52 +107,7 @@ export function AdminDashboard() {
         </div>
       )}
 
-      {/* Monitored Application Fleet Section */}
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-base-900 space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-200 pb-4 dark:border-white/10">
-          <div>
-            <h2 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
-              <Smartphone className="h-5 w-5 text-amber-500" /> Monitored Application Fleet ({activeClients.filter(c => c.app_package_name).length})
-            </h2>
-            <p className="text-xs font-bold text-slate-600 dark:text-slate-400 mt-0.5">
-              Applications actively tracked across client subscriptions
-            </p>
-          </div>
 
-          <Link
-            to="/app/clients"
-            className="text-xs font-black text-amber-600 hover:text-amber-500 flex items-center gap-1"
-          >
-            Manage Accounts <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
-        </div>
-
-        {activeClients.length === 0 ? (
-          <div className="p-8 text-center">
-            <Building2 className="mx-auto mb-2 h-10 w-10 text-slate-400" />
-            <p className="text-xs font-bold text-slate-500">No active apps in fleet yet. Add client accounts in Manage Clients.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {activeClients.map((c) => (
-              <div key={c.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 transition hover:border-amber-500/40 dark:border-white/10 dark:bg-white/[0.02]">
-                <div className="flex items-center gap-3">
-                  <img
-                    src={c.app_icon_url || `https://api.dicebear.com/7.x/identicon/svg?seed=${c.company_name}`}
-                    alt={c.company_name}
-                    className="h-12 w-12 rounded-xl object-cover border border-slate-200 shadow-sm"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-xs font-black text-slate-900 dark:text-white">{c.app_name || c.company_name}</p>
-                    <p className="truncate text-[10px] font-mono text-amber-600 dark:text-amber-400 font-bold">{c.app_package_name || 'com.app.mobile'}</p>
-                    <p className="text-[10px] font-bold text-slate-500 mt-0.5">Client: {c.company_name}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
     </div>
   );
 }

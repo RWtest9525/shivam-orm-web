@@ -300,7 +300,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-base font-black text-slate-900 dark:text-white truncate">{client?.company_name}</p>
-                <p className="text-xs font-bold text-amber-600 dark:text-amber-400 capitalize">{isAdmin ? 'Super Admin Account' : `${client?.plan} Subscription`}</p>
+                <p className="text-xs font-bold text-amber-600 dark:text-amber-400 capitalize">{isAdmin ? 'Shivam' : `${client?.plan} Subscription`}</p>
                 <label className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] font-extrabold text-amber-600 hover:text-amber-500 dark:text-amber-400 cursor-pointer">
                   <span>📸 Upload Profile Logo from Gallery</span>
                   <input
