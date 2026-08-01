@@ -26,6 +26,16 @@ export type ConnectionHealthStatus =
   | 'permissions_revoked'
   | 'disconnected';
 
+export type InboxSourceType =
+  | 'all'
+  | 'google_reviews'
+  | 'facebook_messages'
+  | 'instagram_messages'
+  | 'comments'
+  | 'mentions';
+
+export type ConversationStatus = 'OPEN' | 'PENDING' | 'RESOLVED' | 'CLOSED' | 'ESCALATED';
+
 export interface SentimentDef {
   text: string;
   bg: string;
@@ -76,4 +86,53 @@ export interface ConnectionHistoryItem {
   details: string;
   triggeredBy: string;
   createdAt: string;
+}
+
+export interface ConversationMessage {
+  id: string;
+  conversationId: string;
+  senderType: 'CUSTOMER' | 'AGENT' | 'SYSTEM';
+  senderName: string;
+  senderAvatar?: string;
+  text: string;
+  attachments?: string[];
+  readStatus?: 'DELIVERED' | 'READ';
+  sentAt: string;
+}
+
+export interface InternalNoteItem {
+  id: string;
+  conversationId: string;
+  authorName: string;
+  authorAvatar?: string;
+  noteText: string;
+  createdAt: string;
+}
+
+export interface ConversationHistoryLog {
+  id: string;
+  conversationId: string;
+  action: string;
+  details: string;
+  actorName: string;
+  createdAt: string;
+}
+
+export interface ConversationItem {
+  id: string;
+  companyId: string;
+  platform: PlatformId;
+  sourceType: InboxSourceType;
+  senderName: string;
+  senderHandle?: string;
+  senderAvatar?: string;
+  status: ConversationStatus;
+  isUnread: boolean;
+  isStarred: boolean;
+  isPinned: boolean;
+  assignedWorkerId?: string | null;
+  lastMessageText?: string;
+  lastMessageAt: string;
+  createdAt: string;
+  updatedAt: string;
 }

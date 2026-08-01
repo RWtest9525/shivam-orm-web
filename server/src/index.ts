@@ -104,6 +104,31 @@ app.post('/api/v1/integrations/connections/:id/disconnect', authenticateJWT, dis
 app.post('/api/v1/integrations/connections/:id/reconnect', authenticateJWT, reconnectConnectionHandler);
 app.get('/api/v1/integrations/connections/:id/history', authenticateJWT, getConnectionHistoryHandler);
 
+import {
+  listConversationsHandler,
+  getConversationDetailsHandler,
+  postReplyHandler,
+  addInternalNoteHandler,
+  assignWorkerHandler,
+  updateStatusHandler,
+  toggleStarHandler,
+  togglePinHandler,
+  markReadStatusHandler,
+  manualRefreshHandler,
+} from './controllers/unifiedInbox.controller.js';
+
+// Unified Inbox Routes
+app.get('/api/v1/inbox/conversations', authenticateJWT, listConversationsHandler);
+app.get('/api/v1/inbox/conversations/:id', authenticateJWT, getConversationDetailsHandler);
+app.post('/api/v1/inbox/conversations/:id/reply', authenticateJWT, postReplyHandler);
+app.post('/api/v1/inbox/conversations/:id/notes', authenticateJWT, addInternalNoteHandler);
+app.patch('/api/v1/inbox/conversations/:id/assign', authenticateJWT, assignWorkerHandler);
+app.patch('/api/v1/inbox/conversations/:id/status', authenticateJWT, updateStatusHandler);
+app.patch('/api/v1/inbox/conversations/:id/star', authenticateJWT, toggleStarHandler);
+app.patch('/api/v1/inbox/conversations/:id/pin', authenticateJWT, togglePinHandler);
+app.patch('/api/v1/inbox/conversations/:id/read', authenticateJWT, markReadStatusHandler);
+app.post('/api/v1/inbox/refresh', authenticateJWT, manualRefreshHandler);
+
 // Uploads (R2 / Local Disk)
 app.post('/api/v1/uploads', authenticateJWT, upload.single('file'), handleFileUpload);
 

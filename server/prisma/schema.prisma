@@ -240,30 +240,69 @@ model ConnectionHistory {
 }
 
 model Conversation {
-  id          String    @id @default(uuid())
-  companyId   String
-  company     Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  platform    Platform
-  senderName  String
-  senderHandle String?
-  isUnread    Boolean   @default(true)
-  messages    Message[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id               String                 @id @default(uuid())
+  companyId        String
+  company          Company                @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  platform         Platform
+  sourceType       String                 @default("facebook_messages") // google_reviews, facebook_messages, instagram_messages, comments, mentions
+  senderName       String
+  senderHandle     String?
+  senderAvatar     String?
+  status           String                 @default("OPEN")              // OPEN, PENDING, RESOLVED, CLOSED, ESCALATED
+  isUnread         Boolean                @default(true)
+  isStarred        Boolean                @default(false)
+  isPinned         Boolean                @default(false)
+  assignedWorkerId String?
+  lastMessageText  String?                @db.Text
+  lastMessageAt    DateTime               @default(now())
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+
+  messages         Message[]
+  internalNotes    InternalNote[]
+  auditLogs        ConversationAuditLog[]
 
   @@index([companyId])
+  @@index([sourceType])
+  @@index([status])
 }
 
 model Message {
   id             String       @id @default(uuid())
   conversationId String
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  senderType     String       // 'USER' or 'CLIENT'
+  senderType     String       // CUSTOMER, AGENT, SYSTEM
+  senderName     String
+  senderAvatar   String?
   text           String       @db.Text
-  replyText      String?      @db.Text
-  isUnread       Boolean      @default(true)
-  repliedAt      DateTime?
+  attachments    String?      @db.Text // JSON string array of attachment URLs
+  readStatus     String       @default("DELIVERED") // DELIVERED, READ
+  readAt         DateTime?
   sentAt         DateTime     @default(now())
+
+  @@index([conversationId])
+}
+
+model InternalNote {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  authorName     String
+  authorAvatar   String?
+  noteText       String       @db.Text
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId])
+}
+
+model ConversationAuditLog {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  action         String       // ASSIGNED, STATUS_CHANGE, REPLIED, NOTE_ADDED, STARRED, PINNED
+  details        String
+  actorName      String
+  createdAt      DateTime     @default(now())
 
   @@index([conversationId])
 }
