@@ -339,9 +339,10 @@ export async function fetchPlayStoreAppInfo(inputUrlOrPackage: string): Promise<
     base_url: 'https://yash9525-rw-live-checker.hf.space',
   });
 
-  // 2. Try fetching metadata from Backend Endpoints (Express & Reviews World Python Backend)
+  // 2. Try fetching metadata from Serverless & Backend Endpoints
   const cleanBaseUrl = (globalConfig.base_url || 'https://yash9525-rw-live-checker.hf.space').replace(/\/$/, '');
   const backendUrls = [
+    `/api/playstore?package_name=${encodeURIComponent(pkg)}`,
     `http://localhost:5000/api/v1/playstore/app-details?package_name=${encodeURIComponent(pkg)}`,
     `http://127.0.0.1:5000/api/v1/playstore/app-details?package_name=${encodeURIComponent(pkg)}`,
     `${cleanBaseUrl}/api/v1/playstore/app-details?package_name=${encodeURIComponent(pkg)}`,
@@ -386,6 +387,48 @@ export async function fetchPlayStoreAppInfo(inputUrlOrPackage: string): Promise<
     } catch {
       continue;
     }
+  }
+
+  // 3. Fallback: Parse Play Store Page via AllOrigins JSON Proxy (Access-Control-Allow-Origin: *)
+  try {
+    const allOriginsUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(playLink)}`;
+    const resp = await fetch(allOriginsUrl).catch(() => null);
+    if (resp && resp.ok) {
+      const json = await resp.json().catch(() => ({}));
+      const html = json.contents || '';
+      if (html && html.length > 500) {
+        let appName = '';
+        const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+        if (titleMatch) {
+          appName = titleMatch[1]
+            .replace(/\s*[-–]\s*Apps on Google Play.*$/i, '')
+            .replace(/\s*[-–]\s*Google Play.*$/i, '')
+            .replace(/\s*[-–]\s*Android Apps on Google Play.*$/i, '')
+            .replace(/\s*\|.*$/, '')
+            .trim();
+        }
+
+        let appIcon = '';
+        const ogImg = html.match(/property=["']og:image["']\s+content=["'](https:\/\/play-lh\.googleusercontent\.com\/[^"']+)["']/i) || html.match(/content=["'](https:\/\/play-lh\.googleusercontent\.com\/[^"']+)["']\s+property=["']og:image["']/i);
+        if (ogImg) {
+          appIcon = ogImg[1];
+        }
+
+        if (appName && appIcon) {
+          const metadata: PlayStoreAppMetadata = {
+            package_name: pkg,
+            app_name: appName,
+            app_icon_url: appIcon,
+            play_link: `https://play.google.com/store/apps/details?id=${pkg}`,
+            isValid: true,
+          };
+          saveAppMetadataCache(pkg, metadata);
+          return metadata;
+        }
+      }
+    }
+  } catch {
+    // Ignore and proceed to failure state
   }
 
   // 3. Fallback: Parse Official Google Play Store Page HTML via Reliable CORS Proxies
