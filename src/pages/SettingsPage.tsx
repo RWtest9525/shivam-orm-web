@@ -32,7 +32,7 @@ export function SettingsPage() {
     const trimmedUrl = baseUrl.trim() || 'https://yash9525-rw-live-checker.hf.space';
 
     if (!trimmedKey) {
-      setVerifyStatus({ success: false, msg: '❌ Please enter a valid Reviews World API Key.' });
+      setVerifyStatus({ success: false, msg: '❌ Invalid API Key' });
       return;
     }
 
@@ -46,13 +46,13 @@ export function SettingsPage() {
       setVerifyStatus({
         success: true,
         statusCode: 200,
-        msg: '✅ Reviews World Master API Key Verified & Connected Successfully! (HTTP Status 200 OK)',
+        msg: '✅ API Connected Successfully',
       });
     } else {
       setVerifyStatus({
         success: false,
         statusCode: check.statusCode,
-        msg: check.error || `❌ Connection Error: Backend at ${trimmedUrl} returned HTTP Status ${check.statusCode || 'Failed'}.`,
+        msg: check.statusCode === 404 ? '❌ Connection Failed (404 Not Found)' : (check.error || '❌ Invalid API Key'),
       });
     }
 
@@ -60,12 +60,12 @@ export function SettingsPage() {
   }
 
   function handleUnlinkAndDeleteKey() {
-    if (window.confirm('Are you sure you want to unlink and delete this Master API Key? All automatic live reviews fetching will stop until a new key is linked.')) {
+    if (window.confirm('Are you sure you want to unlink and delete this API key?')) {
       dbEngine.clearGlobalApiKey();
       setAdminApiKey('');
       setVerifyStatus({
         success: true,
-        msg: '🗑️ Master API Key unlinked and deleted successfully.',
+        msg: 'Unlinked successfully.',
       });
     }
   }
@@ -78,22 +78,13 @@ export function SettingsPage() {
       <div className="space-y-6 max-w-3xl mx-auto">
         <PageHeader
           title="Reviews World Global API Key Management"
-          subtitle="Configure & validate your master Reviews World API key and backend URL for all client review operations"
         />
 
         <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm dark:border-white/10 dark:bg-base-900 space-y-6">
           <div className="border-b border-slate-200 pb-4 dark:border-white/10 flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
-                <KeyRound className="h-5 w-5 text-amber-500" /> Master Reviews World API Connection
-              </h2>
-              <p className="text-xs font-bold text-slate-600 dark:text-slate-400 mt-1">
-                Enter your agency's Reviews World Backend URL and API Key. The connection will only be established if HTTP Status 200 is returned.
-              </p>
-            </div>
-            <span className="rounded-full bg-amber-500/20 px-3 py-1 text-[10px] font-black uppercase text-amber-700 dark:text-amber-300">
-              Super Admin Control
-            </span>
+            <h2 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+              <KeyRound className="h-5 w-5 text-amber-500" /> Master Reviews World API Connection
+            </h2>
           </div>
 
           {/* ACTIVE CONNECTED STATE CARD WITH VERIFIED API METRICS */}
@@ -104,11 +95,8 @@ export function SettingsPage() {
                   <CheckCircle2 className="h-6 w-6 text-emerald-500 shrink-0" />
                   <div>
                     <h3 className="text-xs font-black uppercase tracking-wider text-emerald-400">
-                      STATUS 200 OK — CONNECTED & ACTIVE
+                      API CONNECTED
                     </h3>
-                    <p className="text-[11px] font-bold text-slate-400">
-                      Master Reviews World API Handshake verified & linked persistently
-                    </p>
                   </div>
                 </div>
 
@@ -183,7 +171,7 @@ export function SettingsPage() {
                       })}
                     </div>
                     <p className="text-[10px] font-bold text-emerald-400 flex items-center gap-1">
-                      <ShieldCheck className="h-3 w-3" /> Status: Active & Valid
+                      <ShieldCheck className="h-3 w-3" /> Status: Active
                     </p>
                   </div>
                 )}
@@ -203,28 +191,22 @@ export function SettingsPage() {
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-emerald-500/20">
-                <p className="text-[11px] font-bold text-slate-400">
-                  📌 Note: Verified connection is active across all client app fetching until explicitly deleted.
-                </p>
+              <div className="flex flex-wrap items-center justify-end gap-3 pt-2 border-t border-emerald-500/20">
+                <button
+                  onClick={handleAdminValidateAndSave}
+                  disabled={verifying}
+                  className="flex items-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3.5 py-2 text-xs font-bold text-amber-300 transition hover:bg-amber-500/20 disabled:opacity-50"
+                >
+                  {verifying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                  Refresh Status
+                </button>
 
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={handleAdminValidateAndSave}
-                    disabled={verifying}
-                    className="flex items-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3.5 py-2 text-xs font-bold text-amber-300 transition hover:bg-amber-500/20 disabled:opacity-50"
-                  >
-                    {verifying ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
-                    Refresh Status
-                  </button>
-
-                  <button
-                    onClick={handleUnlinkAndDeleteKey}
-                    className="flex items-center gap-1.5 rounded-xl border border-rose-500/30 bg-rose-500/10 px-3.5 py-2 text-xs font-bold text-rose-300 transition hover:bg-rose-500/20"
-                  >
-                    <Trash2 className="h-3.5 w-3.5 text-rose-400" /> Unlink & Delete
-                  </button>
-                </div>
+                <button
+                  onClick={handleUnlinkAndDeleteKey}
+                  className="flex items-center gap-1.5 rounded-xl border border-rose-500/30 bg-rose-500/10 px-3.5 py-2 text-xs font-bold text-rose-300 transition hover:bg-rose-500/20"
+                >
+                  <Trash2 className="h-3.5 w-3.5 text-rose-400" /> Unlink & Delete
+                </button>
               </div>
             </div>
           ) : (
@@ -256,24 +238,19 @@ export function SettingsPage() {
                 />
               </div>
 
-              {/* STRICT VERIFICATION FAILURE BOX (SHOWS ONLY CONNECTION FAILED & REASON - NOTHING ELSE) */}
+              {/* DIRECT ERROR NOTIFICATION */}
               {verifyStatus && verifyStatus.success === false && (
-                <div className="rounded-2xl border border-rose-500/40 bg-rose-500/10 p-4 space-y-1">
-                  <div className="flex items-center gap-2 text-rose-400 font-black text-xs uppercase">
-                    <AlertCircle className="h-4 w-4 shrink-0" />
-                    <span>Connection Failed (HTTP Status {verifyStatus.statusCode || 401})</span>
-                  </div>
-                  <p className="text-xs font-bold text-rose-200 pl-6">
-                    Reason: {verifyStatus.msg}
-                  </p>
+                <div className="flex items-center gap-2.5 rounded-2xl border border-rose-500/40 bg-rose-500/10 p-3.5 text-xs font-bold text-rose-300">
+                  <AlertCircle className="h-4 w-4 text-rose-400 shrink-0" />
+                  <span>{verifyStatus.msg || '❌ Invalid API Key'}</span>
                 </div>
               )}
 
-              {/* SUCCESS NOTIFICATION */}
+              {/* DIRECT SUCCESS NOTIFICATION */}
               {verifyStatus && verifyStatus.success === true && (
-                <div className="rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-4 flex items-center gap-2.5 text-emerald-300 font-bold text-xs">
+                <div className="flex items-center gap-2.5 rounded-2xl border border-emerald-500/40 bg-emerald-500/10 p-3.5 text-xs font-bold text-emerald-300">
                   <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-                  <span>{verifyStatus.msg}</span>
+                  <span>{verifyStatus.msg || '✅ API Connected Successfully'}</span>
                 </div>
               )}
 
@@ -283,7 +260,7 @@ export function SettingsPage() {
                 className="flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 px-6 py-3.5 text-xs font-black text-slate-950 transition hover:shadow-glow disabled:opacity-50"
               >
                 {verifying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Link2 className="h-4 w-4" />}
-                {verifying ? 'Verifying HTTP Status 200 Handshake…' : 'Validate & Link API Key'}
+                {verifying ? 'Connecting…' : 'Connect'}
               </button>
             </div>
           )}
