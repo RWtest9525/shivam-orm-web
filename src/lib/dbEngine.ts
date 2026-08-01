@@ -339,55 +339,52 @@ export async function fetchPlayStoreAppInfo(inputUrlOrPackage: string): Promise<
     base_url: 'https://yash9525-rw-live-checker.hf.space',
   });
 
-  // 2. Try fetching metadata from Reviews World Python Backend
-  if (globalConfig.base_url) {
+  // 2. Try fetching metadata from Backend Endpoints (Express & Reviews World Python Backend)
+  const cleanBaseUrl = (globalConfig.base_url || 'https://yash9525-rw-live-checker.hf.space').replace(/\/$/, '');
+  const backendUrls = [
+    `http://localhost:5000/api/v1/playstore/app-details?package_name=${encodeURIComponent(pkg)}`,
+    `http://127.0.0.1:5000/api/v1/playstore/app-details?package_name=${encodeURIComponent(pkg)}`,
+    `${cleanBaseUrl}/api/v1/playstore/app-details?package_name=${encodeURIComponent(pkg)}`,
+    `${cleanBaseUrl}/api/v1/app-details?package_name=${encodeURIComponent(pkg)}`,
+    `${cleanBaseUrl}/api/v1/app-info?package_name=${encodeURIComponent(pkg)}`,
+    `${cleanBaseUrl}/api/v1/app?id=${encodeURIComponent(pkg)}`,
+  ];
+
+  for (const targetUrl of backendUrls) {
     try {
-      const cleanBaseUrl = globalConfig.base_url.replace(/\/$/, '');
-      const backendUrls = [
-        `${cleanBaseUrl}/api/v1/app-details?package_name=${encodeURIComponent(pkg)}`,
-        `${cleanBaseUrl}/api/v1/app-info?package_name=${encodeURIComponent(pkg)}`,
-        `${cleanBaseUrl}/api/v1/app?id=${encodeURIComponent(pkg)}`,
-      ];
+      const resp = await fetch(targetUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${globalConfig.api_key || ''}`,
+          'x-api-key': globalConfig.api_key || '',
+          'Accept': 'application/json',
+        },
+      }).catch(() => null);
 
-      for (const targetUrl of backendUrls) {
-        try {
-          const resp = await fetch(targetUrl, {
-            method: 'GET',
-            headers: {
-              'Authorization': `Bearer ${globalConfig.api_key || ''}`,
-              'x-api-key': globalConfig.api_key || '',
-              'Accept': 'application/json',
-            },
-          }).catch(() => null);
+      if (resp && resp.status === 200) {
+        const data = await resp.json().catch(() => ({}));
+        const appName = data.app_name || data.title || data.name;
+        const appIcon = data.app_icon_url || data.icon || data.app_icon;
 
-          if (resp && resp.status === 200) {
-            const data = await resp.json().catch(() => ({}));
-            const appName = data.app_name || data.title || data.name;
-            const appIcon = data.app_icon_url || data.icon || data.app_icon;
-
-            if (appName && appIcon) {
-              const metadata: PlayStoreAppMetadata = {
-                package_name: pkg,
-                app_name: appName,
-                app_icon_url: appIcon,
-                play_link: playLink,
-                developer: data.developer || data.developer_name || undefined,
-                category: data.category || undefined,
-                rating: data.rating || undefined,
-                reviews_count: data.reviews_count || data.reviews || undefined,
-                description: data.description || data.short_description || undefined,
-                isValid: true,
-              };
-              saveAppMetadataCache(pkg, metadata);
-              return metadata;
-            }
-          }
-        } catch {
-          continue;
+        if (appName && appIcon) {
+          const metadata: PlayStoreAppMetadata = {
+            package_name: pkg,
+            app_name: appName,
+            app_icon_url: appIcon,
+            play_link: playLink,
+            developer: data.developer || data.developer_name || undefined,
+            category: data.category || undefined,
+            rating: data.rating || undefined,
+            reviews_count: data.reviews_count || data.reviews || undefined,
+            description: data.description || data.short_description || undefined,
+            isValid: true,
+          };
+          saveAppMetadataCache(pkg, metadata);
+          return metadata;
         }
       }
     } catch {
-      // Continue to direct HTML parse if backend endpoint doesn't respond
+      continue;
     }
   }
 
