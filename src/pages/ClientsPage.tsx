@@ -296,6 +296,7 @@ export function ClientsPage() {
                     onChange={(e) => setPlan(e.target.value)}
                     className="w-full rounded-xl border border-slate-300 bg-slate-50 p-3 text-xs font-bold text-slate-900 focus:outline-none dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-100"
                   >
+                    <option value="free">Free Plan</option>
                     <option value="trial">Trial Plan</option>
                     <option value="starter">Starter Plan</option>
                     <option value="pro">Pro Plan</option>

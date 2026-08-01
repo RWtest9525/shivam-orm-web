@@ -14,7 +14,7 @@ export type PlatformId =
 export type SentimentType = 'positive' | 'neutral' | 'negative' | 'crisis';
 export type Severity = 'low' | 'medium' | 'high' | 'critical';
 export type ReviewStatus = 'new' | 'replied' | 'escalated' | 'flagged';
-export type PlanId = 'trial' | 'starter' | 'pro' | 'enterprise';
+export type PlanId = 'trial' | 'starter' | 'pro' | 'enterprise' | 'free';
 export type ClientStatus = 'active' | 'suspended' | 'pending';
 
 export type ConnectionStatus = 'connected' | 'expired' | 'disconnected' | 'error';
@@ -173,4 +173,67 @@ export interface AIReplyLogItem {
   approvedAt?: string | null;
   createdAt: string;
   analysis?: AIAnalysisResult;
+}
+
+export interface PlanItem {
+  id: string;
+  name: string;
+  code: 'FREE' | 'STARTER' | 'PRO' | 'ENTERPRISE';
+  monthlyPrice: number;
+  yearlyPrice: number;
+  storageLimitMb: number;
+  employeeLimit: number;
+  connectedAccountsLimit: number;
+  apiLimitPerMonth: number;
+  reviewLimitPerMonth: number;
+  featuresIncluded: string;
+  isActive: boolean;
+}
+
+export interface SubscriptionExtended {
+  id: string;
+  companyId: string;
+  planId: string;
+  planCode: 'FREE' | 'STARTER' | 'PRO' | 'ENTERPRISE';
+  planName: string;
+  billingCycle: 'MONTHLY' | 'YEARLY';
+  status: 'ACTIVE' | 'SUSPENDED' | 'PAST_DUE' | 'CANCELED';
+  startDate: string;
+  expiryDate: string;
+  renewalDate: string;
+  autoRenew: boolean;
+  appliedCouponCode?: string | null;
+}
+
+export interface UsageLimits {
+  storageUsedMb: number;
+  storageLimitMb: number;
+  employeesUsed: number;
+  employeeLimit: number;
+  accountsConnected: number;
+  connectedAccountsLimit: number;
+  apiCallsMonth: number;
+  apiLimitPerMonth: number;
+  reviewsFetchedMonth: number;
+  reviewLimitPerMonth: number;
+}
+
+export interface InvoiceItem {
+  id: string;
+  invoiceNumber: string;
+  companyId: string;
+  subscriptionId?: string;
+  billingDate: string;
+  dueDate: string;
+  subtotal: number;
+  taxPct: number;
+  taxAmount: number;
+  couponCode?: string | null;
+  discountPct: number;
+  discountAmount: number;
+  totalAmount: number;
+  currency: string;
+  status: 'PAID' | 'PENDING' | 'FAILED';
+  paymentMethod: string;
+  createdAt: string;
 }

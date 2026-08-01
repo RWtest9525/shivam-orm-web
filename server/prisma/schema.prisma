@@ -53,6 +53,7 @@ enum Severity {
 }
 
 enum SubscriptionTier {
+  FREE
   TRIAL
   STARTER
   PRO
@@ -327,27 +328,80 @@ model Customer {
 // --------------------------------------------------
 // Subscriptions & Invoicing
 // --------------------------------------------------
+model Plan {
+  id                      String         @id @default(uuid())
+  name                    String         // Free, Starter, Professional, Enterprise
+  code                    String         @unique // FREE, STARTER, PRO, ENTERPRISE
+  monthlyPrice            Float
+  yearlyPrice             Float
+  storageLimitMb          Int            @default(500)
+  employeeLimit           Int            @default(1)
+  connectedAccountsLimit  Int            @default(1)
+  apiLimitPerMonth        Int            @default(1000)
+  reviewLimitPerMonth     Int            @default(500)
+  featuresIncluded        String         @db.Text // JSON string array
+  isActive                Boolean        @default(true)
+  createdAt               DateTime       @default(now())
+  updatedAt               DateTime       @updatedAt
+
+  subscriptions           Subscription[]
+}
+
+model Coupon {
+  id          String    @id @default(uuid())
+  code        String    @unique
+  discountPct Float     // e.g. 20.0 for 20% off
+  maxUses     Int       @default(100)
+  usedCount   Int       @default(0)
+  expiresAt   DateTime?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+}
+
 model Subscription {
-  id             String             @id @default(uuid())
-  companyId      String
-  company        Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  tier           SubscriptionTier
-  status         SubscriptionStatus @default(ACTIVE)
-  currentPeriodStart DateTime       @default(now())
-  currentPeriodEnd   DateTime
-  invoices       Invoice[]
+  id                 String             @id @default(uuid())
+  companyId          String
+  company            Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  planId             String?
+  plan               Plan?              @relation(fields: [planId], references: [id], onDelete: SetNull)
+  tier               SubscriptionTier   @default(STARTER)
+  billingCycle       String             @default("MONTHLY") // MONTHLY, YEARLY
+  status             SubscriptionStatus @default(ACTIVE)
+  startDate          DateTime           @default(now())
+  expiryDate         DateTime
+  renewalDate        DateTime
+  autoRenew          Boolean            @default(true)
+  appliedCouponCode  String?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  invoices           Invoice[]
 
   @@index([companyId])
 }
 
 model Invoice {
-  id             String       @id @default(uuid())
-  subscriptionId String
-  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
-  amount         Float
-  currency       String       @default("USD")
-  status         String       @default("PAID")
-  issuedAt       DateTime     @default(now())
+  id             String        @id @default(uuid())
+  invoiceNumber  String        @unique
+  companyId      String
+  subscriptionId String?
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  billingDate    DateTime      @default(now())
+  dueDate        DateTime
+  subtotal       Float
+  taxPct         Float         @default(18.0)
+  taxAmount      Float
+  couponCode     String?
+  discountPct    Float         @default(0.0)
+  discountAmount Float         @default(0.0)
+  totalAmount    Float
+  currency       String        @default("USD")
+  status         String        @default("PAID") // PAID, PENDING, FAILED
+  paymentMethod  String        @default("CREDIT_CARD")
+  pdfUrl         String?
+  createdAt      DateTime      @default(now())
+
+  @@index([companyId])
 }
 
 // --------------------------------------------------

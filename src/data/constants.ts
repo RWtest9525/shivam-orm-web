@@ -88,6 +88,7 @@ export const STATUS_DEF: Record<ReviewStatus, { label: string; tone: string }> =
 };
 
 export const PLAN_LABELS: Record<PlanId, string> = {
+  free: 'Free',
   trial: 'Trial',
   starter: 'Starter',
   pro: 'Pro',

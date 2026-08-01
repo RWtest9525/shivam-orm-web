@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 
 import { IntegrationsListCard } from '@/components/IntegrationsListCard';
+import { SubscriptionBillingCard } from '@/components/SubscriptionBillingCard';
 
 export function SettingsPage() {
   const { client, userRole } = useAuth();
@@ -226,6 +227,9 @@ export function SettingsPage() {
         onRefreshConnections={refreshConnections}
         clientId={client?.id}
       />
+
+      {/* Subscription & Billing System Card */}
+      <SubscriptionBillingCard />
     </div>
   );
 }

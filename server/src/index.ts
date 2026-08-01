@@ -142,6 +142,33 @@ app.post('/api/v1/ai/generate-reply', authenticateJWT, generateAIReplyHandler);
 app.post('/api/v1/ai/approve-reply', authenticateJWT, approveAIReplyHandler);
 app.get('/api/v1/ai/history/:targetId', authenticateJWT, getAIHistoryHandler);
 
+import {
+  getPlansHandler,
+  createPlanHandler,
+  updatePlanHandler,
+  deletePlanHandler,
+  getCurrentSubscriptionHandler,
+  subscribePlanHandler,
+  renewSubscriptionHandler,
+  updateSubscriptionStatusHandler,
+  listInvoicesHandler,
+  getInvoicePdfHtmlHandler,
+  validateCouponHandler,
+} from './controllers/subscription.controller.js';
+
+// Subscription & Billing Endpoints
+app.get('/api/v1/subscriptions/plans', authenticateJWT, getPlansHandler);
+app.post('/api/v1/subscriptions/plans', authenticateJWT, requireRole(['SUPER_ADMIN']), createPlanHandler);
+app.patch('/api/v1/subscriptions/plans/:id', authenticateJWT, requireRole(['SUPER_ADMIN']), updatePlanHandler);
+app.delete('/api/v1/subscriptions/plans/:id', authenticateJWT, requireRole(['SUPER_ADMIN']), deletePlanHandler);
+app.get('/api/v1/subscriptions/current', authenticateJWT, getCurrentSubscriptionHandler);
+app.post('/api/v1/subscriptions/subscribe', authenticateJWT, subscribePlanHandler);
+app.post('/api/v1/subscriptions/renew', authenticateJWT, renewSubscriptionHandler);
+app.patch('/api/v1/subscriptions/:id/status', authenticateJWT, requireRole(['SUPER_ADMIN']), updateSubscriptionStatusHandler);
+app.get('/api/v1/subscriptions/invoices', authenticateJWT, listInvoicesHandler);
+app.get('/api/v1/subscriptions/invoices/:id/pdf', getInvoicePdfHtmlHandler);
+app.post('/api/v1/subscriptions/coupons/validate', authenticateJWT, validateCouponHandler);
+
 // Uploads (R2 / Local Disk)
 app.post('/api/v1/uploads', authenticateJWT, upload.single('file'), handleFileUpload);
 
