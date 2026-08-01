@@ -36,6 +36,8 @@ export type InboxSourceType =
 
 export type ConversationStatus = 'OPEN' | 'PENDING' | 'RESOLVED' | 'CLOSED' | 'ESCALATED';
 
+export type AIReplyTone = 'Professional' | 'Friendly' | 'Formal' | 'Short' | 'Detailed';
+
 export interface SentimentDef {
   text: string;
   bg: string;
@@ -135,4 +137,40 @@ export interface ConversationItem {
   lastMessageAt: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface AIAnalysisResult {
+  sentiment: 'POSITIVE' | 'NEUTRAL' | 'NEGATIVE' | 'CRISIS';
+  spamStatus: {
+    isSpam: boolean;
+    spamScore: number;
+    reason: string;
+  };
+  category:
+    | 'Product Quality'
+    | 'Customer Service'
+    | 'Delivery & Shipping'
+    | 'Pricing & Billing'
+    | 'App Bug / Technical Issue'
+    | 'General Feedback';
+  priority: 'URGENT' | 'HIGH' | 'MEDIUM' | 'LOW';
+  language: string;
+  confidenceScore: number;
+}
+
+export interface AIReplyLogItem {
+  id: string;
+  companyId: string;
+  targetType: string;
+  targetId: string;
+  promptUsed: string;
+  tone: AIReplyTone;
+  generatedReply: string;
+  confidenceScore: number;
+  version: number;
+  status: 'GENERATED' | 'EDITED' | 'APPROVED' | 'REJECTED';
+  userEditedReply?: string | null;
+  approvedAt?: string | null;
+  createdAt: string;
+  analysis?: AIAnalysisResult;
 }

@@ -4,7 +4,8 @@ import { SentimentBadge } from '@/components/ui/SentimentBadge';
 import { PlatformIcon } from '@/components/ui/PlatformIcon';
 import { PLATFORM_MAP, STATUS_DEF, SEVERITY_DEF } from '@/data/constants';
 import { cn, formatMinutesAgo } from '@/lib/utils';
-import { Star, MessageSquareReply, ArrowUpRight, Flag, Check, X, FileText } from 'lucide-react';
+import { Star, MessageSquareReply, ArrowUpRight, Flag, Check, X, FileText, Sparkles } from 'lucide-react';
+import { AiReplyAssistantModal } from './AiReplyAssistantModal';
 
 interface Props {
   review: ReviewRow;
@@ -15,6 +16,7 @@ interface Props {
 
 export function ReviewCard({ review, templates, onReply, onStatusChange }: Props) {
   const [showReply, setShowReply] = useState(false);
+  const [showAiModal, setShowAiModal] = useState(false);
   const [replyText, setReplyText] = useState('');
   const [sending, setSending] = useState(false);
   const [done, setDone] = useState<'' | 'replied' | 'escalated' | 'flagged'>(
@@ -167,6 +169,12 @@ export function ReviewCard({ review, templates, onReply, onStatusChange }: Props
                   <MessageSquareReply className="h-3.5 w-3.5" /> Reply
                 </button>
                 <button
+                  onClick={() => setShowAiModal(true)}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500 px-3 py-1.5 text-[11px] font-black text-slate-950 transition hover:bg-amber-400 shadow-sm"
+                >
+                  <Sparkles className="h-3.5 w-3.5" /> ✨ AI Smart Reply
+                </button>
+                <button
                   onClick={() => handleStatusChange('escalated')}
                   className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-[11px] font-black text-amber-900 transition hover:bg-amber-100 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300"
                 >
@@ -198,6 +206,22 @@ export function ReviewCard({ review, templates, onReply, onStatusChange }: Props
           </div>
         </div>
       </div>
+
+      {/* AI Smart Reply Assistant Modal */}
+      <AiReplyAssistantModal
+        isOpen={showAiModal}
+        onClose={() => setShowAiModal(false)}
+        authorName={review.author_name}
+        content={review.content}
+        platform={platform?.label || review.platform}
+        rating={review.rating || undefined}
+        targetId={review.id}
+        targetType="REVIEW"
+        onApproveAndApply={async (approvedText) => {
+          await onReply(review.id, approvedText);
+          setDone('replied');
+        }}
+      />
     </div>
   );
 }

@@ -374,3 +374,33 @@ model SystemConfig {
   value     String   @db.Text
   updatedAt DateTime @updatedAt
 }
+
+model AIReplyLog {
+  id               String   @id @default(uuid())
+  companyId        String
+  targetType       String   // REVIEW or CONVERSATION
+  targetId         String
+  promptUsed       String   @db.Text
+  tone             String   // Professional, Friendly, Formal, Short, Detailed
+  generatedReply   String   @db.Text
+  confidenceScore  Float    @default(0.95)
+  version          Int      @default(1)
+  status           String   @default("GENERATED") // GENERATED, EDITED, APPROVED, REJECTED
+  userEditedReply  String?  @db.Text
+  approvedAt       DateTime?
+  createdAt        DateTime @default(now())
+
+  @@index([companyId])
+  @@index([targetId])
+}
+
+model AIPromptLog {
+  id               String   @id @default(uuid())
+  companyId        String
+  promptText       String   @db.Text
+  tone             String
+  platform         String
+  createdAt        DateTime @default(now())
+
+  @@index([companyId])
+}

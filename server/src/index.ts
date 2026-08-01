@@ -129,6 +129,19 @@ app.patch('/api/v1/inbox/conversations/:id/pin', authenticateJWT, togglePinHandl
 app.patch('/api/v1/inbox/conversations/:id/read', authenticateJWT, markReadStatusHandler);
 app.post('/api/v1/inbox/refresh', authenticateJWT, manualRefreshHandler);
 
+import {
+  analyzeContentHandler,
+  generateAIReplyHandler,
+  approveAIReplyHandler,
+  getAIHistoryHandler,
+} from './controllers/ai.controller.js';
+
+// AI Intelligence & Reply Endpoints
+app.post('/api/v1/ai/analyze', authenticateJWT, analyzeContentHandler);
+app.post('/api/v1/ai/generate-reply', authenticateJWT, generateAIReplyHandler);
+app.post('/api/v1/ai/approve-reply', authenticateJWT, approveAIReplyHandler);
+app.get('/api/v1/ai/history/:targetId', authenticateJWT, getAIHistoryHandler);
+
 // Uploads (R2 / Local Disk)
 app.post('/api/v1/uploads', authenticateJWT, upload.single('file'), handleFileUpload);
 

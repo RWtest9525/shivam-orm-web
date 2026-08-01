@@ -29,9 +29,13 @@ const STATUS_FILTERS: { id: ConversationStatus | 'all'; label: string }[] = [
   { id: 'ESCALATED', label: 'Escalated' },
 ];
 
+import { AiReplyAssistantModal } from '@/components/AiReplyAssistantModal';
+
 export function SocialInboxPage() {
   const { client } = useAuth();
   const { templates } = useReplyTemplates(client?.id);
+
+  const [showAiModal, setShowAiModal] = useState(false);
 
   const {
     conversations,
@@ -632,21 +636,32 @@ export function SocialInboxPage() {
                     </button>
                   </div>
 
-                  {/* Reply Templates Selector */}
+                  {/* Reply Templates Selector & AI Assistant Button */}
                   {composerMode === 'reply' && (
-                    <select
-                      value={selectedTemplateId}
-                      onChange={handleSelectTemplate}
-                      disabled={isViewer}
-                      className="rounded-xl border border-slate-300 bg-slate-50 px-2.5 py-1 text-xs font-bold text-slate-800 focus:border-amber-500 focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-slate-200"
-                    >
-                      <option value="">Insert Reply Template…</option>
-                      {templates.map((t) => (
-                        <option key={t.id} value={t.id}>
-                          {t.title}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setShowAiModal(true)}
+                        disabled={isViewer}
+                        className="flex items-center gap-1.5 rounded-xl bg-amber-500 px-3 py-1 text-xs font-black text-slate-950 transition hover:bg-amber-400 shadow-sm disabled:opacity-50"
+                      >
+                        <Sparkles className="h-3.5 w-3.5" />
+                        ✨ AI Smart Reply
+                      </button>
+
+                      <select
+                        value={selectedTemplateId}
+                        onChange={handleSelectTemplate}
+                        disabled={isViewer}
+                        className="rounded-xl border border-slate-300 bg-slate-50 px-2.5 py-1 text-xs font-bold text-slate-800 focus:border-amber-500 focus:outline-none dark:border-white/10 dark:bg-white/5 dark:text-slate-200"
+                      >
+                        <option value="">Insert Reply Template…</option>
+                        {templates.map((t) => (
+                          <option key={t.id} value={t.id}>
+                            {t.title}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   )}
                 </div>
 
@@ -722,6 +737,22 @@ export function SocialInboxPage() {
           )}
         </div>
       </div>
+
+      {/* AI Smart Reply Assistant Modal */}
+      {activeConversation && (
+        <AiReplyAssistantModal
+          isOpen={showAiModal}
+          onClose={() => setShowAiModal(false)}
+          authorName={activeConversation.senderName}
+          content={activeConversation.lastMessageText || 'Customer inquiry'}
+          platform={activeConversation.platform}
+          targetId={activeConversation.id}
+          targetType="CONVERSATION"
+          onApproveAndApply={async (approvedText) => {
+            await sendReply(approvedText);
+          }}
+        />
+      )}
     </div>
   );
 }
