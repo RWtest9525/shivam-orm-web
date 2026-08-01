@@ -160,13 +160,11 @@ export function AppLayout({ children }: { children: ReactNode }) {
         {/* Seamless Theme-Aware Brand Header */}
         <div className="flex h-16 items-center border-b border-slate-200 px-4 bg-white dark:bg-base-950 dark:border-white/[0.08]">
           <div className="flex items-center gap-3">
-            <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-amber-500/60 bg-slate-950 p-1 shadow-md shadow-amber-500/20">
-              <img
-                src="/logo.svg"
-                alt="Equinox Pulse"
-                className="h-full w-full object-contain"
-              />
-            </div>
+            <img
+              src="/logo.png"
+              alt="Equinox Pulse"
+              className="h-9 w-9 object-contain filter drop-shadow-[0_0_8px_rgba(245,158,11,0.4)]"
+            />
             <div className="flex flex-col leading-tight">
               <span className="text-sm font-black tracking-wide text-slate-900 dark:text-white">
                 EQUINOX <span className="text-amber-500">PULSE</span>
@@ -220,9 +218,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
             <Menu className="h-5 w-5" />
           </button>
           <div className="flex items-center gap-2">
-            <div className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-amber-500/60 bg-slate-950 p-0.5 shadow-sm">
-              <img src="/logo.svg" alt="Equinox Pulse" className="h-full w-full object-contain" />
-            </div>
+            <img src="/logo.png" alt="Equinox Pulse" className="h-8 w-8 object-contain filter drop-shadow-[0_0_6px_rgba(245,158,11,0.4)]" />
             <span className="text-sm font-black text-slate-900 dark:text-white">EQUINOX PULSE</span>
           </div>
         </div>

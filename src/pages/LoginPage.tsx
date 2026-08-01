@@ -44,15 +44,13 @@ export function LoginPage() {
       {/* Unified Premium Master Card */}
       <div className="w-full max-w-md rounded-3xl border border-amber-500/30 bg-slate-900/90 p-6 sm:p-8 shadow-[0_0_60px_rgba(245,158,11,0.12)] backdrop-blur-2xl space-y-6">
         
-        {/* Unclipped Circular Gold Logo Badge */}
+        {/* Clean Circular Gold Logo */}
         <div className="flex flex-col items-center text-center pt-2">
-          <div className="relative flex h-28 w-28 sm:h-32 sm:w-32 items-center justify-center rounded-full border-2 border-amber-500/50 bg-black p-2 shadow-[0_0_40px_rgba(245,158,11,0.25)] transition-transform duration-300 hover:scale-105">
-            <img
-              src="/logo.svg"
-              alt="Equinox Pulse Logo"
-              className="h-full w-full object-contain"
-            />
-          </div>
+          <img
+            src="/logo.png"
+            alt="Equinox Pulse Logo"
+            className="h-28 w-28 sm:h-32 sm:w-32 object-contain filter drop-shadow-[0_0_30px_rgba(245,158,11,0.35)] transition-transform duration-300 hover:scale-105"
+          />
 
           <h1 className="mt-4 text-2xl font-black tracking-wider text-white sm:text-3xl">
             EQUINOX <span className="text-amber-500">PULSE</span>
