@@ -148,7 +148,7 @@ export async function validateReviewsWorldHandshake(
   apiKey: string
 ): Promise<{ isValid: boolean; statusCode: number; error?: string }> {
   const trimmedKey = apiKey.trim();
-  const trimmedUrl = (baseUrl || 'https://api.reviewsworld.live').trim();
+  const trimmedUrl = (baseUrl || 'https://yash9525-rw-live-checker.hf.space').trim();
 
   if (!trimmedKey) {
     return { isValid: false, statusCode: 400, error: '❌ API Key is required for connection.' };
@@ -312,7 +312,7 @@ class DBEngine {
   } {
     return getStorage(STORAGE_KEYS.GLOBAL_API, {
       api_key: '',
-      base_url: 'https://api.reviewsworld.live',
+      base_url: 'https://yash9525-rw-live-checker.hf.space',
       is_verified: false,
       connected_at: null,
       api_mode: 'reviews_world_scraper',
@@ -323,12 +323,12 @@ class DBEngine {
     api_key: string,
     api_mode: 'reviews_world_scraper' | 'google_console' = 'reviews_world_scraper',
     is_verified: boolean = true,
-    base_url: string = 'https://api.reviewsworld.live',
+    base_url: string = 'https://yash9525-rw-live-checker.hf.space',
     connected_at?: string | null
   ) {
     setStorage(STORAGE_KEYS.GLOBAL_API, {
       api_key,
-      base_url: base_url || 'https://api.reviewsworld.live',
+      base_url: base_url || 'https://yash9525-rw-live-checker.hf.space',
       is_verified,
       connected_at: connected_at || (is_verified ? new Date().toISOString() : null),
       api_mode,
@@ -339,7 +339,7 @@ class DBEngine {
   public clearGlobalApiKey(): void {
     setStorage(STORAGE_KEYS.GLOBAL_API, {
       api_key: '',
-      base_url: 'https://api.reviewsworld.live',
+      base_url: 'https://yash9525-rw-live-checker.hf.space',
       is_verified: false,
       connected_at: null,
       api_mode: 'reviews_world_scraper',

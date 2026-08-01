@@ -17,7 +17,7 @@ export function SettingsPage() {
 
   // Super Admin API Verification State
   const globalConfig = dbEngine.getGlobalApiKey();
-  const [baseUrl, setBaseUrl] = useState(globalConfig.base_url || 'https://api.reviewsworld.live');
+  const [baseUrl, setBaseUrl] = useState(globalConfig.base_url || 'https://yash9525-rw-live-checker.hf.space');
   const [adminApiKey, setAdminApiKey] = useState(globalConfig.api_key || '');
   const [verifying, setVerifying] = useState(false);
   const [verifyStatus, setVerifyStatus] = useState<{ success?: boolean; statusCode?: number; msg?: string } | null>(null);
@@ -28,7 +28,7 @@ export function SettingsPage() {
   // Super Admin API Key Validation Function (HTTP 200 Handshake)
   async function handleAdminValidateAndSave() {
     const trimmedKey = adminApiKey.trim();
-    const trimmedUrl = baseUrl.trim() || 'https://api.reviewsworld.live';
+    const trimmedUrl = baseUrl.trim() || 'https://yash9525-rw-live-checker.hf.space';
 
     if (!trimmedKey) {
       setVerifyStatus({ success: false, msg: '❌ Please enter a valid Reviews World API Key.' });
@@ -156,7 +156,7 @@ export function SettingsPage() {
                   type="text"
                   value={baseUrl}
                   onChange={(e) => setBaseUrl(e.target.value)}
-                  placeholder="https://api.reviewsworld.live"
+                  placeholder="https://yash9525-rw-live-checker.hf.space"
                   className="w-full rounded-2xl border border-slate-300 bg-slate-50 p-3.5 font-mono text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:border-amber-500 focus:outline-none dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-100"
                 />
               </div>
