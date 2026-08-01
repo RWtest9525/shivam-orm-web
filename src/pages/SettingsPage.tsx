@@ -214,7 +214,7 @@ export function SettingsPage() {
             <div className="space-y-4">
               <div className="space-y-2">
                 <label className="block text-xs font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
-                  <Globe className="h-3.5 w-3.5 text-amber-500" /> Reviews World Backend Base URL
+                  <Globe className="h-3.5 w-3.5 text-amber-500" /> Reviews world LIst base url
                 </label>
                 <input
                   type="text"
