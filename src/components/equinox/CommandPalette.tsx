@@ -44,30 +44,30 @@ export function CommandPalette({ open, setOpen, setView }: CommandPaletteProps) 
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-black/70 backdrop-blur-md">
-      <div className="w-full max-w-lg rounded-2xl bg-neutral-950 border border-white/10 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-        <div className="flex items-center px-4 border-b border-white/10 bg-black/40">
-          <Search className="w-4 h-4 text-muted-foreground mr-3 shrink-0" />
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-black/60 backdrop-blur-md">
+      <div className="w-full max-w-lg rounded-2xl bg-white border border-slate-200 dark:bg-neutral-950 dark:border-white/10 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+        <div className="flex items-center px-4 border-b border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/40">
+          <Search className="w-4 h-4 text-slate-400 dark:text-muted-foreground mr-3 shrink-0" />
           <input
             type="text"
             autoFocus
             placeholder="Type a command or search view..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="w-full py-3.5 bg-transparent text-sm text-white placeholder:text-neutral-500 focus:outline-none"
+            className="w-full py-3.5 bg-transparent text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-neutral-500 focus:outline-none"
           />
-          <button onClick={() => setOpen(false)} className="text-neutral-500 hover:text-white p-1">
+          <button onClick={() => setOpen(false)} className="text-slate-400 dark:text-neutral-500 hover:text-slate-900 dark:hover:text-white p-1">
             <X className="w-4 h-4" />
           </button>
         </div>
 
         <div className="max-h-[380px] overflow-y-auto p-2 no-scrollbar space-y-3">
           <div>
-            <div className="px-3 py-1.5 text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
+            <div className="px-3 py-1.5 text-[10px] uppercase tracking-widest text-slate-400 dark:text-muted-foreground font-semibold">
               Navigation Views
             </div>
             {filtered.length === 0 ? (
-              <div className="px-3 py-6 text-center text-xs text-muted-foreground italic">No matching results found.</div>
+              <div className="px-3 py-6 text-center text-xs text-slate-500 dark:text-muted-foreground italic">No matching results found.</div>
             ) : (
               filtered.map((item) => {
                 const Icon = item.icon;
@@ -78,11 +78,11 @@ export function CommandPalette({ open, setOpen, setView }: CommandPaletteProps) 
                       setView(item.key);
                       setOpen(false);
                     }}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs text-neutral-200 hover:bg-primary/10 hover:text-primary transition font-medium text-left"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs text-slate-700 dark:text-neutral-200 hover:bg-primary/10 hover:text-primary transition font-medium text-left"
                   >
                     <Icon className="w-4 h-4 shrink-0" />
                     <span>{item.label}</span>
-                    <span className="ml-auto text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
+                    <span className="ml-auto text-[10px] uppercase tracking-widest text-slate-400 dark:text-muted-foreground font-semibold">
                       {item.group}
                     </span>
                   </button>
@@ -91,8 +91,8 @@ export function CommandPalette({ open, setOpen, setView }: CommandPaletteProps) 
             )}
           </div>
 
-          <div className="border-t border-white/5 pt-2">
-            <div className="px-3 py-1.5 text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">
+          <div className="border-t border-slate-100 dark:border-white/5 pt-2">
+            <div className="px-3 py-1.5 text-[10px] uppercase tracking-widest text-slate-400 dark:text-muted-foreground font-semibold">
               Quick Actions
             </div>
             <button
@@ -101,7 +101,7 @@ export function CommandPalette({ open, setOpen, setView }: CommandPaletteProps) 
                 setOpen(false);
                 toast.success('Batch AI Analysis triggered');
               }}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs text-neutral-200 hover:bg-primary/10 hover:text-primary transition font-medium text-left"
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs text-slate-700 dark:text-neutral-200 hover:bg-primary/10 hover:text-primary transition font-medium text-left"
             >
               <Wand2 className="w-4 h-4 text-primary shrink-0" />
               <span>Run Batch AI Analysis</span>
@@ -113,7 +113,7 @@ export function CommandPalette({ open, setOpen, setView }: CommandPaletteProps) 
                 setOpen(false);
                 toast.success('Regenerating AI Insights...');
               }}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs text-neutral-200 hover:bg-primary/10 hover:text-primary transition font-medium text-left"
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs text-slate-700 dark:text-neutral-200 hover:bg-primary/10 hover:text-primary transition font-medium text-left"
             >
               <Sparkles className="w-4 h-4 text-primary shrink-0" />
               <span>Regenerate AI Insights</span>
@@ -125,7 +125,7 @@ export function CommandPalette({ open, setOpen, setView }: CommandPaletteProps) 
                 setOpen(false);
                 toast.success('Generating Executive Report PDF');
               }}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs text-neutral-200 hover:bg-primary/10 hover:text-primary transition font-medium text-left"
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs text-slate-700 dark:text-neutral-200 hover:bg-primary/10 hover:text-primary transition font-medium text-left"
             >
               <FileBarChart2 className="w-4 h-4 text-primary shrink-0" />
               <span>Generate Executive Report</span>

@@ -119,72 +119,72 @@ export function LiveFetcherPage() {
         subtitle="Extract ALL live Play Store reviews for an exact target date and star rating using Reviews World API"
       />
 
-      {/* Live Controls Card with High Dark Contrast */}
-      <div className="rounded-2xl border border-white/10 bg-black/40 p-6 space-y-5 shadow-2xl backdrop-blur">
-        <div className="border-b border-white/10 pb-3">
-          <h2 className="text-base font-bold text-white flex items-center gap-2">
+      {/* Live Controls Card */}
+      <div className="rounded-2xl border border-slate-200 bg-white dark:border-white/10 dark:bg-black/40 p-6 space-y-5 shadow-sm dark:shadow-2xl backdrop-blur">
+        <div className="border-b border-slate-200 dark:border-white/10 pb-3">
+          <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" /> Live Extraction Controls
           </h2>
-          <p className="text-xs text-neutral-400 mt-0.5 font-medium">
+          <p className="text-xs text-slate-500 dark:text-neutral-400 mt-0.5 font-medium">
             Paste the Play Store App URL, select the EXACT date to query, and choose Star Filter.
           </p>
         </div>
 
         <div className="space-y-4">
           <div>
-            <label className="mb-1 block text-xs font-bold text-neutral-200">Play Store App Link or Package ID</label>
+            <label className="mb-1 block text-xs font-bold text-slate-700 dark:text-neutral-200">Play Store App Link or Package ID</label>
             <input
               type="text"
               value={playInput}
               onChange={(e) => setPlayInput(e.target.value)}
               placeholder="Paste Play Store URL (e.g. https://play.google.com/store/apps/details?id=com.hoora.customer)"
-              className="w-full rounded-xl border border-white/10 bg-black/60 p-3.5 text-xs font-semibold text-white placeholder:text-neutral-500 focus:border-primary focus:outline-none transition"
+              className="w-full rounded-xl border border-slate-300 bg-slate-50 dark:border-white/10 dark:bg-black/60 p-3.5 text-xs font-semibold text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-neutral-500 focus:border-primary focus:outline-none transition"
             />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="mb-1 block text-xs font-bold text-neutral-200 flex items-center gap-1.5">
+              <label className="mb-1 block text-xs font-bold text-slate-700 dark:text-neutral-200 flex items-center gap-1.5">
                 <Calendar className="h-4 w-4 text-primary" /> Target Exact Date
               </label>
               <input
                 type="date"
                 value={exactDate}
                 onChange={(e) => setExactDate(e.target.value)}
-                className="w-full rounded-xl border border-white/10 bg-black/60 p-3 text-xs font-semibold text-white focus:border-primary focus:outline-none transition"
+                className="w-full rounded-xl border border-slate-300 bg-slate-50 dark:border-white/10 dark:bg-black/60 p-3 text-xs font-semibold text-slate-900 dark:text-white focus:border-primary focus:outline-none transition"
               />
             </div>
 
             <div>
-              <label className="mb-1 block text-xs font-bold text-neutral-200 flex items-center gap-1.5">
+              <label className="mb-1 block text-xs font-bold text-slate-700 dark:text-neutral-200 flex items-center gap-1.5">
                 <Star className="h-4 w-4 text-primary" /> Star Rating Filter
               </label>
               <select
                 value={starFilter}
                 onChange={(e) => setStarFilter(e.target.value)}
-                className="w-full rounded-xl border border-white/10 bg-neutral-900 p-3 text-xs font-semibold text-white focus:outline-none transition"
+                className="w-full rounded-xl border border-slate-300 bg-slate-50 dark:border-white/10 dark:bg-neutral-900 p-3 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none transition"
               >
-                <option value="all" className="bg-neutral-900 text-white">⭐ All Star Ratings</option>
-                <option value="1" className="bg-neutral-900 text-white">⭐ 1-Star Only (Critical)</option>
-                <option value="2" className="bg-neutral-900 text-white">⭐⭐ 2-Star Only</option>
-                <option value="3" className="bg-neutral-900 text-white">⭐⭐⭐ 3-Star Only</option>
-                <option value="4" className="bg-neutral-900 text-white">⭐⭐⭐⭐ 4-Star Only</option>
-                <option value="5" className="bg-neutral-900 text-white">⭐⭐⭐⭐⭐ 5-Star Only (Positive)</option>
+                <option value="all">⭐ All Star Ratings</option>
+                <option value="1">⭐ 1-Star Only (Critical)</option>
+                <option value="2">⭐⭐ 2-Star Only</option>
+                <option value="3">⭐⭐⭐ 3-Star Only</option>
+                <option value="4">⭐⭐⭐⭐ 4-Star Only</option>
+                <option value="5">⭐⭐⭐⭐⭐ 5-Star Only (Positive)</option>
               </select>
             </div>
           </div>
 
           {/* Feedback Messages */}
           {errorMsg && (
-            <div className="flex items-center gap-3 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3.5 text-xs font-semibold text-rose-300">
-              <ShieldAlert className="h-5 w-5 text-rose-400 shrink-0" />
+            <div className="flex items-center gap-3 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3.5 text-xs font-semibold text-rose-700 dark:text-rose-300">
+              <ShieldAlert className="h-5 w-5 text-rose-500 shrink-0" />
               <span>{errorMsg}</span>
             </div>
           )}
 
           {successMsg && (
-            <div className="flex items-center gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3.5 text-xs font-semibold text-emerald-300">
-              <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0" />
+            <div className="flex items-center gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+              <CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0" />
               <span>{successMsg}</span>
             </div>
           )}
@@ -202,26 +202,26 @@ export function LiveFetcherPage() {
 
       {/* Extracted Reviews Table */}
       {fetchedReviews.length > 0 && (
-        <div className="rounded-2xl border border-white/10 bg-black/40 p-6 space-y-4 shadow-2xl backdrop-blur">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
+        <div className="rounded-2xl border border-slate-200 bg-white dark:border-white/10 dark:bg-black/40 p-6 space-y-4 shadow-sm dark:shadow-2xl backdrop-blur">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-white/10 pb-4">
             <div>
-              <h3 className="text-base font-bold text-white">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">
                 Extracted Live Reviews ({filteredReviews.length})
               </h3>
-              <p className="text-xs text-neutral-400 mt-0.5 font-medium">
-                Target App: <span className="text-primary font-mono font-bold">{parsedApp.package_name}</span> · Date: <span className="text-white font-bold">{exactDate}</span>
+              <p className="text-xs text-slate-500 dark:text-neutral-400 mt-0.5 font-medium">
+                Target App: <span className="text-primary font-mono font-bold">{parsedApp.package_name}</span> · Date: <span className="text-slate-900 dark:text-white font-bold">{exactDate}</span>
               </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
               <div className="relative w-full sm:w-56">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-neutral-400" />
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 dark:text-neutral-400" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Filter extracted list..."
-                  className="w-full rounded-xl border border-white/10 bg-black/60 py-2 pl-9 pr-3 text-xs font-semibold text-white focus:outline-none placeholder:text-neutral-500"
+                  className="w-full rounded-xl border border-slate-300 bg-slate-50 dark:border-white/10 dark:bg-black/60 py-2 pl-9 pr-3 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none placeholder:text-slate-400 dark:placeholder:text-neutral-500"
                 />
               </div>
 
@@ -237,7 +237,7 @@ export function LiveFetcherPage() {
           <div className="overflow-x-auto no-scrollbar">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-white/10 text-[10px] font-bold uppercase text-muted-foreground">
+                <tr className="border-b border-slate-200 dark:border-white/10 text-[10px] font-bold uppercase text-slate-500 dark:text-muted-foreground">
                   <th className="py-2.5 px-3">Author</th>
                   <th className="py-2.5 px-3">Rating</th>
                   <th className="py-2.5 px-3">Sentiment</th>
@@ -245,10 +245,10 @@ export function LiveFetcherPage() {
                   <th className="py-2.5 px-3">Exact Date</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5 text-xs font-medium text-neutral-200">
+              <tbody className="divide-y divide-slate-200 dark:divide-white/5 text-xs font-medium text-slate-800 dark:text-neutral-200">
                 {filteredReviews.map((r) => (
-                  <tr key={r.id} className="hover:bg-white/5 transition">
-                    <td className="py-3 px-3 font-semibold text-white flex items-center gap-2.5">
+                  <tr key={r.id} className="hover:bg-slate-50 dark:hover:bg-white/5 transition">
+                    <td className="py-3 px-3 font-semibold text-slate-900 dark:text-white flex items-center gap-2.5">
                       <img
                         src={r.author_avatar}
                         alt={r.author_name}
@@ -264,17 +264,17 @@ export function LiveFetcherPage() {
                     <td className="py-3 px-3">
                       <span className={cn(
                         'rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase border',
-                        r.sentiment === 'positive' && 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400',
-                        r.sentiment === 'neutral' && 'bg-amber-500/10 border-amber-500/30 text-amber-400',
-                        (r.sentiment === 'negative' || r.sentiment === 'crisis') && 'bg-rose-500/10 border-rose-500/30 text-rose-400'
+                        r.sentiment === 'positive' && 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400',
+                        r.sentiment === 'neutral' && 'bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400',
+                        (r.sentiment === 'negative' || r.sentiment === 'crisis') && 'bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400'
                       )}>
                         {r.sentiment}
                       </span>
                     </td>
-                    <td className="py-3 px-3 text-neutral-300 max-w-md truncate">
+                    <td className="py-3 px-3 text-slate-700 dark:text-neutral-300 max-w-md truncate">
                       "{r.content}"
                     </td>
-                    <td className="py-3 px-3 text-muted-foreground text-[11px] font-mono">
+                    <td className="py-3 px-3 text-slate-500 dark:text-muted-foreground text-[11px] font-mono">
                       {exactDate}
                     </td>
                   </tr>
