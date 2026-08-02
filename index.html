@@ -1,18 +1,31 @@
 <!doctype html>
-<html lang="en" class="light">
+<html lang="en" class="dark">
 
 <head>
   <meta charset="UTF-8" />
   <link rel="icon" type="image/png" href="/logo.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Equinox Pulse — Insights. Trends. Impact.</title>
+  <script>
+    (function() {
+      try {
+        var theme = localStorage.getItem('shivam_orm_theme');
+        if (theme === 'light') {
+          document.documentElement.classList.remove('dark');
+          document.documentElement.classList.add('light');
+        } else {
+          document.documentElement.classList.remove('light');
+          document.documentElement.classList.add('dark');
+        }
+      } catch (e) {}
+    })();
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
-    rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 
-<body class="bg-slate-50 dark:bg-base-950 text-slate-900 dark:text-slate-100 antialiased selection:bg-accent-500/30">
+<body class="bg-[#0b0f17] text-[#f1f5f9] antialiased">
   <div id="root"></div>
   <script type="module" src="/src/main.tsx"></script>
 </body>
