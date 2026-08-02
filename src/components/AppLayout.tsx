@@ -40,7 +40,7 @@ export const ADMIN_NAV = [
   { key: 'crisis', label: 'Crisis Center', to: '/app/crisis', icon: ShieldAlert, group: 'Monitoring' },
   { key: 'competitors', label: 'Competitors', to: '/app/competitors', icon: Trophy, group: 'Monitoring' },
   { key: 'voice_of_market', label: 'Voice of Market', to: '/app/voice-of-market', icon: Mic, group: 'Monitoring', accent: true },
-  { key: 'integrations', label: 'Integrations', to: '/app/integrations', icon: Cable, group: 'Executive', accent: true },
+  { key: 'integrations', label: 'Integrations & APIs', to: '/app/integrations', icon: Cable, group: 'Executive', accent: true },
   { key: 'reports', label: 'Reports', to: '/app/reports', icon: FileBarChart2, group: 'Executive' },
   { key: 'team', label: 'Team & Access', to: '/app/team', icon: Users, group: 'Executive' },
 ];
@@ -71,7 +71,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
     }
   };
 
-  // If super admin, use Equinox layout
+  // Super admin Equinox layout
   if (isAdmin) {
     const activeNav = ADMIN_NAV.find((n) =>
       n.end ? location.pathname === n.to : location.pathname.startsWith(n.to)
@@ -106,7 +106,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
               <div className="px-3 py-3 border-b border-white/5">
                 <button
                   type="button"
-                  onClick={() => navigate('/app/settings')}
+                  onClick={() => navigate('/app/integrations')}
                   className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg bg-black/30 border border-white/5 hover:border-primary/25 transition"
                 >
                   <div className="w-8 h-8 rounded-md bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-xs font-bold text-black shrink-0">
@@ -161,17 +161,20 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
               {/* Bottom Footer Options */}
               <div className="p-3 border-t border-white/5 space-y-1">
-                <NavLink
-                  to="/app/settings"
-                  className={({ isActive }) =>
-                    cn(
-                      'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-neutral-300 hover:bg-white/5 hover:text-primary transition font-medium',
-                      isActive ? 'bg-primary/10 text-primary border border-primary/20' : ''
-                    )
-                  }
+                <button
+                  type="button"
+                  onClick={toggleTheme}
+                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs text-neutral-300 hover:bg-white/5 hover:text-primary transition font-medium"
                 >
-                  <Settings className="w-4 h-4 shrink-0" /> Settings &amp; API Keys
-                </NavLink>
+                  <div className="flex items-center gap-2.5">
+                    {theme === 'dark' ? <Sun className="w-4 h-4 text-primary" /> : <Moon className="w-4 h-4 text-neutral-300" />}
+                    <span>{theme === 'dark' ? 'Light Theme' : 'Dark Theme'}</span>
+                  </div>
+                  <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-white/10 text-neutral-300 uppercase">
+                    {theme}
+                  </span>
+                </button>
+
                 <button
                   type="button"
                   onClick={handleSignOut}
@@ -229,6 +232,16 @@ export function AppLayout({ children }: { children: ReactNode }) {
                     className="md:hidden w-9 h-9 rounded-lg border border-white/10 bg-black/40 flex items-center justify-center text-neutral-300 hover:text-primary hover:border-primary/30 transition"
                   >
                     <Search className="w-4 h-4" />
+                  </button>
+
+                  {/* Topbar Light / Dark Theme Toggle Button */}
+                  <button
+                    type="button"
+                    onClick={toggleTheme}
+                    title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Theme`}
+                    className="h-9 w-9 rounded-lg border border-white/10 bg-black/40 hover:bg-white/5 text-neutral-300 flex items-center justify-center transition"
+                  >
+                    {theme === 'dark' ? <Sun className="w-4 h-4 text-primary" /> : <Moon className="w-4 h-4 text-neutral-300" />}
                   </button>
 
                   <NotificationCenter onNavigate={navigateToView} />
@@ -299,7 +312,17 @@ export function AppLayout({ children }: { children: ReactNode }) {
                     ))}
                   </nav>
 
-                  <div className="pt-3 border-t border-white/10">
+                  <div className="pt-3 border-t border-white/10 space-y-2">
+                    <button
+                      onClick={toggleTheme}
+                      className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium text-neutral-300 hover:bg-white/5 transition"
+                    >
+                      <div className="flex items-center gap-2">
+                        {theme === 'dark' ? <Sun className="w-4 h-4 text-primary" /> : <Moon className="w-4 h-4" />}
+                        <span>Toggle {theme === 'dark' ? 'Light' : 'Dark'} Theme</span>
+                      </div>
+                    </button>
+
                     <button
                       onClick={handleSignOut}
                       className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-rose-400 hover:bg-rose-500/10 transition"
@@ -323,13 +346,12 @@ export function AppLayout({ children }: { children: ReactNode }) {
     );
   }
 
-  // Client mode: Keep client layout intact
+  // Client mode
   const mainNav = [
     { to: '/app', label: 'Executive Dashboard', icon: LayoutDashboard, end: true },
     { to: '/app/reports', label: 'Analytics & Reports', icon: BarChart3 },
     { to: '/app/playstore-live', label: 'Play Store Live & Drops', icon: Radio },
     { to: '/app/social-inbox', label: 'Direct Social DMs', icon: MessageSquare },
-    { to: '/app/settings', label: 'Settings & API Keys', icon: Settings },
   ];
 
   const platformNav = PLATFORMS.map((p) => ({
@@ -425,10 +447,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 ) : (
                   <Moon className="h-4 w-4 text-slate-700 dark:text-slate-300" />
                 )}
-                <span>{theme === 'dark' ? 'White Theme' : 'Black Theme'}</span>
+                <span>{theme === 'dark' ? 'Light Theme' : 'Dark Theme'}</span>
               </div>
               <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[9px] font-extrabold text-slate-800 dark:bg-white/10 dark:text-slate-300">
-                {theme === 'dark' ? 'Black' : 'White'}
+                {theme}
               </span>
             </button>
           </div>

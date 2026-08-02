@@ -14,7 +14,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(() => {
     const saved = localStorage.getItem('shivam_orm_theme');
     if (saved === 'light' || saved === 'dark') return saved;
-    return 'light'; // Default to clean, bright light theme so user sees bright UI immediately
+    return 'dark'; // Default to dark theme
   });
 
   useEffect(() => {
