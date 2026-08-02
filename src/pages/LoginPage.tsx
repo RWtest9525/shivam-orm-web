@@ -48,40 +48,43 @@ export function LoginPage() {
   };
 
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-slate-50 dark:bg-background noise selection:bg-amber-500/30 transition-colors">
-      <div className="absolute inset-0 grid-bg opacity-40 pointer-events-none" />
-      <div className="absolute -top-40 -left-40 w-[500px] h-[500px] rounded-full bg-primary/10 blur-[120px] pointer-events-none" />
-      <div className="absolute -bottom-40 -right-40 w-[500px] h-[500px] rounded-full bg-secondary/15 blur-[120px] pointer-events-none" />
+    <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-[#09090b] text-white noise selection:bg-amber-500/30">
+      {/* Radial Background Spots */}
+      <div className="absolute inset-0 grid-bg opacity-30 pointer-events-none" />
+      <div className="absolute -top-40 -left-40 w-[550px] h-[550px] rounded-full bg-primary/10 blur-[140px] pointer-events-none" />
+      <div className="absolute -bottom-40 -right-40 w-[550px] h-[550px] rounded-full bg-secondary/15 blur-[140px] pointer-events-none" />
 
       <div className="relative w-full max-w-md px-6 py-10 z-10">
+        {/* Brand Header */}
         <div className="mb-8 text-center">
           <div className="inline-flex items-center gap-3 mb-4">
-            <div className="w-11 h-11 rounded-xl gold-border gold-glow bg-white dark:bg-black/60 flex items-center justify-center shrink-0 shadow-sm">
+            <div className="w-11 h-11 rounded-xl gold-border gold-glow bg-black/80 flex items-center justify-center shrink-0">
               <Sparkles className="w-5 h-5 text-primary" />
             </div>
             <div className="text-left">
-              <div className="text-xs uppercase tracking-[0.28em] text-slate-500 dark:text-muted-foreground font-semibold">Enterprise Suite</div>
+              <div className="text-xs uppercase tracking-[0.28em] text-muted-foreground font-semibold">Enterprise Suite</div>
               <div className="text-2xl sm:text-3xl font-bold gold-text tracking-tight" style={{ fontFamily: "'Playfair Display', serif" }}>
                 Equinox Pulse AI
               </div>
             </div>
           </div>
-          <p className="text-xs sm:text-sm text-slate-600 dark:text-muted-foreground max-w-sm mx-auto font-medium">
+          <p className="text-xs sm:text-sm text-neutral-400 max-w-sm mx-auto font-medium">
             AI-powered Online Reputation Management &amp; Social Listening. Built for Indian enterprises.
           </p>
         </div>
 
-        <div className="glass-strong border border-slate-200 dark:border-white/10 rounded-2xl shadow-xl dark:shadow-2xl p-6 sm:p-7 space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/5 pb-3">
+        {/* Reference App Auth Glass Card */}
+        <div className="glass-strong gold-glow border border-white/10 rounded-2xl p-6 sm:p-7 space-y-4 shadow-2xl backdrop-blur-2xl">
+          <div className="flex items-center justify-between border-b border-white/10 pb-3">
             <div>
-              <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+              <h2 className="text-xl font-bold tracking-tight text-white">
                 {mode === 'signup' ? 'Create workspace' : 'Sign in'}
               </h2>
-              <p className="text-[11px] text-slate-500 dark:text-muted-foreground mt-0.5">Multi-tenant · Role-based · SLA-driven</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">Multi-tenant · Role-based · SLA-driven</p>
             </div>
             <button
               type="button"
-              className="text-xs text-slate-600 dark:text-muted-foreground hover:text-primary transition font-medium"
+              className="text-xs text-muted-foreground hover:text-primary transition font-medium"
               onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
             >
               {mode === 'login' ? 'Need an account? Sign up' : 'Have an account? Sign in'}
@@ -92,54 +95,54 @@ export function LoginPage() {
             {mode === 'signup' && (
               <>
                 <div className="relative">
-                  <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-muted-foreground" />
+                  <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <input
                     type="text"
                     placeholder="Your name"
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50 border border-slate-300 dark:bg-black/40 dark:border-white/10 text-xs font-medium text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-neutral-500 focus:border-primary focus:outline-none transition"
+                    className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-black/50 border border-white/10 text-xs font-medium text-white placeholder:text-neutral-500 focus:border-primary focus:outline-none transition"
                   />
                 </div>
                 <div className="relative">
-                  <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-muted-foreground" />
+                  <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <input
                     type="text"
                     placeholder="Organization name"
                     value={form.orgName}
                     onChange={(e) => setForm({ ...form, orgName: e.target.value })}
-                    className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50 border border-slate-300 dark:bg-black/40 dark:border-white/10 text-xs font-medium text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-neutral-500 focus:border-primary focus:outline-none transition"
+                    className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-black/50 border border-white/10 text-xs font-medium text-white placeholder:text-neutral-500 focus:border-primary focus:outline-none transition"
                   />
                 </div>
               </>
             )}
 
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-muted-foreground" />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
                 type="email"
                 required
                 placeholder="you@company.com"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-slate-50 border border-slate-300 dark:bg-black/40 dark:border-white/10 text-xs font-medium text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-neutral-500 focus:border-primary focus:outline-none transition"
+                className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-black/50 border border-white/10 text-xs font-medium text-white placeholder:text-neutral-500 focus:border-primary focus:outline-none transition"
               />
             </div>
 
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-muted-foreground" />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
                 type={showPw ? 'text' : 'password'}
                 required
                 placeholder="Password"
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
-                className="w-full pl-9 pr-10 py-2.5 rounded-xl bg-slate-50 border border-slate-300 dark:bg-black/40 dark:border-white/10 text-xs font-medium text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-neutral-500 focus:border-primary focus:outline-none transition"
+                className="w-full pl-9 pr-10 py-2.5 rounded-xl bg-black/50 border border-white/10 text-xs font-medium text-white placeholder:text-neutral-500 focus:border-primary focus:outline-none transition"
               />
               <button
                 type="button"
                 onClick={() => setShowPw((v) => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-muted-foreground hover:text-slate-900 dark:hover:text-white"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-white"
               >
                 {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -161,7 +164,7 @@ export function LoginPage() {
             </button>
           </form>
 
-          <div className="pt-2 border-t border-slate-200 dark:border-white/5 flex items-center justify-between text-[11px] text-slate-500 dark:text-muted-foreground">
+          <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[11px] text-muted-foreground">
             <span className="flex items-center gap-1">
               <ShieldCheck className="w-3.5 h-3.5 text-primary" /> SOC2 Type II Certified
             </span>
