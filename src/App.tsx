@@ -14,12 +14,21 @@ import { LiveFetcherPage } from '@/pages/LiveFetcherPage';
 import { ReportsPage } from '@/pages/ReportsPage';
 import { OAuthCallbackPage } from '@/pages/OAuthCallbackPage';
 
+// Admin Suite Pages
+import { AiInsightsPage } from '@/pages/admin/AiInsightsPage';
+import { CrisisCenterPage } from '@/pages/admin/CrisisCenterPage';
+import { CompetitorsPage } from '@/pages/admin/CompetitorsPage';
+import { VoiceOfMarketPage } from '@/pages/admin/VoiceOfMarketPage';
+import { IntegrationsPage } from '@/pages/admin/IntegrationsPage';
+import { TeamPage } from '@/pages/admin/TeamPage';
+import { SocialListeningPage } from '@/pages/admin/SocialListeningPage';
+
 function ProtectedRoute({ children }: { children: JSX.Element }) {
   const { session, loading } = useAuth();
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950 text-slate-100">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-amber-500 border-t-transparent" />
+      <div className="flex min-h-screen items-center justify-center bg-background text-foreground">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     );
   }
@@ -58,6 +67,16 @@ export default function App() {
                       <Route path="/reports" element={<ReportsPage />} />
                       <Route path="/platform/:platformId" element={<PlatformPage />} />
                       <Route path="/settings" element={<SettingsPage />} />
+
+                      {/* Equinox Super Admin Suite Routes */}
+                      <Route path="/insights" element={<AiInsightsPage />} />
+                      <Route path="/crisis" element={<CrisisCenterPage />} />
+                      <Route path="/competitors" element={<CompetitorsPage />} />
+                      <Route path="/voice-of-market" element={<VoiceOfMarketPage />} />
+                      <Route path="/integrations" element={<IntegrationsPage />} />
+                      <Route path="/team" element={<TeamPage />} />
+                      <Route path="/social" element={<SocialListeningPage />} />
+
                       <Route path="*" element={<Navigate to="/app" replace />} />
                     </Routes>
                   </AppLayout>
