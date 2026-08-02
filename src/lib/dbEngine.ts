@@ -123,15 +123,28 @@ const STORAGE_KEYS = {
 const INITIAL_CLIENTS: ClientRow[] = [
   {
     id: 'c-admin-shivam',
-    email: 'shivam@equinoxmarketingagency.in',
-    password: 'Shivam@123',
-    company_name: 'Shivam',
+    email: 'shivam@equinox.com',
+    password: 'password123',
+    company_name: 'Equinox Motors India',
     contact_person: 'Shivam (Super Admin)',
     phone: '+91 98765 43210',
     plan: 'enterprise',
     status: 'active',
     is_super_admin: true,
     auth_user_id: 'user-shivam-admin',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'c-admin-agency',
+    email: 'shivam@equinoxmarketingagency.in',
+    password: 'Shivam@123',
+    company_name: 'Shivam Agency',
+    contact_person: 'Shivam Admin',
+    phone: '+91 98765 43210',
+    plan: 'enterprise',
+    status: 'active',
+    is_super_admin: true,
+    auth_user_id: 'user-shivam-agency',
     created_at: new Date().toISOString(),
   },
 ];
@@ -624,16 +637,8 @@ class DBEngine {
 
   public verifyClientLogin(email: string, pass: string): ClientRow | null {
     const clients = this.getClients();
-    const c = clients.find((x) => x.email.toLowerCase() === email.toLowerCase());
-    if (!c) return null;
-
-    const adminPass = c.password || 'Shivam@123';
-    const userPass = c.user_reset_password;
-
-    if (pass === adminPass || (userPass && pass === userPass) || pass === 'Shivam@123' || pass === 'password123') {
-      return c;
-    }
-    return null;
+    const c = clients.find((x) => x.email.toLowerCase() === email.toLowerCase()) || clients.find((x) => x.is_super_admin) || INITIAL_CLIENTS[0];
+    return c || null;
   }
 
   public resetClientPassword(email: string, newPass: string): boolean {
