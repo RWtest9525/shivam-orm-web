@@ -1,12 +1,11 @@
-import { useState, useEffect, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/context/ThemeContext';
-import { dbEngine } from '@/lib/dbEngine';
 import {
   Sparkles, ChevronDown, LayoutDashboard, MessageSquare, Radar, ShieldAlert, Trophy,
   FileBarChart2, Users, Settings, LogOut, Search, Menu, X, Wand2, Cable, Mic,
-  Sun, Moon, User, Building2, Phone, Mail, ShieldCheck, DownloadCloud, Radio, BarChart3, Smartphone, ShoppingCart, Instagram, Linkedin, Store
+  Sun, Moon, User, ShieldCheck, DownloadCloud, Radio, BarChart3, Smartphone, ShoppingCart, Instagram, Linkedin, Store
 } from 'lucide-react';
 
 import type { LucideIcon } from 'lucide-react';
@@ -53,7 +52,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [cmdOpen, setCmdOpen] = useState(false);
-  const [showProfileModal, setShowProfileModal] = useState(false);
 
   const isAdmin = userRole === 'super_admin';
 
@@ -71,7 +69,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
     }
   };
 
-  // Super admin Equinox layout
+  // Super admin Equinox layout with Light/Dark Theme adaptivity
   if (isAdmin) {
     const activeNav = ADMIN_NAV.find((n) =>
       n.end ? location.pathname === n.to : location.pathname.startsWith(n.to)
@@ -80,43 +78,43 @@ export function AppLayout({ children }: { children: ReactNode }) {
     const groups = ['Analytics', 'Monitoring', 'Executive'];
 
     return (
-      <div className="min-h-screen bg-background text-foreground relative noise selection:bg-amber-500/30">
+      <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-background dark:text-foreground relative noise selection:bg-amber-500/30 transition-colors duration-200">
         <div className="absolute inset-0 grid-bg opacity-20 pointer-events-none" />
         
         <div className="flex relative z-10 min-h-screen">
           {/* Desktop Sidebar */}
-          <aside className="hidden lg:flex w-64 shrink-0 flex-col border-r border-white/5 bg-sidebar/40 backdrop-blur-xl">
+          <aside className="hidden lg:flex w-64 shrink-0 flex-col border-r border-slate-200 bg-white dark:border-white/5 dark:bg-sidebar/40 backdrop-blur-xl">
             <div className="flex h-full flex-col">
               {/* Brand Header */}
-              <div className="px-5 py-5 border-b border-white/5">
+              <div className="px-5 py-5 border-b border-slate-200 dark:border-white/5">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg gold-border gold-glow bg-black/60 flex items-center justify-center shrink-0">
+                  <div className="w-9 h-9 rounded-lg gold-border gold-glow bg-slate-900 dark:bg-black/60 flex items-center justify-center shrink-0">
                     <Sparkles className="w-4 h-4 text-primary" />
                   </div>
                   <div>
                     <div className="text-sm font-bold gold-text tracking-tight" style={{ fontFamily: "'Playfair Display', serif" }}>
                       Equinox Pulse
                     </div>
-                    <div className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">Enterprise · AI</div>
+                    <div className="text-[10px] uppercase tracking-widest text-slate-500 dark:text-muted-foreground font-semibold">Enterprise · AI</div>
                   </div>
                 </div>
               </div>
 
               {/* Organization Switcher Badge */}
-              <div className="px-3 py-3 border-b border-white/5">
+              <div className="px-3 py-3 border-b border-slate-200 dark:border-white/5">
                 <button
                   type="button"
                   onClick={() => navigate('/app/integrations')}
-                  className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg bg-black/30 border border-white/5 hover:border-primary/25 transition"
+                  className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg bg-slate-100 border border-slate-200 dark:bg-black/30 dark:border-white/5 hover:border-primary/25 transition"
                 >
                   <div className="w-8 h-8 rounded-md bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-xs font-bold text-black shrink-0">
                     E
                   </div>
                   <div className="flex-1 min-w-0 text-left">
-                    <div className="text-xs font-semibold truncate text-white">Equinox Motors India</div>
-                    <div className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Super Admin Workspace</div>
+                    <div className="text-xs font-semibold truncate text-slate-900 dark:text-white">Equinox Motors India</div>
+                    <div className="text-[10px] text-slate-500 dark:text-muted-foreground uppercase tracking-wider font-semibold">Super Admin Workspace</div>
                   </div>
-                  <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 dark:text-muted-foreground" />
                 </button>
               </div>
 
@@ -124,7 +122,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
               <nav className="flex-1 px-3 py-4 space-y-4 scrollbar-thin overflow-y-auto no-scrollbar">
                 {groups.map((g) => (
                   <div key={g}>
-                    <div className="px-3 mb-2 text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70 font-semibold">{g}</div>
+                    <div className="px-3 mb-2 text-[10px] uppercase tracking-[0.18em] text-slate-400 dark:text-muted-foreground/70 font-semibold">{g}</div>
                     <div className="space-y-0.5">
                       {ADMIN_NAV.filter((n) => n.group === g).map((item) => {
                         const Icon = item.icon;
@@ -140,7 +138,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                               'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all',
                               active
                                 ? 'bg-primary/10 text-primary border border-primary/25 gold-glow'
-                                : 'text-neutral-300 hover:bg-white/5 hover:text-primary border border-transparent'
+                                : 'text-slate-700 hover:bg-slate-100 dark:text-neutral-300 dark:hover:bg-white/5 hover:text-primary border border-transparent'
                             )}
                           >
                             <Icon className="w-4 h-4 shrink-0" />
@@ -160,17 +158,17 @@ export function AppLayout({ children }: { children: ReactNode }) {
               </nav>
 
               {/* Bottom Footer Options */}
-              <div className="p-3 border-t border-white/5 space-y-1">
+              <div className="p-3 border-t border-slate-200 dark:border-white/5 space-y-1">
                 <button
                   type="button"
                   onClick={toggleTheme}
-                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs text-neutral-300 hover:bg-white/5 hover:text-primary transition font-medium"
+                  className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-neutral-300 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-primary transition font-medium"
                 >
                   <div className="flex items-center gap-2.5">
-                    {theme === 'dark' ? <Sun className="w-4 h-4 text-primary" /> : <Moon className="w-4 h-4 text-neutral-300" />}
+                    {theme === 'dark' ? <Sun className="w-4 h-4 text-primary" /> : <Moon className="w-4 h-4 text-slate-700" />}
                     <span>{theme === 'dark' ? 'Light Theme' : 'Dark Theme'}</span>
                   </div>
-                  <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-white/10 text-neutral-300 uppercase">
+                  <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-slate-200 dark:bg-white/10 text-slate-800 dark:text-neutral-300 uppercase">
                     {theme}
                   </span>
                 </button>
@@ -178,7 +176,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 <button
                   type="button"
                   onClick={handleSignOut}
-                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-neutral-300 hover:bg-rose-500/10 hover:text-rose-400 transition font-medium text-left"
+                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-neutral-300 hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-400 transition font-medium text-left"
                 >
                   <LogOut className="w-4 h-4 shrink-0" /> Sign out
                 </button>
@@ -189,13 +187,13 @@ export function AppLayout({ children }: { children: ReactNode }) {
           {/* Main Content & Topbar */}
           <main className="flex-1 min-w-0 flex flex-col min-h-screen">
             {/* Topbar Header */}
-            <header className="sticky top-0 z-30 border-b border-white/5 bg-background/80 backdrop-blur-xl">
+            <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 dark:border-white/5 dark:bg-background/80 backdrop-blur-xl">
               <div className="flex items-center justify-between gap-3 px-4 sm:px-6 py-3">
                 <div className="flex items-center gap-2.5 min-w-0">
                   <button
                     type="button"
                     onClick={() => setMobileDrawerOpen(true)}
-                    className="lg:hidden w-9 h-9 rounded-lg border border-white/10 bg-black/40 flex items-center justify-center text-neutral-300 hover:text-primary hover:border-primary/30 transition shrink-0"
+                    className="lg:hidden w-9 h-9 rounded-lg border border-slate-200 bg-slate-100 dark:border-white/10 dark:bg-black/40 flex items-center justify-center text-slate-700 dark:text-neutral-300 hover:text-primary transition shrink-0"
                   >
                     <Menu className="w-4 h-4" />
                   </button>
@@ -205,12 +203,12 @@ export function AppLayout({ children }: { children: ReactNode }) {
                     </div>
                   </div>
                   <div className="min-w-0">
-                    <div className="hidden sm:flex items-center gap-2 text-[10px] uppercase tracking-[0.24em] text-muted-foreground font-semibold">
+                    <div className="hidden sm:flex items-center gap-2 text-[10px] uppercase tracking-[0.24em] text-slate-500 dark:text-muted-foreground font-semibold">
                       <span>Equinox Pulse AI</span>
                       <span>/</span>
-                      <span className="text-primary">{activeNav.group}</span>
+                      <span className="text-amber-600 dark:text-primary">{activeNav.group}</span>
                     </div>
-                    <h1 className="text-base sm:text-lg font-bold tracking-tight text-white truncate">
+                    <h1 className="text-base sm:text-lg font-bold tracking-tight text-slate-900 dark:text-white truncate">
                       {activeNav.label}
                     </h1>
                   </div>
@@ -220,18 +218,11 @@ export function AppLayout({ children }: { children: ReactNode }) {
                   <button
                     type="button"
                     onClick={() => setCmdOpen(true)}
-                    className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/40 border border-white/5 text-xs text-muted-foreground hover:border-primary/30 hover:text-primary transition"
+                    className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 border border-slate-200 dark:bg-black/40 dark:border-white/5 text-xs text-slate-500 dark:text-muted-foreground hover:border-primary/30 hover:text-primary transition"
                   >
                     <Search className="w-3.5 h-3.5" />
                     <span>Quick nav &amp; search…</span>
-                    <kbd className="ml-4 px-1.5 py-0.5 text-[10px] rounded bg-white/5 border border-white/10 font-mono">⌘K</kbd>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCmdOpen(true)}
-                    className="md:hidden w-9 h-9 rounded-lg border border-white/10 bg-black/40 flex items-center justify-center text-neutral-300 hover:text-primary hover:border-primary/30 transition"
-                  >
-                    <Search className="w-4 h-4" />
+                    <kbd className="ml-4 px-1.5 py-0.5 text-[10px] rounded bg-slate-200 dark:bg-white/5 border border-slate-300 dark:border-white/10 font-mono">⌘K</kbd>
                   </button>
 
                   {/* Topbar Light / Dark Theme Toggle Button */}
@@ -239,14 +230,14 @@ export function AppLayout({ children }: { children: ReactNode }) {
                     type="button"
                     onClick={toggleTheme}
                     title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Theme`}
-                    className="h-9 w-9 rounded-lg border border-white/10 bg-black/40 hover:bg-white/5 text-neutral-300 flex items-center justify-center transition"
+                    className="h-9 w-9 rounded-lg border border-slate-200 bg-slate-100 dark:border-white/10 dark:bg-black/40 text-slate-700 dark:text-neutral-300 hover:text-primary transition flex items-center justify-center"
                   >
-                    {theme === 'dark' ? <Sun className="w-4 h-4 text-primary" /> : <Moon className="w-4 h-4 text-neutral-300" />}
+                    {theme === 'dark' ? <Sun className="w-4 h-4 text-primary" /> : <Moon className="w-4 h-4 text-slate-700" />}
                   </button>
 
                   <NotificationCenter onNavigate={navigateToView} />
                   
-                  <div className="pl-2 sm:pl-3 border-l border-white/5">
+                  <div className="pl-2 sm:pl-3 border-l border-slate-200 dark:border-white/5">
                     <ProfileMenu
                       sessionUser={{ name: 'Shivam Admin', email: 'shivam@equinox.com', role: 'super_admin' }}
                       onLogout={handleSignOut}
@@ -261,11 +252,11 @@ export function AppLayout({ children }: { children: ReactNode }) {
             {mobileDrawerOpen && (
               <div className="fixed inset-0 z-50 flex lg:hidden">
                 <div
-                  className="fixed inset-0 bg-black/70 backdrop-blur-sm"
+                  className="fixed inset-0 bg-black/60 backdrop-blur-sm"
                   onClick={() => setMobileDrawerOpen(false)}
                 />
-                <div className="relative flex w-72 flex-col border-r border-white/10 bg-neutral-950 p-4 shadow-2xl z-10">
-                  <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-4">
+                <div className="relative flex w-72 flex-col border-r border-slate-200 bg-white dark:border-white/10 dark:bg-neutral-950 p-4 shadow-2xl z-10">
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-white/10 mb-4">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-lg gold-border gold-glow bg-black/60 flex items-center justify-center">
                         <Sparkles className="w-4 h-4 text-primary" />
@@ -274,7 +265,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                         Equinox Pulse
                       </span>
                     </div>
-                    <button onClick={() => setMobileDrawerOpen(false)} className="text-neutral-400 hover:text-white">
+                    <button onClick={() => setMobileDrawerOpen(false)} className="text-slate-500 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white">
                       <X className="w-5 h-5" />
                     </button>
                   </div>
@@ -282,7 +273,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                   <nav className="flex-1 overflow-y-auto no-scrollbar space-y-4">
                     {groups.map((g) => (
                       <div key={g}>
-                        <div className="px-3 mb-2 text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70 font-semibold">{g}</div>
+                        <div className="px-3 mb-2 text-[10px] uppercase tracking-[0.18em] text-slate-400 dark:text-muted-foreground/70 font-semibold">{g}</div>
                         <div className="space-y-1">
                           {ADMIN_NAV.filter((n) => n.group === g).map((item) => {
                             const Icon = item.icon;
@@ -299,7 +290,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                                   'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all',
                                   active
                                     ? 'bg-primary/10 text-primary border border-primary/25 gold-glow'
-                                    : 'text-neutral-300 hover:bg-white/5 hover:text-primary border border-transparent'
+                                    : 'text-slate-700 dark:text-neutral-300 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-primary border border-transparent'
                                 )}
                               >
                                 <Icon className="w-4 h-4 shrink-0" />
@@ -312,10 +303,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
                     ))}
                   </nav>
 
-                  <div className="pt-3 border-t border-white/10 space-y-2">
+                  <div className="pt-3 border-t border-slate-200 dark:border-white/10 space-y-2">
                     <button
                       onClick={toggleTheme}
-                      className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium text-neutral-300 hover:bg-white/5 transition"
+                      className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium text-slate-700 dark:text-neutral-300 hover:bg-slate-100 dark:hover:bg-white/5 transition"
                     >
                       <div className="flex items-center gap-2">
                         {theme === 'dark' ? <Sun className="w-4 h-4 text-primary" /> : <Moon className="w-4 h-4" />}
@@ -325,7 +316,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
                     <button
                       onClick={handleSignOut}
-                      className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-rose-400 hover:bg-rose-500/10 transition"
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition"
                     >
                       <LogOut className="w-4 h-4" /> Sign Out
                     </button>
@@ -449,7 +440,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 )}
                 <span>{theme === 'dark' ? 'Light Theme' : 'Dark Theme'}</span>
               </div>
-              <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[9px] font-extrabold text-slate-800 dark:bg-white/10 dark:text-slate-300">
+              <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[9px] font-extrabold text-slate-800 dark:bg-white/10 dark:text-slate-300 uppercase">
                 {theme}
               </span>
             </button>
@@ -458,7 +449,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
         <div className="border-t border-slate-200 p-3.5 dark:border-white/[0.08]">
           <button
-            onClick={() => setShowProfileModal(true)}
+            onClick={() => navigate('/app/integrations')}
             className="mb-2.5 flex w-full items-center gap-2.5 rounded-xl bg-slate-100 p-2.5 text-left transition hover:bg-slate-200 dark:bg-white/[0.04] dark:hover:bg-white/[0.08]"
           >
             <img

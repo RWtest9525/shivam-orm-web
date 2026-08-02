@@ -54,13 +54,13 @@ export function ReportsPage() {
   return (
     <div className="space-y-4">
       {/* Executive Report Generator Card */}
-      <div className="bg-gradient-to-br from-black to-neutral-950 border border-primary/20 rounded-2xl p-6 gold-glow">
+      <div className="bg-slate-900 border border-amber-500/30 dark:bg-gradient-to-br dark:from-black dark:to-neutral-950 dark:border-primary/20 rounded-2xl p-6 gold-glow shadow-md">
         <div className="flex items-start justify-between flex-col md:flex-row gap-4">
           <div>
             <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2" style={{ fontFamily: "'Playfair Display', serif" }}>
               <Sparkles className="w-5 h-5 text-primary" /> Executive Boardroom Report Generator
             </h2>
-            <p className="text-xs sm:text-sm text-neutral-300 mt-1">
+            <p className="text-xs sm:text-sm text-slate-300 dark:text-neutral-300 mt-1">
               AI-drafted boardroom reports across periods · export to PDF or Markdown
             </p>
           </div>
@@ -69,12 +69,12 @@ export function ReportsPage() {
             <select
               value={period}
               onChange={(e) => setPeriod(e.target.value as any)}
-              className="flex-1 md:w-[140px] md:flex-none bg-black/40 border border-white/10 text-white text-xs font-semibold rounded-xl h-9 px-3 focus:outline-none"
+              className="flex-1 md:w-[140px] md:flex-none bg-slate-800 border border-slate-700 dark:bg-black/40 dark:border-white/10 text-white text-xs font-semibold rounded-xl h-9 px-3 focus:outline-none"
             >
-              <option value="daily">Daily</option>
-              <option value="weekly">Weekly</option>
-              <option value="monthly">Monthly</option>
-              <option value="quarterly">Quarterly</option>
+              <option value="daily" className="bg-slate-900 text-white">Daily</option>
+              <option value="weekly" className="bg-slate-900 text-white">Weekly</option>
+              <option value="monthly" className="bg-slate-900 text-white">Monthly</option>
+              <option value="quarterly" className="bg-slate-900 text-white">Quarterly</option>
             </select>
 
             <button
@@ -90,11 +90,11 @@ export function ReportsPage() {
       </div>
 
       {report && (
-        <div className="bg-black/40 border border-white/5 rounded-2xl p-6 space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
+        <div className="bg-white border border-slate-200 dark:bg-black/40 dark:border-white/5 rounded-2xl p-6 space-y-4 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-white/10 pb-4">
             <div>
-              <h3 className="text-base font-bold text-white capitalize">{report.period} Boardroom Report</h3>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white capitalize">{report.period} Boardroom Report</h3>
+              <p className="text-xs text-slate-500 dark:text-muted-foreground mt-0.5">
                 {report.stats.total} total reviews · {report.stats.pos} positive · {report.stats.neg} negative · Avg {report.stats.avgRating}★
               </p>
             </div>
@@ -102,7 +102,7 @@ export function ReportsPage() {
             <div className="flex items-center gap-2">
               <button
                 onClick={downloadMD}
-                className="px-3 py-1.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-xs font-semibold text-neutral-200 transition flex items-center gap-1.5"
+                className="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-100 dark:border-white/10 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-xs font-semibold text-slate-700 dark:text-neutral-200 transition flex items-center gap-1.5"
               >
                 <Download className="w-3.5 h-3.5" /> Markdown
               </button>
@@ -115,13 +115,13 @@ export function ReportsPage() {
             </div>
           </div>
 
-          <div className="prose prose-invert prose-sm max-w-none space-y-1">
+          <div className="prose prose-sm max-w-none space-y-1 text-slate-800 dark:text-neutral-200">
             {report.report.split('\n').map((line, i) => {
-              if (line.startsWith('## ')) return <h3 key={i} className="text-primary text-base sm:text-lg font-semibold mt-4 mb-2" style={{ fontFamily: "'Playfair Display', serif" }}>{line.slice(3)}</h3>;
-              if (line.startsWith('# ')) return <h2 key={i} className="text-primary text-lg sm:text-xl font-bold mt-4" style={{ fontFamily: "'Playfair Display', serif" }}>{line.slice(2)}</h2>;
-              if (line.startsWith('- ') || line.startsWith('* ')) return <div key={i} className="flex items-start gap-2 my-1"><ChevronRight className="w-4 h-4 text-primary mt-0.5 shrink-0" /><span className="text-xs sm:text-sm text-neutral-200">{line.slice(2)}</span></div>;
+              if (line.startsWith('## ')) return <h3 key={i} className="text-amber-600 dark:text-primary text-base sm:text-lg font-semibold mt-4 mb-2" style={{ fontFamily: "'Playfair Display', serif" }}>{line.slice(3)}</h3>;
+              if (line.startsWith('# ')) return <h2 key={i} className="text-amber-600 dark:text-primary text-lg sm:text-xl font-bold mt-4" style={{ fontFamily: "'Playfair Display', serif" }}>{line.slice(2)}</h2>;
+              if (line.startsWith('- ') || line.startsWith('* ')) return <div key={i} className="flex items-start gap-2 my-1"><ChevronRight className="w-4 h-4 text-amber-600 dark:text-primary mt-0.5 shrink-0" /><span className="text-xs sm:text-sm text-slate-700 dark:text-neutral-200">{line.slice(2)}</span></div>;
               if (line.trim() === '') return <div key={i} className="h-2" />;
-              return <p key={i} className="text-xs sm:text-sm text-neutral-300 my-1">{line}</p>;
+              return <p key={i} className="text-xs sm:text-sm text-slate-600 dark:text-neutral-300 my-1">{line}</p>;
             })}
           </div>
         </div>
@@ -130,7 +130,7 @@ export function ReportsPage() {
       {!report && !loading && (
         <div className="text-center py-16">
           <FileBarChart2 className="w-12 h-12 text-primary/40 mx-auto mb-3" />
-          <p className="text-sm text-muted-foreground font-medium">Choose a period and click Generate to produce an executive report.</p>
+          <p className="text-sm text-slate-500 dark:text-muted-foreground font-medium">Choose a period and click Generate to produce an executive report.</p>
         </div>
       )}
     </div>

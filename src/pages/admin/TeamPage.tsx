@@ -1,126 +1,137 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { Users, ShieldCheck, UserPlus, Mail, Shield, Check } from 'lucide-react';
-import { ROLE_META } from '@/lib/equinox/design';
+import { Users, UserPlus, ShieldCheck, Mail, Shield, Trash2, Key } from 'lucide-react';
 
 export function TeamPage() {
   const [members, setMembers] = useState([
-    { id: '1', name: 'Shivam Admin', email: 'shivam@equinox.com', role: 'super_admin', status: 'Active', joined: 'Owner' },
-    { id: '2', name: 'Rahul Sharma', email: 'rahul@equinox.com', role: 'manager', status: 'Active', joined: '2 months ago' },
-    { id: '3', name: 'Priya Verma', email: 'priya@equinox.com', role: 'analyst', status: 'Active', joined: '1 month ago' },
-    { id: '4', name: 'Ankit Gupta', email: 'ankit@clientorg.com', role: 'viewer', status: 'Active', joined: '2 weeks ago' },
+    { id: '1', name: 'Shivam Admin', email: 'shivam@equinox.com', role: 'Super Admin', status: 'Active', avatar: 'https://ui-avatars.com/api/?name=Shivam+Admin&background=0D8ABC&color=fff' },
+    { id: '2', name: 'Rahul Verma', email: 'rahul@equinox.com', role: 'Analyst', status: 'Active', avatar: 'https://ui-avatars.com/api/?name=Rahul+Verma&background=2563EB&color=fff' },
+    { id: '3', name: 'Priya Sharma', email: 'priya@equinox.com', role: 'Support Specialist', status: 'Active', avatar: 'https://ui-avatars.com/api/?name=Priya+Sharma&background=D4AF37&color=fff' },
   ]);
 
-  const [newEmail, setNewEmail] = useState('');
-  const [newRole, setNewRole] = useState('manager');
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteName, setInviteName] = useState('');
+  const [inviteRole, setInviteRole] = useState('Analyst');
 
-  const handleInvite = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newEmail.trim()) return;
-    setMembers([
-      ...members,
-      {
-        id: String(Date.now()),
-        name: newEmail.split('@')[0],
-        email: newEmail.trim(),
-        role: newRole,
-        status: 'Active',
-        joined: 'Just now',
-      },
-    ]);
-    setNewEmail('');
-    toast.success(`Invite link sent to ${newEmail}`);
+  const handleInvite = () => {
+    if (!inviteEmail.trim() || !inviteName.trim()) return;
+    const newMember = {
+      id: Date.now().toString(),
+      name: inviteName.trim(),
+      email: inviteEmail.trim(),
+      role: inviteRole,
+      status: 'Active',
+      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(inviteName)}&background=0D8ABC&color=fff`,
+    };
+    setMembers([...members, newMember]);
+    setShowInviteModal(false);
+    setInviteName('');
+    setInviteEmail('');
+    toast.success(`Invite sent to ${inviteEmail}`);
   };
 
   return (
     <div className="space-y-6">
-      <div className="p-6 rounded-2xl bg-black/40 border border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Top Header */}
+      <div className="p-6 rounded-2xl bg-white border border-slate-200 dark:bg-black/40 dark:border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="w-11 h-11 rounded-xl bg-primary/15 border border-primary/30 flex items-center justify-center shrink-0">
             <Users className="w-6 h-6 text-primary" />
           </div>
           <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight" style={{ fontFamily: "'Playfair Display', serif" }}>
-              Team &amp; Access Control
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight" style={{ fontFamily: "'Playfair Display', serif" }}>
+              Team &amp; Access Management
             </h2>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Role-based authorization, SSO configuration, and team member management.
+            <p className="text-xs text-slate-500 dark:text-muted-foreground mt-0.5">
+              Manage agency team members, role-based access permissions, and audit logs.
             </p>
           </div>
         </div>
 
-        <span className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold flex items-center gap-1.5 shrink-0">
-          <ShieldCheck className="w-4 h-4" /> SSO Ready (SAML 2.0)
-        </span>
+        <button
+          onClick={() => setShowInviteModal(true)}
+          className="px-4 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs flex items-center gap-2 transition"
+        >
+          <UserPlus className="w-4 h-4 text-black" /> Invite Team Member
+        </button>
       </div>
 
-      {/* Invite Form */}
-      <div className="p-5 rounded-2xl bg-black/40 border border-white/5 space-y-3">
-        <h3 className="text-sm font-bold text-white flex items-center gap-2">
-          <UserPlus className="w-4 h-4 text-primary" /> Invite Team Member
-        </h3>
-        <form onSubmit={handleInvite} className="flex flex-col sm:flex-row items-center gap-3">
-          <div className="relative flex-1 w-full">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <input
-              type="email"
-              required
-              placeholder="colleague@company.com"
-              value={newEmail}
-              onChange={(e) => setNewEmail(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 rounded-xl bg-black/40 border border-white/10 text-xs text-white placeholder:text-neutral-500 focus:border-primary focus:outline-none"
-            />
-          </div>
-
-          <select
-            value={newRole}
-            onChange={(e) => setNewRole(e.target.value)}
-            className="py-2 px-3 rounded-xl bg-black/40 border border-white/10 text-xs text-white focus:border-primary focus:outline-none w-full sm:w-auto"
-          >
-            <option value="admin">Admin</option>
-            <option value="manager">Manager</option>
-            <option value="analyst">Analyst</option>
-            <option value="viewer">Viewer</option>
-          </select>
-
-          <button
-            type="submit"
-            className="w-full sm:w-auto px-4 py-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs shrink-0 transition"
-          >
-            Send Invitation
-          </button>
-        </form>
-      </div>
-
-      {/* Members List */}
-      <div className="p-5 rounded-2xl bg-black/40 border border-white/5 space-y-3">
-        <h3 className="text-sm font-bold text-white">Active Workspace Members ({members.length})</h3>
-        <div className="divide-y divide-white/5">
-          {members.map((m) => {
-            const roleMeta = (ROLE_META as any)[m.role] || ROLE_META.viewer;
-            return (
-              <div key={m.id} className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-secondary text-black font-bold text-xs flex items-center justify-center shrink-0">
-                    {m.name[0]}
-                  </div>
-                  <div>
-                    <div className="font-semibold text-white">{m.name}</div>
-                    <div className="text-muted-foreground text-[11px]">{m.email}</div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <span className={`px-2.5 py-0.5 rounded border text-[10px] font-bold uppercase ${roleMeta.color}`}>
-                    {roleMeta.label}
-                  </span>
-                  <span className="text-muted-foreground text-[10px]">{m.joined}</span>
-                </div>
+      {/* Members Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {members.map((m) => (
+          <div key={m.id} className="p-5 rounded-2xl bg-white border border-slate-200 dark:bg-black/40 dark:border-white/5 space-y-4 hover:border-primary/30 transition shadow-sm">
+            <div className="flex items-center gap-3">
+              <img src={m.avatar} alt={m.name} className="w-12 h-12 rounded-xl object-cover border border-primary/30 shrink-0" />
+              <div className="min-w-0">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white truncate">{m.name}</h3>
+                <p className="text-xs text-slate-500 dark:text-muted-foreground truncate">{m.email}</p>
+                <span className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/25">
+                  {m.role}
+                </span>
               </div>
-            );
-          })}
-        </div>
+            </div>
+          </div>
+        ))}
       </div>
+
+      {/* Invite Modal */}
+      {showInviteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white dark:border-white/10 dark:bg-neutral-950 p-6 shadow-2xl space-y-4">
+            <h3 className="text-base font-bold text-slate-900 dark:text-white">Invite New Team Member</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-semibold text-slate-700 dark:text-neutral-300 mb-1 block">Full Name</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Ankit Sharma"
+                  value={inviteName}
+                  onChange={(e) => setInviteName(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 dark:bg-black/60 dark:border-white/10 text-xs text-slate-900 dark:text-white focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-slate-700 dark:text-neutral-300 mb-1 block">Email Address</label>
+                <input
+                  type="email"
+                  placeholder="ankit@equinox.com"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 dark:bg-black/60 dark:border-white/10 text-xs text-slate-900 dark:text-white focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-slate-700 dark:text-neutral-300 mb-1 block">Role</label>
+                <select
+                  value={inviteRole}
+                  onChange={(e) => setInviteRole(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-300 dark:bg-neutral-900 dark:border-white/10 text-xs text-slate-900 dark:text-white focus:outline-none"
+                >
+                  <option value="Analyst">Analyst</option>
+                  <option value="Support Specialist">Support Specialist</option>
+                  <option value="Admin">Admin</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                onClick={() => setShowInviteModal(false)}
+                className="px-4 py-2 rounded-xl border border-slate-200 bg-slate-100 dark:border-white/10 dark:bg-white/5 text-xs text-slate-700 dark:text-neutral-300 font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleInvite}
+                className="px-4 py-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold"
+              >
+                Send Invitation
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
