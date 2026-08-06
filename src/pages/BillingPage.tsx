@@ -12,7 +12,7 @@ import { InvoicePdfModal } from '@/components/InvoicePdfModal';
 import {
   DollarSign, FileSpreadsheet, ExternalLink, Calendar, CheckCircle2,
   Clock, AlertTriangle, Plus, Edit, Trash2, Printer, Download, Eye,
-  Building2, Layers, ArrowUpRight, FileText, Check, ShieldAlert, Sparkles, Filter
+  Building2, Layers, ArrowUpRight, FileText, Check, ShieldAlert, Sparkles, Filter, Receipt
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
