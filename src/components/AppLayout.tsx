@@ -7,7 +7,7 @@ import {
   Sparkles, ChevronDown, LayoutDashboard, MessageSquare, Radar, ShieldAlert, Trophy,
   FileBarChart2, Users, Settings, LogOut, Search, Menu, X, Wand2, Cable, Mic,
   Sun, Moon, ShieldCheck, DownloadCloud, Radio, DollarSign, Check, ArrowRightLeft,
-  Receipt, Building2
+  Receipt, Building2, Smartphone, ShoppingCart, Instagram, Linkedin, Store, Youtube, Facebook
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { NotificationCenter } from '@/components/equinox/NotificationCenter';
@@ -19,7 +19,7 @@ export interface NavItemDef {
   label: string;
   to: string;
   icon: any;
-  group: 'Analytics' | 'Monitoring' | 'Executive';
+  group: 'Analytics' | 'Monitored Channels' | 'Monitoring' | 'Executive';
   end?: boolean;
   accent?: boolean;
   adminOnly?: boolean;
@@ -27,11 +27,20 @@ export interface NavItemDef {
 
 export const APP_NAV_ITEMS: NavItemDef[] = [
   { key: 'dashboard', label: 'Executive Dashboard', to: '/app', icon: LayoutDashboard, group: 'Analytics', end: true },
-  { key: 'billing', label: 'Client Amounts & Invoices', to: '/app/billing', icon: Receipt, group: 'Analytics', accent: true },
-  { key: 'playstore-live', label: 'Play Store Live Tracker', to: '/app/playstore-live', icon: Radio, group: 'Analytics' },
+  { key: 'billing', label: 'Client Invoice', to: '/app/billing', icon: Receipt, group: 'Analytics', accent: true },
   { key: 'live-fetcher', label: 'Live Review Fetcher', to: '/app/live-fetcher', icon: DownloadCloud, group: 'Analytics' },
   { key: 'clients', label: 'Manage Clients', to: '/app/clients', icon: Users, group: 'Analytics', adminOnly: true },
   { key: 'insights', label: 'AI Insights', to: '/app/insights', icon: Wand2, group: 'Analytics' },
+
+  // Monitored Channels Section
+  { key: 'ch-playstore', label: 'Play Store Channel', to: '/app/platform/playstore', icon: Smartphone, group: 'Monitored Channels' },
+  { key: 'ch-instagram', label: 'Instagram Channel', to: '/app/platform/instagram', icon: Instagram, group: 'Monitored Channels' },
+  { key: 'ch-youtube', label: 'YouTube Channel', to: '/app/platform/youtube', icon: Youtube, group: 'Monitored Channels' },
+  { key: 'ch-google_business', label: 'Google Business Profile', to: '/app/platform/google_business', icon: Store, group: 'Monitored Channels' },
+  { key: 'ch-facebook', label: 'Facebook Page', to: '/app/platform/facebook', icon: Facebook, group: 'Monitored Channels' },
+  { key: 'ch-x', label: 'X (Twitter) Channel', to: '/app/platform/x', icon: MessageSquare, group: 'Monitored Channels' },
+  { key: 'ch-linkedin', label: 'LinkedIn Page', to: '/app/platform/linkedin', icon: Linkedin, group: 'Monitored Channels' },
+
   { key: 'social-inbox', label: 'Direct Social DMs', to: '/app/social-inbox', icon: MessageSquare, group: 'Monitoring' },
   { key: 'social', label: 'Social Listening', to: '/app/social', icon: Radar, group: 'Monitoring' },
   { key: 'crisis', label: 'Crisis Center', to: '/app/crisis', icon: ShieldAlert, group: 'Monitoring' },
@@ -43,7 +52,7 @@ export const APP_NAV_ITEMS: NavItemDef[] = [
 ];
 
 export function AppLayout({ children }: { children: ReactNode }) {
-  const { client, userRole, isMasterAdmin, switchUser, signOut } = useAuth();
+  const { client, userRole, isMasterAdmin, isDemoMode, switchUser, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
@@ -80,10 +89,13 @@ export function AppLayout({ children }: { children: ReactNode }) {
     }
   };
 
-  // Filter navigation links based on permissions ("Manage Clients" is strictly Admin only)
+  // Filter navigation links based on permissions & demo mode
   const navItems = APP_NAV_ITEMS.filter((item) => {
-    if (item.adminOnly && !isMasterAdmin && userRole !== 'super_admin') {
-      return false;
+    // Hide "Manage Clients" in demo mode OR for non-admin users
+    if (item.adminOnly) {
+      if (isDemoMode || !isMasterAdmin || userRole !== 'super_admin') {
+        return false;
+      }
     }
     return true;
   });
@@ -92,13 +104,17 @@ export function AppLayout({ children }: { children: ReactNode }) {
     n.end ? location.pathname === n.to : location.pathname.startsWith(n.to)
   ) || navItems[0];
 
-  const groups: Array<'Analytics' | 'Monitoring' | 'Executive'> = ['Analytics', 'Monitoring', 'Executive'];
+  const groups: Array<'Analytics' | 'Monitored Channels' | 'Monitoring' | 'Executive'> = [
+    'Analytics', 'Monitored Channels', 'Monitoring', 'Executive'
+  ];
 
   const filteredClientsForSwitcher = allClients.filter((c) =>
     c.company_name.toLowerCase().includes(switcherSearch.toLowerCase()) ||
     c.email.toLowerCase().includes(switcherSearch.toLowerCase()) ||
     (c.app_name && c.app_name.toLowerCase().includes(switcherSearch.toLowerCase()))
   );
+
+  const canSwitchAccounts = isMasterAdmin && !isDemoMode;
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-background dark:text-foreground relative noise selection:bg-amber-500/30 transition-colors duration-200">
@@ -120,7 +136,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                     Equinox Pulse
                   </div>
                   <div className="text-[10px] uppercase tracking-widest text-slate-500 dark:text-muted-foreground font-semibold">
-                    {isMasterAdmin ? 'Enterprise · Super Admin' : 'Client ORM Portal'}
+                    {isDemoMode ? 'Interactive Demo Mode' : isMasterAdmin ? 'Enterprise · Super Admin' : 'Client ORM Portal'}
                   </div>
                 </div>
               </div>
@@ -128,7 +144,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
             {/* Left Side Account / Client Switcher */}
             <div className="px-3 py-3 border-b border-slate-200 dark:border-white/5 relative" ref={switcherRef}>
-              {isMasterAdmin ? (
+              {canSwitchAccounts ? (
                 <div>
                   <div className="px-2 pb-1 flex items-center justify-between text-[9px] font-extrabold uppercase text-amber-600 dark:text-primary tracking-widest">
                     <span>Instant Switcher</span>
@@ -228,7 +244,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                   )}
                 </div>
               ) : (
-                /* Static Non-Switchable Workspace Badge for Clients */
+                /* Static Non-Switchable Workspace Badge */
                 <div className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-slate-100 dark:bg-black/30 border border-slate-200 dark:border-white/5">
                   <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center text-slate-950 font-bold shrink-0 shadow-sm overflow-hidden">
                     {client?.app_icon_url ? (
@@ -239,10 +255,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                      {client?.company_name}
+                      {client?.company_name || 'Active Workspace'}
                     </div>
                     <div className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">
-                      Client Workspace
+                      {isDemoMode ? 'Demo Showcase Mode' : 'Client Workspace'}
                     </div>
                   </div>
                   <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
@@ -325,8 +341,26 @@ export function AppLayout({ children }: { children: ReactNode }) {
           
           {/* Topbar Header */}
           <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 dark:border-white/5 dark:bg-background/80 backdrop-blur-xl">
+            {/* Demo Mode Notice Banner */}
+            {isDemoMode && (
+              <div className="bg-amber-500/15 border-b border-amber-500/30 px-4 py-1.5 flex items-center justify-between text-xs font-bold text-amber-900 dark:text-amber-200">
+                <div className="flex items-center gap-2 truncate">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                  <span className="truncate">
+                    Interactive Demo Mode Active: Pre-loaded feature showcase. Log in with real credentials for personal live data workspace.
+                  </span>
+                </div>
+                <button
+                  onClick={handleSignOut}
+                  className="px-2.5 py-0.5 rounded-lg bg-amber-500 text-slate-950 text-[10px] font-black hover:bg-amber-400 transition shrink-0 ml-2 shadow-sm"
+                >
+                  Log in to Real Workspace
+                </button>
+              </div>
+            )}
+
             {/* Instant Admin Switcher Banner when Super Admin is viewing client context */}
-            {isMasterAdmin && client && !client.is_super_admin && (
+            {!isDemoMode && isMasterAdmin && client && !client.is_super_admin && (
               <div className="bg-gradient-to-r from-amber-500/15 via-amber-500/25 to-amber-500/15 border-b border-amber-500/30 px-4 py-1.5 flex items-center justify-between text-xs font-bold text-amber-900 dark:text-amber-200">
                 <div className="flex items-center gap-2 truncate">
                   <span className="flex h-2 w-2 rounded-full bg-amber-500 animate-ping" />

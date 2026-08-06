@@ -46,7 +46,7 @@ export function AiInsightsPage() {
   return (
     <div className="space-y-6">
       {/* Top AI Banner */}
-      <div className="bg-slate-900 dark:bg-gradient-to-br dark:from-black dark:via-neutral-950 dark:to-black border border-amber-500/30 dark:border-primary/25 rounded-2xl p-6 gold-glow relative overflow-hidden shadow-md">
+      <div className="bg-white border border-slate-200 dark:bg-gradient-to-br dark:from-black dark:via-neutral-950 dark:to-black dark:border-primary/25 rounded-2xl p-6 gold-glow relative overflow-hidden shadow-sm dark:shadow-md">
         <div className="absolute inset-0 grid-bg opacity-20 pointer-events-none" />
         <div className="relative flex flex-col md:flex-row items-start justify-between gap-4">
           <div className="flex items-start gap-3">
@@ -54,23 +54,23 @@ export function AiInsightsPage() {
               <Wand2 className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight" style={{ fontFamily: "'Playfair Display', serif" }}>
-                AI Insights <span className="text-xs text-slate-300 dark:text-muted-foreground uppercase tracking-widest ml-2">by Equinox Pulse</span>
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight" style={{ fontFamily: "'Playfair Display', serif" }}>
+                AI Insights <span className="text-xs text-slate-500 dark:text-muted-foreground uppercase tracking-widest ml-2">by Equinox Pulse</span>
               </h2>
-              <p className="text-xs sm:text-sm text-slate-200 dark:text-neutral-300 mt-1 max-w-2xl">
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-neutral-300 mt-1 max-w-2xl font-medium">
                 Root-cause synthesis, trend detection, and executive recommendations — grounded in your live review &amp; mention data.
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-800 dark:bg-black/50 border border-slate-700 dark:border-white/5">
+            <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100 dark:bg-black/50 border border-slate-200 dark:border-white/5">
               {WINDOWS.map((w) => (
                 <button
                   key={w.key}
                   onClick={() => setWin(w.key)}
                   className={`text-xs px-3 py-1 rounded-lg transition font-medium ${
-                    win === w.key ? 'bg-primary/20 text-primary border border-primary/30' : 'text-slate-300 dark:text-neutral-400 hover:text-white'
+                    win === w.key ? 'bg-primary/20 text-primary border border-primary/30 font-bold' : 'text-slate-600 dark:text-neutral-400 hover:text-slate-900 dark:hover:text-white'
                   }`}
                 >
                   {w.label}
@@ -81,19 +81,19 @@ export function AiInsightsPage() {
             <button
               onClick={handleRegen}
               disabled={loading}
-              className="px-4 py-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs flex items-center gap-1.5 transition disabled:opacity-50"
+              className="px-4 py-2 rounded-xl bg-primary hover:bg-primary/90 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition disabled:opacity-50 shadow-sm"
             >
-              {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 text-black" />}
+              {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 text-slate-950" />}
               <span>Regenerate</span>
             </button>
           </div>
         </div>
 
-        <div className="mt-5 pt-4 border-t border-slate-800 dark:border-white/10 relative">
-          <div className="text-xl font-semibold gold-text" style={{ fontFamily: "'Playfair Display', serif" }}>
+        <div className="mt-5 pt-4 border-t border-slate-200 dark:border-white/10 relative">
+          <div className="text-xl font-bold gold-text" style={{ fontFamily: "'Playfair Display', serif" }}>
             "Checkout Reliability &amp; Customer Response Speed Drive Current Brand Sentiment"
           </div>
-          <p className="text-xs sm:text-sm text-slate-300 dark:text-neutral-300 mt-1.5 max-w-3xl leading-relaxed">
+          <p className="text-xs sm:text-sm text-slate-700 dark:text-neutral-300 mt-1.5 max-w-3xl leading-relaxed font-medium">
             Overall brand sentiment is strong at 86/100. Key positive driver is fast resolution via AI response assistant. Primary risk vector is checkout drop-off on legacy Android builds.
           </p>
         </div>

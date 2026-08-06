@@ -6,13 +6,13 @@ import { useAuth } from '@/hooks/useAuth';
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const { signIn } = useAuth();
+  const { signIn, signInDemo } = useAuth();
 
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [form, setForm] = useState({
     name: '',
-    email: 'shivam@equinox.com',
-    password: 'password123',
+    email: '',
+    password: '',
     orgName: '',
   });
   const [loading, setLoading] = useState(false);
@@ -22,9 +22,13 @@ export function LoginPage() {
     try {
       const targetEmail = form.email.trim() || 'shivam@equinox.com';
       const targetPass = form.password.trim() || 'password123';
-      await signIn(targetEmail, targetPass);
-      toast.success(mode === 'signup' ? 'Workspace created · demo data loaded' : `Welcome back, ${form.name || 'Shivam Admin'}`);
-      navigate('/app', { replace: true });
+      const res = await signIn(targetEmail, targetPass);
+      if (res && res.success) {
+        toast.success(mode === 'signup' ? 'Workspace created successfully' : `Welcome back! Real data workspace active.`);
+        navigate('/app', { replace: true });
+      } else {
+        toast.error(res?.error || 'Invalid credentials');
+      }
     } catch (e: any) {
       toast.error(e?.message || 'Authentication error');
     } finally {
@@ -35,11 +39,10 @@ export function LoginPage() {
   const demoLogin = async () => {
     setLoading(true);
     try {
-      await signIn('shivam@equinox.com', 'password123');
-      toast.success('Signed in · Equinox Motors India');
+      await signInDemo();
+      toast.success('Signed in with Demo Mode · Pre-loaded interactive showcase');
       navigate('/app', { replace: true });
     } catch (e: any) {
-      toast.success('Signed in · Equinox Motors India');
       navigate('/app', { replace: true });
     } finally {
       setLoading(false);

@@ -18,8 +18,8 @@ import {
 import { cn } from '@/lib/utils';
 
 export function BillingPage() {
-  const { client, userRole, isMasterAdmin } = useAuth();
-  const isAdmin = isMasterAdmin || userRole === 'super_admin';
+  const { client, userRole, isMasterAdmin, isDemoMode } = useAuth();
+  const isAdmin = (isMasterAdmin || userRole === 'super_admin') && !isDemoMode;
 
   // Subscriptions & DB Listeners
   const [clients] = useState<ClientRow[]>(() => dbEngine.getClients());
@@ -235,14 +235,14 @@ export function BillingPage() {
     <div className="space-y-6">
       {/* Top Header */}
       <PageHeader
-        title={isAdmin ? "Client Amounts & Invoicing Workspace" : "My Account Invoices & Live Tracker"}
+        title="Client Invoice"
         subtitle={
           isAdmin
             ? "Per-client folder invoice system. Update amounts, manage Excel links, log Play Store daily live reviews, and mark payments as paid."
             : "View your campaign folders, daily Play Store live activity breakdown, Excel sheet records, and official invoices."
         }
         action={
-          isAdmin && (
+          isAdmin && !isDemoMode && (
             <div className="flex items-center gap-2">
               <button
                 onClick={() => {

@@ -6,11 +6,13 @@ interface AuthState {
   client: ClientRow | null;
   userRole: 'super_admin' | 'client';
   isMasterAdmin: boolean;
+  isDemoMode: boolean;
   loading: boolean;
 }
 
 interface AuthContextValue extends AuthState {
   signIn: (email: string, pass: string) => Promise<{ success: boolean; error?: string }>;
+  signInDemo: () => Promise<void>;
   resetPassword: (email: string, newPass: string) => Promise<{ success: boolean; error?: string }>;
   signOut: () => Promise<void>;
   switchUser: (email: string) => void;
@@ -28,11 +30,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return localStorage.getItem('equinox_master_super_admin') || null;
   });
 
+  const [isDemoMode, setIsDemoMode] = useState<boolean>(() => {
+    return localStorage.getItem('equinox_is_demo_mode') === 'true';
+  });
+
   const [state, setState] = useState<AuthState>({
     session: null,
     client: null,
     userRole: 'client',
     isMasterAdmin: false,
+    isDemoMode: localStorage.getItem('equinox_is_demo_mode') === 'true',
     loading: false,
   });
 
@@ -43,6 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         client: null,
         userRole: 'client',
         isMasterAdmin: false,
+        isDemoMode: localStorage.getItem('equinox_is_demo_mode') === 'true',
         loading: false,
       });
       return;
@@ -52,12 +60,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const foundClient = clients.find((c) => c.email.toLowerCase() === email.toLowerCase()) || clients[0];
     
     if (!foundClient) {
-      setState({ session: null, client: null, userRole: 'client', isMasterAdmin: false, loading: false });
+      setState({ session: null, client: null, userRole: 'client', isMasterAdmin: false, isDemoMode: false, loading: false });
       return;
     }
 
     const isSuper = foundClient.is_super_admin || !!localStorage.getItem('equinox_master_super_admin');
     const role: 'super_admin' | 'client' = isSuper ? 'super_admin' : 'client';
+    const demo = localStorage.getItem('equinox_is_demo_mode') === 'true';
 
     setState({
       session: {
@@ -69,6 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       client: foundClient,
       userRole: role,
       isMasterAdmin: !!localStorage.getItem('equinox_master_super_admin') || foundClient.is_super_admin,
+      isDemoMode: demo,
       loading: false,
     });
   };
@@ -87,6 +97,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { success: false, error: 'Invalid email or password. Please check your credentials.' };
     }
     localStorage.setItem('equinox_pulse_active_user', verifiedClient.email);
+    localStorage.setItem('equinox_is_demo_mode', 'false');
+    setIsDemoMode(false);
+
     if (verifiedClient.is_super_admin) {
       localStorage.setItem('equinox_master_super_admin', verifiedClient.email);
       setMasterAdminEmail(verifiedClient.email);
@@ -97,6 +110,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setCurrentEmail(verifiedClient.email);
     resolveAuth(verifiedClient.email);
     return { success: true };
+  };
+
+  const signInDemo = async () => {
+    localStorage.setItem('equinox_is_demo_mode', 'true');
+    setIsDemoMode(true);
+    const clients = dbEngine.getClients();
+    const demoClient = clients.find((c) => !c.is_super_admin) || clients[0];
+    localStorage.setItem('equinox_pulse_active_user', demoClient.email);
+    localStorage.removeItem('equinox_master_super_admin');
+    setMasterAdminEmail(null);
+    setCurrentEmail(demoClient.email);
+    resolveAuth(demoClient.email);
   };
 
   const resetPassword = async (email: string, newPass: string) => {
@@ -120,13 +145,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     localStorage.removeItem('equinox_pulse_active_user');
     localStorage.removeItem('equinox_master_super_admin');
+    localStorage.removeItem('equinox_is_demo_mode');
     setCurrentEmail(null);
     setMasterAdminEmail(null);
-    setState({ session: null, client: null, userRole: 'client', isMasterAdmin: false, loading: false });
+    setIsDemoMode(false);
+    setState({ session: null, client: null, userRole: 'client', isMasterAdmin: false, isDemoMode: false, loading: false });
   };
 
   return (
-    <AuthContext.Provider value={{ ...state, signIn, resetPassword, signOut, switchUser, refreshClient }}>
+    <AuthContext.Provider value={{ ...state, signIn, signInDemo, resetPassword, signOut, switchUser, refreshClient }}>
       {children}
     </AuthContext.Provider>
   );
