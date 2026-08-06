@@ -1153,6 +1153,18 @@ class DBEngine {
     return newLog;
   }
 
+  public updateDailyLiveLog(log: DailyLiveAppLog): void {
+    const logs = this.getDailyLiveLogs();
+    const index = logs.findIndex((l) => l.id === log.id);
+    if (index >= 0) {
+      logs[index] = { ...logs[index], ...log };
+    } else {
+      logs.unshift(log);
+    }
+    setStorage(STORAGE_KEYS.DAILY_LIVE_LOGS, logs);
+    this.notify();
+  }
+
   public deleteDailyLiveLog(id: string): void {
     const logs = this.getDailyLiveLogs().filter((l) => l.id !== id);
     setStorage(STORAGE_KEYS.DAILY_LIVE_LOGS, logs);
