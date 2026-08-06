@@ -109,6 +109,54 @@ export interface ReplyTemplateRow {
   created_at: string;
 }
 
+export interface ClientBillingRecord {
+  client_id: string;
+  app_name: string;
+  excel_sheet_url: string;
+  total_amount: number;
+  paid_amount: number;
+  pending_amount: number;
+  notes?: string;
+  updated_at: string;
+}
+
+export interface DailyLiveAppLog {
+  id: string;
+  client_id: string;
+  date: string;
+  app_name: string;
+  live_count: number;
+  unit_price: number;
+  total_amount: number;
+  status: 'Live' | 'Pending' | 'Completed';
+  notes?: string;
+}
+
+export interface ClientInvoiceItem {
+  description: string;
+  quantity: number;
+  unit_price: number;
+  total: number;
+}
+
+export interface ClientInvoiceRecord {
+  id: string;
+  invoice_number: string;
+  client_id: string;
+  client_name: string;
+  client_email: string;
+  invoice_date: string;
+  due_date: string;
+  app_name: string;
+  excel_sheet_url?: string;
+  items: ClientInvoiceItem[];
+  subtotal: number;
+  tax_amount: number;
+  grand_total: number;
+  status: 'paid' | 'pending' | 'overdue';
+  created_at: string;
+}
+
 const STORAGE_KEYS = {
   CLIENTS: 'equinox_pulse_db_clients_v7',
   CONNECTIONS: 'equinox_pulse_db_connections_v7',
@@ -117,9 +165,12 @@ const STORAGE_KEYS = {
   MESSAGES: 'equinox_pulse_db_messages_v7',
   TEMPLATES: 'equinox_pulse_db_templates_v7',
   GLOBAL_API: 'equinox_pulse_global_api_key_v7',
+  BILLING_RECORDS: 'equinox_pulse_db_billing_v7',
+  DAILY_LIVE_LOGS: 'equinox_pulse_db_daily_live_v7',
+  INVOICES: 'equinox_pulse_db_invoices_v7',
 };
 
-// Initial Fresh Super Admin ONLY
+// Initial Fresh Super Admin & Sample Clients
 const INITIAL_CLIENTS: ClientRow[] = [
   {
     id: 'c-admin-shivam',
@@ -146,6 +197,176 @@ const INITIAL_CLIENTS: ClientRow[] = [
     is_super_admin: true,
     auth_user_id: 'user-shivam-agency',
     created_at: new Date().toISOString(),
+  },
+  {
+    id: 'c-client-zomato',
+    email: 'zomato@client.com',
+    password: 'password123',
+    company_name: 'Zomato Limited',
+    contact_person: 'Rahul Sharma',
+    phone: '+91 98111 22233',
+    plan: 'enterprise',
+    status: 'active',
+    is_super_admin: false,
+    auth_user_id: 'user-zomato',
+    app_name: 'Zomato: Food Delivery & Dining',
+    app_package_name: 'com.application.zomato',
+    app_icon_url: 'https://play-lh.googleusercontent.com/gM13Lp6j9n0fEwJ0Wj5-l2-l2-l2=s180-rw',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'c-client-swiggy',
+    email: 'swiggy@client.com',
+    password: 'password123',
+    company_name: 'Swiggy India',
+    contact_person: 'Ananya Roy',
+    phone: '+91 98222 33344',
+    plan: 'pro',
+    status: 'active',
+    is_super_admin: false,
+    auth_user_id: 'user-swiggy',
+    app_name: 'Swiggy: Food & Grocery Delivery',
+    app_package_name: 'in.swiggy.android',
+    app_icon_url: 'https://play-lh.googleusercontent.com/39hN7K92zXh8-l2-l2-l2=s180-rw',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'c-client-paytm',
+    email: 'paytm@client.com',
+    password: 'password123',
+    company_name: 'Paytm Digital',
+    contact_person: 'Vikram Mehta',
+    phone: '+91 98333 44455',
+    plan: 'pro',
+    status: 'active',
+    is_super_admin: false,
+    auth_user_id: 'user-paytm',
+    app_name: 'Paytm: Secure UPI Payments & Bank',
+    app_package_name: 'net.one97.paytm',
+    app_icon_url: 'https://play-lh.googleusercontent.com/paytm=s180-rw',
+    created_at: new Date().toISOString(),
+  },
+];
+
+const INITIAL_BILLING_RECORDS: ClientBillingRecord[] = [
+  {
+    client_id: 'c-client-zomato',
+    app_name: 'Zomato: Food Delivery & Dining',
+    excel_sheet_url: 'https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit',
+    total_amount: 120000,
+    paid_amount: 85000,
+    pending_amount: 35000,
+    notes: 'Pending ₹35,000 for Play Store 5-star live reviews batch #4',
+    updated_at: new Date().toISOString(),
+  },
+  {
+    client_id: 'c-client-swiggy',
+    app_name: 'Swiggy: Food & Grocery Delivery',
+    excel_sheet_url: 'https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit',
+    total_amount: 180000,
+    paid_amount: 180000,
+    pending_amount: 0,
+    notes: 'Fully paid for July campaign. August campaign under review.',
+    updated_at: new Date().toISOString(),
+  },
+  {
+    client_id: 'c-client-paytm',
+    app_name: 'Paytm: Secure UPI Payments & Bank',
+    excel_sheet_url: 'https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit',
+    total_amount: 95000,
+    paid_amount: 50000,
+    pending_amount: 45000,
+    notes: '₹45,000 pending payment after Play Store review release',
+    updated_at: new Date().toISOString(),
+  },
+];
+
+const INITIAL_DAILY_LIVE_LOGS: DailyLiveAppLog[] = [
+  {
+    id: 'log-1',
+    client_id: 'c-client-zomato',
+    date: '2026-08-05',
+    app_name: 'Zomato: Food Delivery & Dining',
+    live_count: 150,
+    unit_price: 50,
+    total_amount: 7500,
+    status: 'Live',
+    notes: '150 reviews went live on Play Store',
+  },
+  {
+    id: 'log-2',
+    client_id: 'c-client-zomato',
+    date: '2026-08-04',
+    app_name: 'Zomato: Food Delivery & Dining',
+    live_count: 200,
+    unit_price: 50,
+    total_amount: 10000,
+    status: 'Live',
+    notes: '200 reviews verified & live on Play Store',
+  },
+  {
+    id: 'log-3',
+    client_id: 'c-client-swiggy',
+    date: '2026-08-05',
+    app_name: 'Swiggy: Food & Grocery Delivery',
+    live_count: 300,
+    unit_price: 50,
+    total_amount: 15000,
+    status: 'Live',
+    notes: '300 reviews live on Play Store store page',
+  },
+  {
+    id: 'log-4',
+    client_id: 'c-client-paytm',
+    date: '2026-08-05',
+    app_name: 'Paytm: Secure UPI Payments & Bank',
+    live_count: 100,
+    unit_price: 50,
+    total_amount: 5000,
+    status: 'Pending',
+    notes: '100 reviews pending Play Store index sync',
+  },
+];
+
+const INITIAL_INVOICES: ClientInvoiceRecord[] = [
+  {
+    id: 'inv-101',
+    invoice_number: 'INV-2026-0801',
+    client_id: 'c-client-zomato',
+    client_name: 'Zomato Limited',
+    client_email: 'zomato@client.com',
+    invoice_date: '2026-08-01',
+    due_date: '2026-08-15',
+    app_name: 'Zomato: Food Delivery & Dining',
+    excel_sheet_url: 'https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit',
+    items: [
+      { description: 'Play Store Live Reviews (Batch #4 - 700 units)', quantity: 700, unit_price: 50, total: 35000 },
+      { description: 'Monthly App Reputation & ORM Service', quantity: 1, unit_price: 50000, total: 50000 },
+    ],
+    subtotal: 85000,
+    tax_amount: 15300,
+    grand_total: 100300,
+    status: 'pending',
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 'inv-102',
+    invoice_number: 'INV-2026-0715',
+    client_id: 'c-client-swiggy',
+    client_name: 'Swiggy India',
+    client_email: 'swiggy@client.com',
+    invoice_date: '2026-07-15',
+    due_date: '2026-07-30',
+    app_name: 'Swiggy: Food & Grocery Delivery',
+    excel_sheet_url: 'https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit',
+    items: [
+      { description: 'Play Store Live Reviews (Batch #3 - 1000 units)', quantity: 1000, unit_price: 50, total: 50000 },
+    ],
+    subtotal: 50000,
+    tax_amount: 9000,
+    grand_total: 59000,
+    status: 'paid',
+    created_at: new Date(Date.now() - 1000 * 3600 * 24 * 20).toISOString(),
   },
 ];
 
@@ -890,6 +1111,118 @@ class DBEngine {
     setStorage(STORAGE_KEYS.CLIENTS, updated);
     this.notify();
   }
+
+  // --- CLIENT BILLING & EXCEL SHEET DATA ---
+  public getBillingRecords(): ClientBillingRecord[] {
+    return getStorage<ClientBillingRecord[]>(STORAGE_KEYS.BILLING_RECORDS, INITIAL_BILLING_RECORDS);
+  }
+
+  public getBillingRecord(clientId: string): ClientBillingRecord | null {
+    const records = this.getBillingRecords();
+    return records.find((r) => r.client_id === clientId) || null;
+  }
+
+  public updateBillingRecord(record: ClientBillingRecord): void {
+    const records = this.getBillingRecords();
+    const index = records.findIndex((r) => r.client_id === record.client_id);
+    if (index >= 0) {
+      records[index] = { ...records[index], ...record, updated_at: new Date().toISOString() };
+    } else {
+      records.push({ ...record, updated_at: new Date().toISOString() });
+    }
+    setStorage(STORAGE_KEYS.BILLING_RECORDS, records);
+    this.notify();
+  }
+
+  // --- DAILY PLAY STORE LIVE APP LOGS ---
+  public getDailyLiveLogs(clientId?: string): DailyLiveAppLog[] {
+    const logs = getStorage<DailyLiveAppLog[]>(STORAGE_KEYS.DAILY_LIVE_LOGS, INITIAL_DAILY_LIVE_LOGS);
+    if (!clientId) return logs;
+    return logs.filter((l) => l.client_id === clientId);
+  }
+
+  public addDailyLiveLog(log: Omit<DailyLiveAppLog, 'id'>): DailyLiveAppLog {
+    const logs = this.getDailyLiveLogs();
+    const newLog: DailyLiveAppLog = {
+      ...log,
+      id: `log-${Date.now()}`,
+    };
+    logs.unshift(newLog);
+    setStorage(STORAGE_KEYS.DAILY_LIVE_LOGS, logs);
+    this.notify();
+    return newLog;
+  }
+
+  public deleteDailyLiveLog(id: string): void {
+    const logs = this.getDailyLiveLogs().filter((l) => l.id !== id);
+    setStorage(STORAGE_KEYS.DAILY_LIVE_LOGS, logs);
+    this.notify();
+  }
+
+  // --- CLIENT INVOICES ---
+  public getInvoices(clientId?: string): ClientInvoiceRecord[] {
+    const invoices = getStorage<ClientInvoiceRecord[]>(STORAGE_KEYS.INVOICES, INITIAL_INVOICES);
+    if (!clientId) return invoices;
+    return invoices.filter((i) => i.client_id === clientId);
+  }
+
+  public addInvoice(inv: Omit<ClientInvoiceRecord, 'id' | 'created_at'>): ClientInvoiceRecord {
+    const invoices = this.getInvoices();
+    const newInvoice: ClientInvoiceRecord = {
+      ...inv,
+      id: `inv-${Date.now()}`,
+      created_at: new Date().toISOString(),
+    };
+    invoices.unshift(newInvoice);
+    setStorage(STORAGE_KEYS.INVOICES, invoices);
+
+    // Auto update billing record pending amount if invoice status is pending
+    if (inv.status === 'pending' || inv.status === 'overdue') {
+      const existingBilling = this.getBillingRecord(inv.client_id);
+      if (existingBilling) {
+        this.updateBillingRecord({
+          ...existingBilling,
+          pending_amount: (existingBilling.pending_amount || 0) + inv.grand_total,
+        });
+      }
+    }
+
+    this.notify();
+    return newInvoice;
+  }
+
+  public updateInvoiceStatus(id: string, status: 'paid' | 'pending' | 'overdue'): void {
+    const invoices = this.getInvoices();
+    const target = invoices.find((i) => i.id === id);
+    if (!target) return;
+
+    const oldStatus = target.status;
+    const updated = invoices.map((i) => (i.id === id ? { ...i, status } : i));
+    setStorage(STORAGE_KEYS.INVOICES, updated);
+
+    // Adjust pending amount on billing record if invoice marked as paid
+    if (oldStatus !== 'paid' && status === 'paid') {
+      const billing = this.getBillingRecord(target.client_id);
+      if (billing) {
+        const newPaid = billing.paid_amount + target.grand_total;
+        const newPending = Math.max(0, billing.pending_amount - target.grand_total);
+        this.updateBillingRecord({
+          ...billing,
+          paid_amount: newPaid,
+          pending_amount: newPending,
+        });
+      }
+    }
+
+    this.notify();
+  }
+
+  public deleteInvoice(id: string): void {
+    const invoices = this.getInvoices().filter((i) => i.id !== id);
+    setStorage(STORAGE_KEYS.INVOICES, invoices);
+    this.notify();
+  }
 }
 
 export const dbEngine = new DBEngine();
+

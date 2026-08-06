@@ -14,6 +14,8 @@ import { LiveFetcherPage } from '@/pages/LiveFetcherPage';
 import { ReportsPage } from '@/pages/ReportsPage';
 import { OAuthCallbackPage } from '@/pages/OAuthCallbackPage';
 
+import { BillingPage } from '@/pages/BillingPage';
+
 // Admin Suite Pages
 import { AiInsightsPage } from '@/pages/admin/AiInsightsPage';
 import { CrisisCenterPage } from '@/pages/admin/CrisisCenterPage';
@@ -37,11 +39,7 @@ function ProtectedRoute({ children }: { children: JSX.Element }) {
 }
 
 function RoleBasedDashboard() {
-  const { userRole } = useAuth();
-  if (userRole === 'super_admin') {
-    return <AdminDashboard />;
-  }
-  return <ClientDashboard />;
+  return <AdminDashboard />;
 }
 
 export default function App() {
@@ -60,6 +58,7 @@ export default function App() {
                   <AppLayout>
                     <Routes>
                       <Route path="/" element={<RoleBasedDashboard />} />
+                      <Route path="/billing" element={<BillingPage />} />
                       <Route path="/clients" element={<ClientsPage />} />
                       <Route path="/live-fetcher" element={<LiveFetcherPage />} />
                       <Route path="/playstore-live" element={<PlayStoreLivePage />} />

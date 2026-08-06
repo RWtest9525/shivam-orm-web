@@ -123,10 +123,10 @@ export function AdminDashboard() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight" style={{ fontFamily: "'Playfair Display', serif" }}>
-            Welcome back, Shivam!
+            Welcome back, {client?.contact_person || client?.company_name || 'Shivam'}!
           </h2>
           <p className="text-xs text-slate-500 dark:text-muted-foreground mt-0.5 font-medium">
-            Live executive overview of all client apps &amp; online reputation across platforms.
+            Live executive overview of client apps &amp; online reputation across platforms.
           </p>
         </div>
 
