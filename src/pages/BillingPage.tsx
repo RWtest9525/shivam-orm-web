@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { PageHeader } from '@/components/AppLayout';
 import {
@@ -12,7 +12,8 @@ import { InvoicePdfModal } from '@/components/InvoicePdfModal';
 import {
   DollarSign, FileSpreadsheet, ExternalLink, Calendar, CheckCircle2,
   Clock, AlertTriangle, Plus, Edit, Trash2, Printer, Download, Eye,
-  Building2, Layers, ArrowUpRight, FileText, Check, ShieldAlert, Sparkles, Filter, Receipt
+  Building2, Folder, FolderOpen, ArrowUpRight, FileText, Check, ShieldAlert,
+  Sparkles, Filter, Receipt, ArrowRight, ChevronRight, X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -20,23 +21,22 @@ export function BillingPage() {
   const { client, userRole, isMasterAdmin } = useAuth();
   const isAdmin = isMasterAdmin || userRole === 'super_admin';
 
-  // Subscriptions & DB Listeners trigger re-render on dbEngine changes
+  // Subscriptions & DB Listeners
   const [clients] = useState<ClientRow[]>(() => dbEngine.getClients());
   const [billingRecords, setBillingRecords] = useState<ClientBillingRecord[]>(() => dbEngine.getBillingRecords());
   const [dailyLogs, setDailyLogs] = useState<DailyLiveAppLog[]>(() => dbEngine.getDailyLiveLogs(isAdmin ? undefined : client?.id));
   const [invoices, setInvoices] = useState<ClientInvoiceRecord[]>(() => dbEngine.getInvoices(isAdmin ? undefined : client?.id));
 
-  // Sync state when dbEngine triggers notification
-  const refreshData = () => {
-    setBillingRecords(dbEngine.getBillingRecords());
-    setDailyLogs(dbEngine.getDailyLiveLogs(isAdmin ? undefined : client?.id));
-    setInvoices(dbEngine.getInvoices(isAdmin ? undefined : client?.id));
-  };
+  // Filter States
+  const [selectedMonth, setSelectedMonth] = useState<string>('ALL');
+  const [selectedStatusFilter, setSelectedStatusFilter] = useState<'ALL' | 'PENDING' | 'PAID'>('ALL');
+  const [activeFolderModal, setActiveFolderModal] = useState<{
+    clientObj: ClientRow;
+    monthKey: string;
+    monthLabel: string;
+  } | null>(null);
 
   // Modals state
-  const [activeTab, setActiveTab] = useState<'overview' | 'live_logs' | 'invoices'>('overview');
-  
-  // Edit Billing Modal State
   const [editingBilling, setEditingBilling] = useState<ClientBillingRecord | null>(null);
   const [editExcelUrl, setEditExcelUrl] = useState('');
   const [editTotalAmount, setEditTotalAmount] = useState<number>(0);
@@ -47,7 +47,7 @@ export function BillingPage() {
   const [showAddLogModal, setShowAddLogModal] = useState(false);
   const [logClientId, setLogClientId] = useState('');
   const [logDate, setLogDate] = useState(new Date().toISOString().split('T')[0]);
-  const [logCount, setLogCount] = useState<number>(100);
+  const [logCount, setLogCount] = useState<number>(150);
   const [logRate, setLogRate] = useState<number>(50);
   const [logStatus, setLogStatus] = useState<'Live' | 'Pending' | 'Completed'>('Live');
   const [logNotes, setLogNotes] = useState('');
@@ -64,25 +64,51 @@ export function BillingPage() {
   // PDF Preview Modal State
   const [previewInvoice, setPreviewInvoice] = useState<any | null>(null);
 
-  // Filter clients list for admin view
   const nonAdminClients = clients.filter((c) => !c.is_super_admin);
+  const displayClients = isAdmin ? nonAdminClients : [client!].filter(Boolean);
 
-  // Calculated Summary Metrics
-  const totalContractedSum = billingRecords.reduce((acc, r) => acc + (r.total_amount || 0), 0);
-  const totalPaidSum = billingRecords.reduce((acc, r) => acc + (r.paid_amount || 0), 0);
-  const totalPendingSum = billingRecords.reduce((acc, r) => acc + (r.pending_amount || 0), 0);
-  const totalLiveReviewsLogged = dailyLogs.reduce((acc, l) => acc + (l.live_count || 0), 0);
+  const refreshData = () => {
+    setBillingRecords(dbEngine.getBillingRecords());
+    setDailyLogs(dbEngine.getDailyLiveLogs(isAdmin ? undefined : client?.id));
+    setInvoices(dbEngine.getInvoices(isAdmin ? undefined : client?.id));
+  };
 
-  // Specific client metrics if client mode
-  const currentClientBilling = billingRecords.find((r) => r.client_id === client?.id) || {
-    client_id: client?.id || '',
-    app_name: client?.app_name || client?.company_name || 'App Review Campaign',
-    excel_sheet_url: 'https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit',
-    total_amount: 120000,
-    paid_amount: 85000,
-    pending_amount: 35000,
-    notes: 'Pending balance for verified Play Store 5-star live reviews campaign batch #4',
-    updated_at: new Date().toISOString(),
+  // Calculated Overall Metrics
+  const totalContractedSum = useMemo(() => billingRecords.reduce((acc, r) => acc + (r.total_amount || 0), 0), [billingRecords]);
+  const totalPaidSum = useMemo(() => billingRecords.reduce((acc, r) => acc + (r.paid_amount || 0), 0), [billingRecords]);
+  const totalPendingSum = useMemo(() => billingRecords.reduce((acc, r) => acc + (r.pending_amount || 0), 0), [billingRecords]);
+  const totalLiveReviewsLogged = useMemo(() => dailyLogs.reduce((acc, l) => acc + (l.live_count || 0), 0), [dailyLogs]);
+
+  // Current client specific billing if client mode
+  const currentClientBilling = useMemo(() => {
+    return billingRecords.find((r) => r.client_id === client?.id) || {
+      client_id: client?.id || '',
+      app_name: client?.app_name || client?.company_name || 'App Campaign',
+      excel_sheet_url: 'https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit',
+      total_amount: 120000,
+      paid_amount: 85000,
+      pending_amount: 35000,
+      notes: 'Pending balance for Play Store 5-star live reviews campaign batch #4',
+      updated_at: new Date().toISOString(),
+    };
+  }, [billingRecords, client]);
+
+  // Helper: Mark Month / Invoice as Paid by Super Admin
+  const handleMarkAsPaid = (targetClientId: string, invoiceId?: string) => {
+    if (invoiceId) {
+      dbEngine.updateInvoiceStatus(invoiceId, 'paid');
+    } else {
+      const record = billingRecords.find((r) => r.client_id === targetClientId);
+      if (record && record.pending_amount > 0) {
+        dbEngine.updateBillingRecord({
+          ...record,
+          paid_amount: record.paid_amount + record.pending_amount,
+          pending_amount: 0,
+          notes: 'Invoice marked as PAID by Admin',
+        });
+      }
+    }
+    refreshData();
   };
 
   // Helper: Open Edit Billing Modal
@@ -198,15 +224,22 @@ export function BillingPage() {
     });
   };
 
+  // Predefined Month Folders
+  const MONTH_FOLDERS = [
+    { key: '2026-08', label: 'August 2026', range: '01 Aug - 31 Aug 2026' },
+    { key: '2026-07', label: 'July 2026', range: '01 Jul - 31 Jul 2026' },
+    { key: '2026-06', label: 'June 2026', range: '01 Jun - 30 Jun 2026' },
+  ];
+
   return (
     <div className="space-y-6">
       {/* Top Header */}
       <PageHeader
-        title={isAdmin ? "Client Amounts & Play Store Live Tracker" : "My Invoices & Play Store Live Tracker"}
+        title={isAdmin ? "Client Amounts & Invoicing Workspace" : "My Account Invoices & Live Tracker"}
         subtitle={
           isAdmin
-            ? "Manage per-client pending amounts, Google Excel sheet links, daily Play Store live review activity, and official tax invoices."
-            : "Track your pending amount, live Play Store app activity by date, Google Excel sheet records, and official invoices."
+            ? "Per-client folder invoice system. Update amounts, manage Excel links, log Play Store daily live reviews, and mark payments as paid."
+            : "View your campaign folders, daily Play Store live activity breakdown, Excel sheet records, and official invoices."
         }
         action={
           isAdmin && (
@@ -234,9 +267,9 @@ export function BillingPage() {
         }
       />
 
-      {/* KPI Cards Summary Row */}
+      {/* Top Summary Metrics Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1: Outstanding Pending Amount */}
+        {/* Card 1: Total Outstanding Pending */}
         <div className={cn(
           "p-5 rounded-2xl border backdrop-blur transition shadow-sm",
           (isAdmin ? totalPendingSum > 0 : currentClientBilling.pending_amount > 0)
@@ -248,18 +281,36 @@ export function BillingPage() {
               <AlertTriangle className="w-5 h-5" />
             </span>
             <span className="text-[10px] px-2.5 py-0.5 rounded-full font-bold bg-rose-500/20 text-rose-600 dark:text-rose-300 border border-rose-500/30 uppercase">
-              Action Required
+              {isAdmin ? "Total Outstanding" : "My Balance Due"}
             </span>
           </div>
           <p className="mt-3 text-[10px] uppercase tracking-widest text-slate-500 dark:text-muted-foreground font-semibold">
-            {isAdmin ? "Total Outstanding Pending" : "My Pending Balance"}
+            Total Outstanding Pending
           </p>
           <p className="mt-1 text-2xl font-black tracking-tight text-slate-900 dark:text-white">
             ₹ {(isAdmin ? totalPendingSum : currentClientBilling.pending_amount).toLocaleString('en-IN')}
           </p>
         </div>
 
-        {/* Card 2: Total Contracted Amount */}
+        {/* Card 2: Total Payments Received */}
+        <div className="p-5 rounded-2xl bg-white dark:bg-black/40 border border-slate-200 dark:border-white/10 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 flex items-center justify-center font-bold">
+              <CheckCircle2 className="w-5 h-5" />
+            </span>
+            <span className="text-[10px] px-2.5 py-0.5 rounded-full font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 uppercase">
+              Received / Paid
+            </span>
+          </div>
+          <p className="mt-3 text-[10px] uppercase tracking-widest text-slate-500 dark:text-muted-foreground font-semibold">
+            Total Payment Cleared
+          </p>
+          <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">
+            ₹ {(isAdmin ? totalPaidSum : currentClientBilling.paid_amount).toLocaleString('en-IN')}
+          </p>
+        </div>
+
+        {/* Card 3: Total Contract Value */}
         <div className="p-5 rounded-2xl bg-white dark:bg-black/40 border border-slate-200 dark:border-white/10 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="w-10 h-10 rounded-xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center font-bold">
@@ -270,32 +321,14 @@ export function BillingPage() {
             </span>
           </div>
           <p className="mt-3 text-[10px] uppercase tracking-widest text-slate-500 dark:text-muted-foreground font-semibold">
-            {isAdmin ? "Total Agency Contract Value" : "My Total Campaign Amount"}
+            Total Agreed Contract
           </p>
           <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">
             ₹ {(isAdmin ? totalContractedSum : currentClientBilling.total_amount).toLocaleString('en-IN')}
           </p>
         </div>
 
-        {/* Card 3: Paid Amount */}
-        <div className="p-5 rounded-2xl bg-white dark:bg-black/40 border border-slate-200 dark:border-white/10 shadow-sm">
-          <div className="flex items-center justify-between">
-            <span className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 flex items-center justify-center font-bold">
-              <CheckCircle2 className="w-5 h-5" />
-            </span>
-            <span className="text-[10px] px-2.5 py-0.5 rounded-full font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 uppercase">
-              Cleared
-            </span>
-          </div>
-          <p className="mt-3 text-[10px] uppercase tracking-widest text-slate-500 dark:text-muted-foreground font-semibold">
-            {isAdmin ? "Total Payments Collected" : "Total Amount Paid"}
-          </p>
-          <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">
-            ₹ {(isAdmin ? totalPaidSum : currentClientBilling.paid_amount).toLocaleString('en-IN')}
-          </p>
-        </div>
-
-        {/* Card 4: Daily Live Reviews Logged */}
+        {/* Card 4: Total Live Reviews Count */}
         <div className="p-5 rounded-2xl bg-white dark:bg-black/40 border border-slate-200 dark:border-white/10 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 border border-amber-500/20 flex items-center justify-center font-bold">
@@ -306,7 +339,7 @@ export function BillingPage() {
             </span>
           </div>
           <p className="mt-3 text-[10px] uppercase tracking-widest text-slate-500 dark:text-muted-foreground font-semibold">
-            Play Store Live Reviews
+            Total Play Store Live Count
           </p>
           <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">
             {totalLiveReviewsLogged.toLocaleString('en-IN')} <span className="text-xs text-slate-400 font-normal">units</span>
@@ -314,405 +347,371 @@ export function BillingPage() {
         </div>
       </div>
 
-      {/* Client View Prominent Excel Banner */}
-      {!isAdmin && (
-        <div className="p-6 rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-500/20 to-primary/10 border border-amber-500/30 shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-amber-500 text-slate-950 flex items-center justify-center font-bold shrink-0 shadow-md">
-              <FileSpreadsheet className="w-6 h-6" />
-            </div>
-            <div>
-              <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
-                Play Store Live Activity & Review Excel Sheet
-              </h3>
-              <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 font-medium max-w-2xl">
-                Super Admin updates your daily live review count, rating release status, and Excel sheet link here. Click below to view live raw campaign data directly in Google Sheets.
-              </p>
-              {currentClientBilling.notes && (
-                <div className="mt-2 text-xs font-semibold text-amber-700 dark:text-amber-300 bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-lg inline-block">
-                  📌 Admin Note: {currentClientBilling.notes}
+      {/* Filter Bar (Month & Status Filter) */}
+      <div className="p-4 rounded-2xl bg-white dark:bg-black/40 border border-slate-200 dark:border-white/10 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+          <span className="text-xs font-bold text-slate-500 flex items-center gap-1.5 pr-2 border-r border-slate-200 dark:border-white/10 shrink-0">
+            <Filter className="w-3.5 h-3.5 text-primary" /> Filter Month:
+          </span>
+          <button
+            onClick={() => setSelectedMonth('ALL')}
+            className={cn(
+              "px-3 py-1.5 rounded-xl text-xs font-bold transition shrink-0",
+              selectedMonth === 'ALL'
+                ? "bg-primary text-slate-950 shadow-sm"
+                : "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10"
+            )}
+          >
+            All Months
+          </button>
+          {MONTH_FOLDERS.map((m) => (
+            <button
+              key={m.key}
+              onClick={() => setSelectedMonth(m.key)}
+              className={cn(
+                "px-3 py-1.5 rounded-xl text-xs font-bold transition shrink-0 flex items-center gap-1.5",
+                selectedMonth === m.key
+                  ? "bg-primary text-slate-950 shadow-sm"
+                  : "bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10"
+              )}
+            >
+              <Calendar className="w-3.5 h-3.5" /> {m.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-xs font-bold text-slate-500">Status:</span>
+          <select
+            value={selectedStatusFilter}
+            onChange={(e) => setSelectedStatusFilter(e.target.value as any)}
+            className="px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-black/40 text-slate-900 dark:text-white font-bold"
+          >
+            <option value="ALL">All Status</option>
+            <option value="PENDING">Pending Balance Only</option>
+            <option value="PAID">Paid / Cleared Only</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Main Per-Client & App Month Folder Grid */}
+      <div className="space-y-6">
+        {displayClients.map((c) => {
+          const bRecord = billingRecords.find((r) => r.client_id === c.id) || {
+            client_id: c.id,
+            app_name: c.app_name || c.company_name,
+            excel_sheet_url: 'https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit',
+            total_amount: 120000,
+            paid_amount: 85000,
+            pending_amount: 35000,
+            notes: 'Pending ₹35,000 for Play Store 5-star live reviews batch #4',
+            updated_at: new Date().toISOString(),
+          };
+
+          const clientLogs = dailyLogs.filter((l) => l.client_id === c.id);
+          const clientInvoices = invoices.filter((i) => i.client_id === c.id);
+
+          const hasPending = bRecord.pending_amount > 0;
+
+          if (selectedStatusFilter === 'PENDING' && !hasPending) return null;
+          if (selectedStatusFilter === 'PAID' && hasPending) return null;
+
+          return (
+            <div
+              key={c.id}
+              className="bg-white dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-3xl p-6 shadow-sm space-y-6 transition hover:border-primary/30"
+            >
+              {/* App / Client Header Bar */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-white/10">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center text-slate-950 font-bold shrink-0 shadow-md overflow-hidden">
+                    {c.app_icon_url ? (
+                      <img src={c.app_icon_url} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <Building2 className="w-6 h-6" />
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                      {c.company_name}
+                      {hasPending ? (
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 uppercase">
+                          Pending: ₹{bRecord.pending_amount.toLocaleString('en-IN')}
+                        </span>
+                      ) : (
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 uppercase">
+                          Paid / Cleared
+                        </span>
+                      )}
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                      App: {c.app_name || 'Play Store App'} · Email: {c.email}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 shrink-0">
+                  {bRecord.excel_sheet_url && (
+                    <a
+                      href={bRecord.excel_sheet_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-xs hover:bg-emerald-500/20 transition border border-emerald-500/20 shadow-sm"
+                    >
+                      <FileSpreadsheet className="w-4 h-4" /> Open Admin Excel Sheet ↗
+                    </a>
+                  )}
+
+                  {isAdmin && (
+                    <>
+                      <button
+                        onClick={() => handleOpenEditBilling(bRecord)}
+                        className="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-white/10 hover:bg-primary/20 text-slate-800 dark:text-white font-bold text-xs transition border border-slate-200 dark:border-white/10"
+                      >
+                        <Edit className="w-3.5 h-3.5 inline mr-1" /> Edit Amounts
+                      </button>
+
+                      {hasPending && (
+                        <button
+                          onClick={() => handleMarkAsPaid(c.id)}
+                          className="px-4 py-2 rounded-xl bg-emerald-500 text-slate-950 hover:bg-emerald-400 transition font-black text-xs shadow-md"
+                        >
+                          ✓ Mark as Paid
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Financial Progress Bar */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200/60 dark:border-white/5 text-xs font-semibold">
+                <div>
+                  <span className="text-slate-400 uppercase text-[10px] font-extrabold">Agreed Contract Amount</span>
+                  <p className="text-base font-black text-slate-900 dark:text-white mt-0.5">₹ {bRecord.total_amount.toLocaleString('en-IN')}</p>
+                </div>
+                <div>
+                  <span className="text-slate-400 uppercase text-[10px] font-extrabold">Amount Paid so far</span>
+                  <p className="text-base font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">₹ {bRecord.paid_amount.toLocaleString('en-IN')}</p>
+                </div>
+                <div>
+                  <span className="text-slate-400 uppercase text-[10px] font-extrabold">Remaining Pending Balance</span>
+                  <p className={cn("text-base font-black mt-0.5", hasPending ? "text-rose-600 dark:text-rose-400" : "text-emerald-500")}>
+                    ₹ {bRecord.pending_amount.toLocaleString('en-IN')}
+                  </p>
+                </div>
+              </div>
+
+              {/* Month Folders Container */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-xs font-extrabold text-slate-500 uppercase tracking-wider">
+                  <span className="flex items-center gap-1.5">
+                    <Folder className="w-4 h-4 text-amber-500" /> Monthly Report Folders (1st to Last Date)
+                  </span>
+                  <span>Click folder to open date-wise breakdown</span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {MONTH_FOLDERS.filter((m) => selectedMonth === 'ALL' || selectedMonth === m.key).map((m) => {
+                    const monthLogs = clientLogs.filter((l) => l.date.startsWith(m.key));
+                    const monthLiveSum = monthLogs.reduce((acc, l) => acc + l.live_count, 0);
+                    const monthCostSum = monthLogs.reduce((acc, l) => acc + l.total_amount, 0);
+
+                    return (
+                      <button
+                        key={m.key}
+                        type="button"
+                        onClick={() => setActiveFolderModal({ clientObj: c, monthKey: m.key, monthLabel: m.label })}
+                        className="group flex flex-col justify-between p-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-black/30 hover:border-amber-500/50 hover:bg-amber-500/5 transition text-left shadow-sm"
+                      >
+                        <div className="flex items-start justify-between w-full">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-500 flex items-center justify-center group-hover:scale-110 transition shrink-0">
+                              <FolderOpen className="w-5 h-5" />
+                            </div>
+                            <div>
+                              <h4 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-amber-500 transition">
+                                {m.label}
+                              </h4>
+                              <p className="text-[10px] text-slate-400 font-medium">{m.range}</p>
+                            </div>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-amber-500 transition" />
+                        </div>
+
+                        <div className="mt-4 pt-3 border-t border-slate-200 dark:border-white/10 flex items-center justify-between text-xs w-full font-bold">
+                          <span className="text-slate-500 dark:text-slate-400">
+                            {monthLiveSum} Live Reviews
+                          </span>
+                          <span className="text-amber-600 dark:text-amber-400">
+                            ₹ {monthCostSum.toLocaleString('en-IN')}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Invoices List for this Client */}
+              {clientInvoices.length > 0 && (
+                <div className="pt-2 border-t border-slate-200 dark:border-white/10 space-y-2">
+                  <div className="text-xs font-extrabold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                    <Receipt className="w-4 h-4 text-primary" /> Generated Tax Invoices
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {clientInvoices.map((inv) => (
+                      <div
+                        key={inv.id}
+                        className="p-3.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.02] flex items-center justify-between text-xs font-bold"
+                      >
+                        <div>
+                          <div className="font-mono text-primary">{inv.invoice_number}</div>
+                          <div className="text-slate-500 text-[10px]">{inv.invoice_date} · Due: {inv.due_date}</div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-slate-900 dark:text-white">₹ {inv.grand_total.toLocaleString('en-IN')}</span>
+                          <span className={cn(
+                            "px-2 py-0.5 rounded text-[9px] uppercase font-bold",
+                            inv.status === 'paid' ? "bg-emerald-500/15 text-emerald-500" : "bg-amber-500/15 text-amber-500"
+                          )}>
+                            {inv.status}
+                          </span>
+                          <button
+                            onClick={() => handleOpenPdfModal(inv)}
+                            className="p-1 text-slate-400 hover:text-primary transition"
+                            title="View / Print PDF"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
-          </div>
-          <a
-            href={currentClientBilling.excel_sheet_url || '#'}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 px-5 py-3 rounded-xl bg-amber-500 text-slate-950 font-black text-xs hover:bg-amber-400 transition shrink-0 shadow-md gold-glow"
-          >
-            Open Official Excel Sheet <ArrowUpRight className="w-4 h-4" />
-          </a>
-        </div>
-      )}
-
-      {/* Tabs Bar */}
-      <div className="flex items-center gap-2 border-b border-slate-200 dark:border-white/10 pb-1">
-        <button
-          onClick={() => setActiveTab('overview')}
-          className={cn(
-            "px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2",
-            activeTab === 'overview'
-              ? "bg-primary/15 text-primary border border-primary/30"
-              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-          )}
-        >
-          <Building2 className="w-4 h-4" /> {isAdmin ? "Client Amounts & Excel Registry" : "Financial Overview & Sheet"}
-        </button>
-        <button
-          onClick={() => setActiveTab('live_logs')}
-          className={cn(
-            "px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2",
-            activeTab === 'live_logs'
-              ? "bg-primary/15 text-primary border border-primary/30"
-              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-          )}
-        >
-          <FileSpreadsheet className="w-4 h-4" /> Daily Live Reviews Log ({dailyLogs.length})
-        </button>
-        <button
-          onClick={() => setActiveTab('invoices')}
-          className={cn(
-            "px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2",
-            activeTab === 'invoices'
-              ? "bg-primary/15 text-primary border border-primary/30"
-              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-          )}
-        >
-          <Receipt className="w-4 h-4" /> Tax Invoices ({invoices.length})
-        </button>
+          );
+        })}
       </div>
 
-      {/* Tab 1: Client Amounts & Excel Registry */}
-      {activeTab === 'overview' && (
-        <div className="bg-white dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl p-5 shadow-sm space-y-4">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-white/10">
-            <div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                {isAdmin ? "Client Accounts Financial & Excel Master Sheet" : "My Account Financial Summary"}
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                {isAdmin
-                  ? "Update contract amount, collected payment, pending balance, and Excel sheet links for each client."
-                  : "View agreed contract amount, payments processed, and current pending balance."}
-              </p>
-            </div>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs font-medium">
-              <thead className="bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 text-[10px] uppercase font-extrabold tracking-wider border-b border-slate-200 dark:border-white/10">
-                <tr>
-                  <th className="p-3">Client Account & App</th>
-                  <th className="p-3">Excel Data Link</th>
-                  <th className="p-3 text-right">Total Amount</th>
-                  <th className="p-3 text-right">Paid Amount</th>
-                  <th className="p-3 text-right">Pending Amount</th>
-                  <th className="p-3">Notes / Status</th>
-                  {isAdmin && <th className="p-3 text-center">Action</th>}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-white/10 text-slate-800 dark:text-slate-200">
-                {(isAdmin ? nonAdminClients : [client!]).map((c) => {
-                  const bRecord = billingRecords.find((r) => r.client_id === c.id) || {
-                    client_id: c.id,
-                    app_name: c.app_name || c.company_name,
-                    excel_sheet_url: 'https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit',
-                    total_amount: 100000,
-                    paid_amount: 60000,
-                    pending_amount: 40000,
-                    notes: 'Play Store campaign in progress',
-                    updated_at: new Date().toISOString(),
-                  };
-
-                  const hasPending = bRecord.pending_amount > 0;
-
-                  return (
-                    <tr key={c.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition">
-                      <td className="p-3">
-                        <div className="flex items-center gap-3">
-                          {c.app_icon_url ? (
-                            <img src={c.app_icon_url} alt="" className="w-8 h-8 rounded-lg object-cover border border-slate-200 dark:border-white/10" />
-                          ) : (
-                            <div className="w-8 h-8 rounded-lg bg-primary/20 text-primary flex items-center justify-center font-bold text-xs">
-                              {c.company_name.charAt(0)}
-                            </div>
-                          )}
-                          <div>
-                            <div className="font-bold text-slate-900 dark:text-white text-xs">{c.company_name}</div>
-                            <div className="text-[10px] text-slate-400 font-normal">{c.app_name || c.email}</div>
-                          </div>
-                        </div>
-                      </td>
-
-                      <td className="p-3">
-                        {bRecord.excel_sheet_url ? (
-                          <a
-                            href={bRecord.excel_sheet_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold hover:bg-emerald-500/20 transition border border-emerald-500/20"
-                          >
-                            <FileSpreadsheet className="w-3.5 h-3.5" /> Open Excel ↗
-                          </a>
-                        ) : (
-                          <span className="text-slate-400 text-[10px]">No link added</span>
-                        )}
-                      </td>
-
-                      <td className="p-3 text-right font-bold text-slate-900 dark:text-white">
-                        ₹ {bRecord.total_amount.toLocaleString('en-IN')}
-                      </td>
-
-                      <td className="p-3 text-right font-bold text-emerald-600 dark:text-emerald-400">
-                        ₹ {bRecord.paid_amount.toLocaleString('en-IN')}
-                      </td>
-
-                      <td className="p-3 text-right font-black">
-                        <span className={cn(
-                          "px-2 py-0.5 rounded-md",
-                          hasPending ? "bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30" : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
-                        )}>
-                          ₹ {bRecord.pending_amount.toLocaleString('en-IN')}
-                        </span>
-                      </td>
-
-                      <td className="p-3 max-w-xs truncate text-[11px] text-slate-500 dark:text-slate-400 font-normal">
-                        {bRecord.notes || '—'}
-                      </td>
-
-                      {isAdmin && (
-                        <td className="p-3 text-center">
-                          <button
-                            onClick={() => handleOpenEditBilling(bRecord)}
-                            className="px-3 py-1 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition font-bold text-xs border border-primary/20"
-                          >
-                            <Edit className="w-3.5 h-3.5 inline mr-1" /> Edit Amount
-                          </button>
-                        </td>
-                      )}
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* Tab 2: Daily Play Store Live Reviews Log */}
-      {activeTab === 'live_logs' && (
-        <div className="bg-white dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl p-5 shadow-sm space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-200 dark:border-white/10">
-            <div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                Play Store Daily Live Review Activity Log
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Date-wise breakdown of live reviews published on Google Play Store with unit rates and cost breakdown.
-              </p>
-            </div>
-            {isAdmin && (
+      {/* Month Folder Detailed Popup / Modal */}
+      {activeFolderModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="w-full max-w-4xl rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-white/10 dark:bg-slate-900 space-y-5 animate-float-up my-8">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-4 dark:border-white/10">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500 text-slate-950 flex items-center justify-center font-bold shadow-md">
+                  <FolderOpen className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+                    {activeFolderModal.clientObj.company_name} — {activeFolderModal.monthLabel}
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                    Date-wise breakdown of live reviews published on Google Play Store from 1st to last date of month.
+                  </p>
+                </div>
+              </div>
               <button
-                onClick={() => {
-                  setLogClientId(nonAdminClients[0]?.id || '');
-                  setShowAddLogModal(true);
-                }}
-                className="px-3 py-1.5 rounded-xl bg-primary text-slate-950 font-bold text-xs hover:bg-primary/90 transition shadow-sm"
+                onClick={() => setActiveFolderModal(null)}
+                className="rounded-xl p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-white/10 dark:hover:text-white"
               >
-                + Add Live Entry
+                <X className="h-5 w-5" />
               </button>
-            )}
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs font-medium">
-              <thead className="bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 text-[10px] uppercase font-extrabold tracking-wider border-b border-slate-200 dark:border-white/10">
-                <tr>
-                  <th className="p-3">Date</th>
-                  <th className="p-3">Client & App Name</th>
-                  <th className="p-3 text-right">Live Reviews Count</th>
-                  <th className="p-3 text-right">Unit Rate</th>
-                  <th className="p-3 text-right">Total Amount</th>
-                  <th className="p-3">Status</th>
-                  <th className="p-3">Notes</th>
-                  {isAdmin && <th className="p-3 text-center">Action</th>}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-white/10 text-slate-800 dark:text-slate-200">
-                {dailyLogs.length === 0 ? (
-                  <tr>
-                    <td colSpan={8} className="p-6 text-center text-slate-400 text-xs">
-                      No live logs recorded yet.
-                    </td>
-                  </tr>
-                ) : (
-                  dailyLogs.map((log) => {
-                    const cObj = clients.find((c) => c.id === log.client_id);
-                    return (
-                      <tr key={log.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition">
-                        <td className="p-3 font-bold text-slate-900 dark:text-white">
-                          <span className="flex items-center gap-1.5">
-                            <Calendar className="w-3.5 h-3.5 text-amber-500" /> {log.date}
-                          </span>
-                        </td>
-                        <td className="p-3">
-                          <div className="font-bold text-slate-900 dark:text-white">{cObj?.company_name || 'Client App'}</div>
-                          <div className="text-[10px] text-slate-400 truncate">{log.app_name}</div>
-                        </td>
-                        <td className="p-3 text-right font-black text-amber-600 dark:text-amber-400">
-                          {log.live_count} Live Reviews
-                        </td>
-                        <td className="p-3 text-right text-slate-500">
-                          ₹ {log.unit_price} / unit
-                        </td>
-                        <td className="p-3 text-right font-bold text-slate-900 dark:text-white">
-                          ₹ {log.total_amount.toLocaleString('en-IN')}
-                        </td>
-                        <td className="p-3">
-                          <span className={cn(
-                            "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border",
-                            log.status === 'Live'
-                              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
-                              : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30"
-                          )}>
-                            {log.status}
-                          </span>
-                        </td>
-                        <td className="p-3 max-w-xs text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                          {log.notes || '—'}
-                        </td>
-                        {isAdmin && (
-                          <td className="p-3 text-center">
-                            <button
-                              onClick={() => {
-                                dbEngine.deleteDailyLiveLog(log.id);
-                                refreshData();
-                              }}
-                              className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-500/10 transition"
-                              title="Delete Log Entry"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </td>
-                        )}
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* Tab 3: Tax Invoices */}
-      {activeTab === 'invoices' && (
-        <div className="bg-white dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-2xl p-5 shadow-sm space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-200 dark:border-white/10">
-            <div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                Official Tax Invoices &amp; Receipts
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Download or print itemized tax invoices for Play Store review campaigns and ORM subscription services.
-              </p>
             </div>
-            {isAdmin && (
-              <button
-                onClick={() => {
-                  setInvClientId(nonAdminClients[0]?.id || '');
-                  setShowAddInvoiceModal(true);
-                }}
-                className="px-3.5 py-2 rounded-xl bg-primary text-slate-950 font-bold text-xs hover:bg-primary/90 transition shadow-sm gold-glow"
-              >
-                + Create New Invoice
-              </button>
-            )}
-          </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs font-medium">
-              <thead className="bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 text-[10px] uppercase font-extrabold tracking-wider border-b border-slate-200 dark:border-white/10">
-                <tr>
-                  <th className="p-3">Invoice #</th>
-                  <th className="p-3">Billed Client</th>
-                  <th className="p-3">Invoice Date</th>
-                  <th className="p-3">Due Date</th>
-                  <th className="p-3 text-right">Grand Total</th>
-                  <th className="p-3">Status</th>
-                  <th className="p-3 text-center">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-white/10 text-slate-800 dark:text-slate-200">
-                {invoices.length === 0 ? (
+            {/* Folder Date-Wise Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs font-medium">
+                <thead className="bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 text-[10px] uppercase font-extrabold tracking-wider border-b border-slate-200 dark:border-white/10">
                   <tr>
-                    <td colSpan={7} className="p-6 text-center text-slate-400 text-xs">
-                      No invoices created yet.
-                    </td>
+                    <th className="p-3">Date</th>
+                    <th className="p-3">App Name</th>
+                    <th className="p-3 text-right">Live Count</th>
+                    <th className="p-3 text-right">Rate / Review</th>
+                    <th className="p-3 text-right">Daily Cost</th>
+                    <th className="p-3">Live Status</th>
+                    <th className="p-3">Excel Sheet Link</th>
                   </tr>
-                ) : (
-                  invoices.map((inv) => (
-                    <tr key={inv.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition">
-                      <td className="p-3 font-mono font-bold text-primary">
-                        {inv.invoice_number}
-                      </td>
-                      <td className="p-3">
-                        <div className="font-bold text-slate-900 dark:text-white">{inv.client_name}</div>
-                        <div className="text-[10px] text-slate-400">{inv.client_email}</div>
-                      </td>
-                      <td className="p-3 text-slate-600 dark:text-slate-400">{inv.invoice_date}</td>
-                      <td className="p-3 text-slate-600 dark:text-slate-400">{inv.due_date}</td>
-                      <td className="p-3 text-right font-black text-slate-900 dark:text-white">
-                        ₹ {inv.grand_total.toLocaleString('en-IN')}
-                      </td>
-                      <td className="p-3">
-                        <span className={cn(
-                          "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border",
-                          inv.status === 'paid'
-                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
-                            : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30"
-                        )}>
-                          {inv.status}
-                        </span>
-                      </td>
-                      <td className="p-3 text-center">
-                        <div className="flex items-center justify-center gap-2">
-                          <button
-                            onClick={() => handleOpenPdfModal(inv)}
-                            className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-white/10 hover:bg-primary/20 text-slate-700 dark:text-slate-200 hover:text-primary transition font-bold text-[11px] flex items-center gap-1"
-                          >
-                            <Eye className="w-3.5 h-3.5" /> View / Print PDF
-                          </button>
-                          {isAdmin && inv.status !== 'paid' && (
-                            <button
-                              onClick={() => {
-                                dbEngine.updateInvoiceStatus(inv.id, 'paid');
-                                refreshData();
-                              }}
-                              className="px-2 py-1 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/25 transition font-bold text-[11px]"
-                            >
-                              Mark Paid
-                            </button>
-                          )}
-                          {isAdmin && (
-                            <button
-                              onClick={() => {
-                                dbEngine.deleteInvoice(inv.id);
-                                refreshData();
-                              }}
-                              className="p-1 text-rose-500 hover:bg-rose-500/10 rounded-lg"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          )}
-                        </div>
+                </thead>
+                <tbody className="divide-y divide-slate-200 dark:divide-white/10 text-slate-800 dark:text-slate-200">
+                  {dailyLogs
+                    .filter((l) => l.client_id === activeFolderModal.clientObj.id && l.date.startsWith(activeFolderModal.monthKey))
+                    .length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="p-6 text-center text-slate-400 text-xs">
+                        No daily logs recorded for {activeFolderModal.monthLabel} yet.
                       </td>
                     </tr>
-                  ))
+                  ) : (
+                    dailyLogs
+                      .filter((l) => l.client_id === activeFolderModal.clientObj.id && l.date.startsWith(activeFolderModal.monthKey))
+                      .map((log) => {
+                        const bRec = billingRecords.find((r) => r.client_id === activeFolderModal.clientObj.id);
+                        return (
+                          <tr key={log.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition">
+                            <td className="p-3 font-bold text-slate-900 dark:text-white">
+                              <span className="flex items-center gap-1.5">
+                                <Calendar className="w-3.5 h-3.5 text-amber-500" /> {log.date}
+                              </span>
+                            </td>
+                            <td className="p-3 font-bold text-slate-900 dark:text-white">{log.app_name}</td>
+                            <td className="p-3 text-right font-black text-amber-600 dark:text-amber-400">{log.live_count} Live</td>
+                            <td className="p-3 text-right text-slate-500">₹ {log.unit_price}</td>
+                            <td className="p-3 text-right font-bold text-slate-900 dark:text-white">₹ {log.total_amount.toLocaleString('en-IN')}</td>
+                            <td className="p-3">
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-500 uppercase">
+                                {log.status}
+                              </span>
+                            </td>
+                            <td className="p-3">
+                              {bRec?.excel_sheet_url ? (
+                                <a
+                                  href={bRec.excel_sheet_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-500 text-[10px] font-bold hover:bg-emerald-500/20"
+                                >
+                                  Open Excel ↗
+                                </a>
+                              ) : (
+                                <span className="text-slate-400 text-[10px]">No link</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-white/10">
+              <div className="text-xs font-bold text-slate-500">
+                Total Live for Month: {dailyLogs.filter((l) => l.client_id === activeFolderModal.clientObj.id && l.date.startsWith(activeFolderModal.monthKey)).reduce((acc, l) => acc + l.live_count, 0)} units
+              </div>
+              <div className="flex items-center gap-2">
+                {isAdmin && (
+                  <button
+                    onClick={() => {
+                      handleMarkAsPaid(activeFolderModal.clientObj.id);
+                      setActiveFolderModal(null);
+                    }}
+                    className="px-4 py-2 rounded-xl bg-emerald-500 text-slate-950 font-black text-xs hover:bg-emerald-400 transition"
+                  >
+                    ✓ Mark Month as Paid
+                  </button>
                 )}
-              </tbody>
-            </table>
+                <button
+                  onClick={() => setActiveFolderModal(null)}
+                  className="px-4 py-2 rounded-xl border border-slate-300 dark:border-white/10 text-xs font-bold text-slate-700 dark:text-slate-300"
+                >
+                  Close Folder
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -722,7 +721,7 @@ export function BillingPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto">
           <div className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-white/10 dark:bg-slate-900 space-y-4 animate-float-up">
             <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-              Update Client Amount &amp; Excel Link
+              Update Client Amounts &amp; Excel Sheet Link
             </h3>
             <form onSubmit={handleSaveBilling} className="space-y-4">
               <div>
