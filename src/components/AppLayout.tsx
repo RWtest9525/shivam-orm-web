@@ -541,12 +541,7 @@ export function PageHeader({
   return (
     <div className="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
       <div>
-        <div className="flex items-center gap-2 text-[11px] font-bold text-slate-500 dark:text-slate-400">
-          <span>Equinox Pulse</span>
-          <span className="text-amber-500">/</span>
-          <span className="text-amber-600 dark:text-amber-400">{title}</span>
-        </div>
-        <h1 className="mt-1 text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl">
+        <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl">
           {title}
         </h1>
         {subtitle && <p className="mt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium">{subtitle}</p>}
