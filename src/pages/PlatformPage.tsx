@@ -201,14 +201,14 @@ export function PlatformPage() {
             <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0" />
             <div>
               <p className="text-xs font-black text-amber-900 dark:text-amber-200">Platform Not Connected</p>
-              <p className="text-xs font-bold text-amber-700 dark:text-amber-400">Connect your API key or account in Settings to start receiving live reviews.</p>
+              <p className="text-xs font-bold text-amber-700 dark:text-amber-400">Connect your API key or account in Integrations &amp; APIs to start receiving live reviews.</p>
             </div>
           </div>
           <Link
-            to="/app/settings"
+            to="/app/integrations"
             className="rounded-xl border border-amber-400 bg-amber-200 px-3.5 py-2 text-xs font-black text-amber-950 transition hover:bg-amber-300 dark:border-amber-500/40 dark:bg-amber-500/20 dark:text-amber-200"
           >
-            Configure API Key →
+            Configure Integrations &amp; APIs →
           </Link>
         </div>
       ) : (

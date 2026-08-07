@@ -18,7 +18,7 @@ export function OAuthCallbackPage() {
     if (account) params.set('account', account);
     if (error) params.set('error', error);
 
-    navigate(`/app/settings?${params.toString()}`, { replace: true });
+    navigate(`/app/integrations?${params.toString()}`, { replace: true });
   }, [searchParams, navigate]);
 
   return (

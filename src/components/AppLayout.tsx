@@ -48,7 +48,6 @@ export const APP_NAV_ITEMS: NavItemDef[] = [
   { key: 'voice_of_market', label: 'Voice of Market', to: '/app/voice-of-market', icon: Mic, group: 'Monitoring' },
   { key: 'integrations', label: 'Integrations & APIs', to: '/app/integrations', icon: Cable, group: 'Executive' },
   { key: 'reports', label: 'Reports & Exports', to: '/app/reports', icon: FileBarChart2, group: 'Executive' },
-  { key: 'settings', label: 'Settings', to: '/app/settings', icon: Settings, group: 'Executive' },
 ];
 
 export function AppLayout({ children }: { children: ReactNode }) {
