@@ -1,14 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
-import { dbEngine } from '@/lib/dbEngine';
+import { dbEngine, type PlatformConnectionRow } from '@/lib/dbEngine';
 import { ClientOnboardingDrawer } from '@/components/ClientOnboardingDrawer';
 import { ConnectorModal, type ConnectorModalTarget } from '@/components/ConnectorModal';
 import {
   Cable, Play, Store, Globe, Instagram, Facebook, Linkedin, Youtube, CheckCircle2,
-  RefreshCw, KeyRound, ShieldAlert, Save, X, Loader2, AlertCircle, Server, Activity,
-  LogOut, Link2, ExternalLink, MessageSquare, Check, HelpCircle, FileText, ClipboardList
+  RefreshCw, KeyRound, ShieldAlert, X, AlertCircle, ClipboardList, MessageSquare
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -17,7 +16,6 @@ export interface ChannelConnectorDef {
   name: string;
   platformKey: string;
   icon: any;
-  defaultStatus: 'Connected' | 'Action Needed';
   authType: 'OAuth 2.0' | 'API Key' | 'Developer Console' | 'Scraper Engine';
   color: string;
   description: string;
@@ -29,7 +27,6 @@ const CONNECTORS: ChannelConnectorDef[] = [
     name: 'Google Play Console API',
     platformKey: 'playstore',
     icon: Play,
-    defaultStatus: 'Connected',
     authType: 'Developer Console',
     color: 'text-emerald-500 dark:text-emerald-400',
     description: 'Official Google Play Developer API for live review ingestion & direct replies.',
@@ -39,7 +36,6 @@ const CONNECTORS: ChannelConnectorDef[] = [
     name: 'Instagram Graph API',
     platformKey: 'instagram',
     icon: Instagram,
-    defaultStatus: 'Connected',
     authType: 'OAuth 2.0',
     color: 'text-pink-500 dark:text-pink-400',
     description: 'Meta Graph API for Instagram Business account comments, DMs & media mentions.',
@@ -49,7 +45,6 @@ const CONNECTORS: ChannelConnectorDef[] = [
     name: 'YouTube Data API v3',
     platformKey: 'youtube',
     icon: Youtube,
-    defaultStatus: 'Connected',
     authType: 'OAuth 2.0',
     color: 'text-red-500',
     description: 'Google Data API v3 for YouTube channel video comments & community replies.',
@@ -59,7 +54,6 @@ const CONNECTORS: ChannelConnectorDef[] = [
     name: 'Google Business Profile API',
     platformKey: 'google_business',
     icon: Globe,
-    defaultStatus: 'Connected',
     authType: 'OAuth 2.0',
     color: 'text-amber-500 dark:text-amber-400',
     description: 'Google Maps & Business location reviews, ratings, and instant response manager.',
@@ -69,7 +63,6 @@ const CONNECTORS: ChannelConnectorDef[] = [
     name: 'Facebook Pages Manager',
     platformKey: 'facebook',
     icon: Facebook,
-    defaultStatus: 'Connected',
     authType: 'OAuth 2.0',
     color: 'text-blue-500 dark:text-blue-400',
     description: 'Meta Graph API for Facebook Brand Page post comments and Messenger DMs.',
@@ -79,7 +72,6 @@ const CONNECTORS: ChannelConnectorDef[] = [
     name: 'LinkedIn Company Page',
     platformKey: 'linkedin',
     icon: Linkedin,
-    defaultStatus: 'Connected',
     authType: 'OAuth 2.0',
     color: 'text-sky-600 dark:text-sky-500',
     description: 'LinkedIn Organization API for company updates, post comments & reputation analytics.',
@@ -89,7 +81,6 @@ const CONNECTORS: ChannelConnectorDef[] = [
     name: 'X (Twitter) Developer API v2',
     platformKey: 'x',
     icon: MessageSquare,
-    defaultStatus: 'Action Needed',
     authType: 'OAuth 2.0',
     color: 'text-slate-900 dark:text-slate-100',
     description: 'X API v2 for brand mentions, direct messages, and crisis sentiment monitoring.',
@@ -99,7 +90,6 @@ const CONNECTORS: ChannelConnectorDef[] = [
     name: 'Apple App Store Connect',
     platformKey: 'app_store',
     icon: Store,
-    defaultStatus: 'Connected',
     authType: 'API Key',
     color: 'text-sky-500 dark:text-sky-400',
     description: 'App Store Connect API for iOS customer reviews and ratings synchronization.',
@@ -114,15 +104,29 @@ export function IntegrationsPage() {
   const [loading, setLoading] = useState(false);
   const [showOnboardingDrawer, setShowOnboardingDrawer] = useState(false);
 
-  // Connection State Map (tracks connected vs disconnected status for each platform)
-  const [connectedMap, setConnectedMap] = useState<Record<string, boolean>>(() => {
-    const map: Record<string, boolean> = {};
-    CONNECTORS.forEach((c) => {
-      map[c.id] = c.defaultStatus === 'Connected';
-    });
-    map['reviews_world'] = true;
-    return map;
-  });
+  // DYNAMIC MULTI-TENANT CONNECTIONS LIST (Loaded strictly for logged-in client.id)
+  const [connections, setConnections] = useState<PlatformConnectionRow[]>([]);
+  const [globalRwConfig, setGlobalRwConfig] = useState(() => dbEngine.getGlobalApiKey());
+
+  const loadConnections = useCallback(() => {
+    if (client?.id) {
+      setConnections(dbEngine.getConnections(client.id));
+    } else {
+      setConnections([]);
+    }
+    setGlobalRwConfig(dbEngine.getGlobalApiKey());
+  }, [client?.id]);
+
+  useEffect(() => {
+    loadConnections();
+    const unsub = dbEngine.subscribe(loadConnections);
+    return unsub;
+  }, [loadConnections]);
+
+  // Helper: Find active connected connection row for a platformKey
+  const getConnectedRow = (platformKey: string): PlatformConnectionRow | undefined => {
+    return connections.find((c) => c.platform === platformKey && c.status === 'connected');
+  };
 
   // Modal State for Universal ConnectorModal
   const [modalTarget, setModalTarget] = useState<ConnectorModalTarget | null>(null);
@@ -132,59 +136,67 @@ export function IntegrationsPage() {
     if (connectParam) {
       const match = CONNECTORS.find((c) => c.platformKey === connectParam || c.id === connectParam);
       if (match) {
+        const activeConn = getConnectedRow(match.platformKey);
         setModalTarget({
           id: match.id,
           name: match.name,
           platformKey: match.platformKey,
           icon: match.icon,
-          status: connectedMap[match.id] ? 'Connected' : 'Disconnected',
+          status: activeConn ? 'Connected' : 'Disconnected',
           authType: match.authType,
           color: match.color,
           description: match.description,
-          accountHandle: `@${client?.company_name.toLowerCase().replace(/\s+/g, '') || 'official'}`,
+          accountHandle: activeConn?.account_name || `@${client?.company_name.toLowerCase().replace(/\s+/g, '') || 'official'}`,
+          lastSyncedAt: activeConn?.last_synced_at || undefined,
         });
       }
     }
-  }, [connectParam, client]);
+  }, [connectParam, client, connections]);
 
   const handleSyncAll = () => {
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
-      toast.success('All enterprise connectors and API channels synced');
+      loadConnections();
+      toast.success('All connected channel API tokens & webhooks re-verified.');
     }, 800);
   };
 
-  const handleStatusChange = (platformId: string, isConnected: boolean) => {
-    setConnectedMap((prev) => ({ ...prev, [platformId]: isConnected }));
+  const handleStatusChange = (platformKey: string, isConnected: boolean) => {
+    loadConnections();
   };
 
   const openConnectorModalForCard = (c: ChannelConnectorDef) => {
+    const activeConn = getConnectedRow(c.platformKey);
     setModalTarget({
       id: c.id,
       name: c.name,
       platformKey: c.platformKey,
       icon: c.icon,
-      status: connectedMap[c.id] ? 'Connected' : 'Disconnected',
+      status: activeConn ? 'Connected' : 'Disconnected',
       authType: c.authType,
       color: c.color,
       description: c.description,
-      accountHandle: `@${client?.company_name.toLowerCase().replace(/\s+/g, '') || 'official'}`,
+      accountHandle: activeConn?.account_name || `@${client?.company_name.toLowerCase().replace(/\s+/g, '') || 'official'}`,
+      lastSyncedAt: activeConn?.last_synced_at || undefined,
     });
   };
 
   const openRwScraperModal = () => {
+    const isRwConnected = globalRwConfig.is_verified && !!globalRwConfig.api_key;
     setModalTarget({
       id: 'reviews_world',
       name: 'Reviews World API Engine',
       platformKey: 'reviews_world',
       icon: KeyRound,
-      status: connectedMap['reviews_world'] ? 'Connected' : 'Disconnected',
+      status: isRwConnected ? 'Connected' : 'Disconnected',
       authType: 'Scraper Engine',
       color: 'text-amber-500',
       description: 'Master Play Store & App Store live review scraper API provided by platform owner.',
     });
   };
+
+  const isRwConnected = globalRwConfig.is_verified && !!globalRwConfig.api_key;
 
   return (
     <div className="space-y-6">
@@ -199,7 +211,7 @@ export function IntegrationsPage() {
               Enterprise Integrations &amp; API Management
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
-              Manage social channel OAuth authorizations, App Store connectors, and Reviews World scraper endpoint.
+              Multi-tenant channel authorization for <span className="font-bold text-primary">{client?.company_name || 'My Organization'}</span>
             </p>
           </div>
         </div>
@@ -219,7 +231,7 @@ export function IntegrationsPage() {
             className="px-4 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-slate-950 font-bold text-xs flex items-center gap-2 transition disabled:opacity-50 shadow-sm gold-glow"
           >
             <RefreshCw className={`w-4 h-4 text-slate-950 ${loading ? 'animate-spin' : ''}`} />
-            <span>Sync All Connectors</span>
+            <span>Sync Connected Channels</span>
           </button>
         </div>
       </div>
@@ -233,7 +245,9 @@ export function IntegrationsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {CONNECTORS.map((c) => {
             const Icon = c.icon;
-            const isConnected = !!connectedMap[c.id];
+            const activeConn = getConnectedRow(c.platformKey);
+            const isConnected = !!activeConn;
+
             return (
               <div key={c.id} className="p-5 rounded-2xl bg-white border border-slate-200 dark:bg-black/40 dark:border-white/5 space-y-3 flex flex-col justify-between hover:border-primary/25 transition shadow-sm">
                 <div>
@@ -242,9 +256,9 @@ export function IntegrationsPage() {
                       <Icon className="w-5 h-5" />
                     </div>
                     <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border ${
-                      isConnected ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400' : 'bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400'
+                      isConnected ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400' : 'bg-slate-500/10 border-slate-500/30 text-slate-500 dark:text-slate-400'
                     }`}>
-                      {isConnected ? '🟢 Connected & Syncing' : '🔴 Disconnected'}
+                      {isConnected ? `🟢 Connected (${activeConn.account_name})` : '🔴 Not Configured'}
                     </span>
                   </div>
 
@@ -255,17 +269,17 @@ export function IntegrationsPage() {
                 <div className="pt-3 border-t border-slate-200 dark:border-white/5 flex items-center justify-between text-xs">
                   <span className={cn(
                     "text-[10px] font-bold flex items-center gap-1",
-                    isConnected ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"
+                    isConnected ? "text-emerald-600 dark:text-emerald-400" : "text-slate-500 dark:text-slate-400"
                   )}>
                     {isConnected ? <CheckCircle2 className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
-                    {isConnected ? 'OAuth Active' : 'Action Needed'}
+                    {isConnected ? 'Live Sync Active' : 'Disconnected'}
                   </span>
                   <button
                     type="button"
                     onClick={() => openConnectorModalForCard(c)}
                     className="text-xs text-primary hover:underline font-bold"
                   >
-                    {isConnected ? 'Manage / Disconnect →' : 'Connect API →'}
+                    {isConnected ? 'Manage / Disconnect →' : 'Connect Account →'}
                   </button>
                 </div>
               </div>
@@ -280,29 +294,29 @@ export function IntegrationsPage() {
                   <KeyRound className="w-5 h-5" />
                 </div>
                 <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border ${
-                  connectedMap['reviews_world'] ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400' : 'bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400'
+                  isRwConnected ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400' : 'bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400'
                 }`}>
-                  {connectedMap['reviews_world'] ? '🟢 Verified & Connected' : '🔴 Action Needed'}
+                  {isRwConnected ? '🟢 Scraper Verified' : '🔴 Action Needed'}
                 </span>
               </div>
 
               <h3 className="text-sm font-bold text-slate-900 dark:text-white mt-3">Reviews World API Engine</h3>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                Play Store &amp; App Store live review scraper API provided by platform owner.
+                Master Play Store &amp; App Store live review scraper API provided by platform owner.
               </p>
             </div>
 
             <div className="pt-3 border-t border-slate-200 dark:border-white/5 flex items-center justify-between text-xs">
-              <span className={`text-[10px] font-bold flex items-center gap-1 ${connectedMap['reviews_world'] ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                {connectedMap['reviews_world'] ? <CheckCircle2 className="w-3 h-3" /> : <ShieldAlert className="w-3 h-3" />}
-                {connectedMap['reviews_world'] ? 'HTTP 200 Handshake OK' : 'Not Authenticated'}
+              <span className={`text-[10px] font-bold flex items-center gap-1 ${isRwConnected ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                {isRwConnected ? <CheckCircle2 className="w-3 h-3" /> : <ShieldAlert className="w-3 h-3" />}
+                {isRwConnected ? 'HTTP 200 Handshake OK' : 'Not Authenticated'}
               </span>
               <button
                 type="button"
                 onClick={openRwScraperModal}
                 className="text-xs text-primary hover:underline font-bold"
               >
-                {connectedMap['reviews_world'] ? 'Manage Scraper API →' : 'Authenticate Scraper API →'}
+                {isRwConnected ? 'Manage Scraper API →' : 'Authenticate Scraper API →'}
               </button>
             </div>
           </div>

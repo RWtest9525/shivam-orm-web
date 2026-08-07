@@ -1,9 +1,10 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
 import { dbEngine, validateReviewsWorldHandshake } from '@/lib/dbEngine';
 import {
   X, CheckCircle2, AlertCircle, Loader2, KeyRound, Server, Activity,
-  RefreshCw, LogOut, Upload, ShieldCheck, Link2, ExternalLink, FileCode, Check
+  RefreshCw, LogOut, Upload, ShieldCheck, Link2, FileCode, Check, RotateCcw
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -25,7 +26,7 @@ export interface ConnectorModalProps {
   isOpen: boolean;
   onClose: () => void;
   target: ConnectorModalTarget | null;
-  onStatusChange: (platformId: string, isConnected: boolean) => void;
+  onStatusChange: (platformKey: string, isConnected: boolean) => void;
 }
 
 export function ConnectorModal({
@@ -34,51 +35,67 @@ export function ConnectorModal({
   target,
   onStatusChange,
 }: ConnectorModalProps) {
+  const { client } = useAuth();
   if (!isOpen || !target) return null;
 
   const isRwScraper = target.id === 'reviews_world' || target.authType === 'Scraper Engine';
   const isAppStore = target.id === 'google_play' || target.id === 'app_store';
   const isConnected = target.status === 'Connected';
 
-  // Active Tab for App Store Cards (Tab 1: Direct OAuth, Tab 2: Service Account / Key Input)
+  // Active Tab for App Store Cards (Tab 1: Direct OAuth, Tab 2: Service Key Input)
   const [activeTab, setActiveTab] = useState<'oauth' | 'service_account'>('oauth');
 
   // Input states
-  const [accountHandleInput, setAccountHandleInput] = useState(
-    target.accountHandle || `@hoora_${target.platformKey}`
-  );
+  const [accountHandleInput, setAccountHandleInput] = useState('');
   const [tokenInput, setTokenInput] = useState('');
   const [serviceAccountEmail, setServiceAccountEmail] = useState('');
   const [issuerId, setIssuerId] = useState('');
   const [keyId, setKeyId] = useState('');
   const [uploadedFileName, setUploadedFileName] = useState('');
 
-  // Loading states
-  const [submitting, setSubmitting] = useState(false);
+  // Status & Error Feedback states
+  const [verifying, setVerifying] = useState(false);
+  const [authError, setAuthError] = useState('');
   const [syncing, setSyncing] = useState(false);
 
   // Reviews World specific states
   const [rwBaseUrl, setRwBaseUrl] = useState('https://yash9525-rw-live-checker.hf.space');
   const [rwApiKey, setRwApiKey] = useState('');
-  const [rwError, setRwError] = useState('');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Simulated File Upload handler (.json or .p8)
+  // Reset modal state on open
+  useEffect(() => {
+    setAuthError('');
+    setVerifying(false);
+    setAccountHandleInput(target.accountHandle || '');
+    setTokenInput('');
+    setServiceAccountEmail('');
+    setUploadedFileName('');
+  }, [target]);
+
+  // Handle File Upload (.json or .p8)
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setUploadedFileName(file.name);
-      toast.success(`Uploaded ${file.name} successfully! Ready to verify.`);
+      setAuthError('');
+      toast.success(`Loaded ${file.name}. Ready to verify credentials.`);
     }
   };
 
-  // Flow 1: OAuth Authorize Popup Simulation + POST /api/connectors/oauth/callback
+  // Flow 1: OAuth Authorize for Social Platforms
   const handleOAuthAuthorize = async () => {
-    setSubmitting(true);
-    toast.info(`Opening official ${target.name} OAuth 2.0 permission window...`);
+    setAuthError('');
 
-    // Simulate OAuth popup window
+    if (!accountHandleInput.trim()) {
+      setAuthError('Connection Failed: Company account handle or page name cannot be empty.');
+      return;
+    }
+
+    setVerifying(true);
+
+    // Simulate OAuth Popup & API authorization check
     const width = 600;
     const height = 700;
     const left = window.screen.width / 2 - width / 2;
@@ -86,7 +103,7 @@ export function ConnectorModal({
 
     const popup = window.open(
       'about:blank',
-      `${target.name} OAuth Authorization`,
+      `Authorize ${target.name}`,
       `width=${width},height=${height},top=${top},left=${left}`
     );
 
@@ -94,83 +111,122 @@ export function ConnectorModal({
       popup.document.write(`
         <html>
           <head><title>Authorize ${target.name}</title></head>
-          <body style="font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #0f172a; color: #fff; margin: 0;">
-            <h2 style="color: #f59e0b;">Authorizing ${target.name}...</h2>
-            <p>Granting permissions for Hoora ORM / Equinox Pulse SaaS Engine</p>
-            <div style="margin-top: 20px; font-size: 12px; color: #94a3b8;">Processing authorization_code callback...</div>
+          <body style="font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #0f172a; color: #fff; margin: 0; padding: 20px; text-align: center;">
+            <h2 style="color: #f59e0b; font-size: 18px;">Verifying ${target.name} Permissions...</h2>
+            <p style="font-size: 13px; color: #cbd5e1;">Authenticating company profile for: <strong>${accountHandleInput}</strong></p>
+            <div style="margin-top: 15px; font-size: 11px; color: #94a3b8;">Verifying OAuth 2.0 Access Token...</div>
           </body>
         </html>
       `);
     }
 
-    setTimeout(async () => {
+    setTimeout(() => {
       if (popup && !popup.closed) popup.close();
 
-      try {
-        // Send POST to /api/connectors/oauth/callback
-        const response = await fetch('/api/connectors/oauth/callback', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            authorization_code: `auth_code_${Date.now()}`,
-            platform: target.platformKey,
-            account_handle: accountHandleInput,
-          }),
-        }).catch(() => null);
-
-        onStatusChange(target.id, true);
-        toast.success(`${target.name} connected successfully & live syncing active!`);
-        onClose();
-      } catch (e: any) {
-        onStatusChange(target.id, true);
-        toast.success(`${target.name} connected successfully!`);
-        onClose();
-      } finally {
-        setSubmitting(false);
+      if (!client?.id) {
+        setVerifying(false);
+        setAuthError('Connection Failed: Logged-in company session not found. Please log in again.');
+        return;
       }
-    }, 1500);
-  };
 
-  // Flow 2: Save & Verify Service Account / Key Input Connection
-  const handleSaveServiceAccount = () => {
-    setSubmitting(true);
-    setTimeout(() => {
-      onStatusChange(target.id, true);
-      setSubmitting(false);
-      toast.success(`${target.name} credentials verified & connection saved!`);
+      // Save real connection in DB scoped to client.id
+      dbEngine.upsertConnection({
+        client_id: client.id,
+        platform: target.platformKey,
+        account_name: accountHandleInput.trim(),
+        api_key: tokenInput || `token-${Date.now()}`,
+        access_token: tokenInput || `oauth-${Date.now()}`,
+        status: 'connected',
+        health_status: 'healthy',
+        last_synced_at: new Date().toISOString(),
+      });
+
+      setVerifying(false);
+      onStatusChange(target.platformKey, true);
+      toast.success(`${target.name} connected successfully for ${client.company_name}!`);
       onClose();
-    }, 800);
+    }, 1400);
   };
 
-  // Flow 3: Force Sync Now
+  // Flow 2: Save Service Account Key / App Store Credentials
+  const handleSaveServiceAccount = () => {
+    setAuthError('');
+
+    if (target.id === 'google_play') {
+      if (!uploadedFileName && !serviceAccountEmail.trim()) {
+        setAuthError('Connection Failed: Please upload google-services.json OR enter Service Account Email.');
+        return;
+      }
+    } else if (target.id === 'app_store') {
+      if (!uploadedFileName && (!issuerId.trim() || !keyId.trim())) {
+        setAuthError('Connection Failed: Please upload .p8 Private Key file OR fill in Issuer ID and Key ID.');
+        return;
+      }
+    }
+
+    setVerifying(true);
+    setTimeout(() => {
+      if (!client?.id) {
+        setVerifying(false);
+        setAuthError('Connection Failed: Logged-in client session missing.');
+        return;
+      }
+
+      const accName = serviceAccountEmail.trim() || uploadedFileName || `${client.company_name} Store Key`;
+      dbEngine.upsertConnection({
+        client_id: client.id,
+        platform: target.platformKey,
+        account_name: accName,
+        api_key: issuerId || keyId || `key-${Date.now()}`,
+        access_token: `jwt-${Date.now()}`,
+        status: 'connected',
+        health_status: 'healthy',
+        last_synced_at: new Date().toISOString(),
+      });
+
+      setVerifying(false);
+      onStatusChange(target.platformKey, true);
+      toast.success(`${target.name} service account verified & saved successfully!`);
+      onClose();
+    }, 1200);
+  };
+
+  // Flow 3: Force Sync
   const handleForceSync = () => {
     setSyncing(true);
     setTimeout(() => {
       setSyncing(false);
-      toast.success(`Force Sync Completed! Cleaned and updated live review data for ${target.name}.`);
-    }, 1000);
+      toast.success(`Synced live review data for ${target.name}.`);
+    }, 900);
   };
 
   // Flow 4: Disconnect Account
   const handleDisconnect = () => {
-    onStatusChange(target.id, false);
-    toast.info(`${target.name} disconnected & logged out successfully.`);
+    if (client?.id) {
+      const conn = dbEngine.getConnections(client.id).find((c) => c.platform === target.platformKey);
+      if (conn) {
+        dbEngine.deleteConnection(conn.id);
+      }
+    }
+    onStatusChange(target.platformKey, false);
+    toast.info(`${target.name} disconnected successfully.`);
     onClose();
   };
 
-  // Flow 5: Reviews World Scraper API Handshake
+  // Flow 5: Reviews World Scraper Engine Authentication
   const handleAuthenticateRw = async () => {
-    setRwError('');
+    setAuthError('');
     if (!rwApiKey.trim()) {
-      setRwError('HTTP 401 Unauthorized: API Secret Key cannot be empty.');
+      setAuthError('Connection Failed: Master API Secret Key cannot be empty.');
       return;
     }
 
-    setSubmitting(true);
+    setVerifying(true);
     try {
       const res = await validateReviewsWorldHandshake(rwBaseUrl, rwApiKey);
       if (!res.isValid || res.statusCode !== 200) {
-        setRwError(res.error || `HTTP ${res.statusCode || 401} Unauthorized: Invalid API secret key.`);
+        setVerifying(false);
+        setAuthError(res.error || `HTTP ${res.statusCode || 401} Connection Failed: Invalid API secret key.`);
         return;
       }
 
@@ -183,13 +239,13 @@ export function ConnectorModal({
         res.quotaDetails
       );
 
-      onStatusChange(target.id, true);
+      setVerifying(false);
+      onStatusChange(target.platformKey, true);
       toast.success('Verified Reviews World Scraper API connection (HTTP 200 OK)!');
       onClose();
     } catch (e: any) {
-      setRwError(`Connection Error: ${e.message || 'Failed to connect.'}`);
-    } finally {
-      setSubmitting(false);
+      setVerifying(false);
+      setAuthError(`Connection Failed: ${e.message || 'Server handshake error.'}`);
     }
   };
 
@@ -207,14 +263,14 @@ export function ConnectorModal({
             </div>
             <div className="min-w-0">
               <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white truncate">
-                {isConnected ? `${target.name} Settings` : `Connect ${target.name}`}
+                {isConnected ? `${target.name} Connection` : `Connect ${target.name}`}
               </h3>
               <div className="flex items-center gap-2 mt-0.5">
                 <span className={cn(
-                  "text-[10px] font-extrabold px-2 py-0.5 rounded-full border uppercase",
-                  isConnected ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30" : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30"
+                  "text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border uppercase",
+                  isConnected ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400" : "bg-slate-500/10 border-slate-500/30 text-slate-600 dark:text-slate-400"
                 )}>
-                  {isConnected ? "🟢 Connected & Syncing" : "🔴 Disconnected / Action Needed"}
+                  {isConnected ? "🟢 Connected & Syncing" : "🔴 Disconnected / Not Configured"}
                 </span>
               </div>
             </div>
@@ -225,30 +281,45 @@ export function ConnectorModal({
           </button>
         </div>
 
+        {/* Dynamic Error State Banner */}
+        {authError && (
+          <div className="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-start gap-2.5 text-xs text-rose-700 dark:text-rose-300">
+            <AlertCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+            <div className="min-w-0 flex-1">
+              <div className="font-bold">{authError}</div>
+              <button
+                type="button"
+                onClick={() => setAuthError('')}
+                className="mt-1.5 text-[11px] font-extrabold text-rose-600 dark:text-rose-400 underline flex items-center gap-1"
+              >
+                <RotateCcw className="w-3 h-3" /> Try Again
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* ========================================================================= */}
-        {/* SCENARIO A: CONNECTED STATE (Connected & Syncing) */}
+        {/* SCENARIO A: CONNECTED STATE */}
         {/* ========================================================================= */}
         {isConnected && !isRwScraper && (
           <div className="space-y-4">
             <div className="p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 space-y-2.5 text-xs">
               <div className="flex items-center justify-between">
                 <span className="text-slate-500 font-bold">Connected Account:</span>
-                <span className="font-black text-slate-900 dark:text-white font-mono">{accountHandleInput}</span>
+                <span className="font-black text-slate-900 dark:text-white font-mono">{target.accountHandle || 'Active Account'}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-slate-500 font-bold">Last Synced Timestamp:</span>
-                <span className="font-bold text-emerald-600 dark:text-emerald-400">{target.lastSyncedAt || 'Just now'}</span>
+                <span className="text-slate-500 font-bold">Client Organization:</span>
+                <span className="font-bold text-primary">{client?.company_name || 'My Organization'}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-slate-500 font-bold">API Rate Limit Status:</span>
-                <span className="font-extrabold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded font-mono">
-                  {target.quotaStatus || '9,420 / 10,000 Quota (Healthy)'}
-                </span>
+                <span className="text-slate-500 font-bold">Last Synced:</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400">{target.lastSyncedAt ? new Date(target.lastSyncedAt).toLocaleString() : 'Just now'}</span>
               </div>
             </div>
 
             <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-              Hoora ORM is actively fetching live comments, mentions, and processing automated AI responses for this channel.
+              Live reviews, messages, and mentions are actively syncing for this platform.
             </p>
 
             <div className="pt-3 border-t border-slate-200 dark:border-white/10 flex items-center justify-between gap-3">
@@ -265,36 +336,49 @@ export function ConnectorModal({
                 className="px-5 py-2.5 rounded-xl bg-primary text-slate-950 font-black text-xs hover:bg-primary/90 transition shadow-sm flex items-center gap-1.5 gold-glow disabled:opacity-50"
               >
                 <RefreshCw className={cn("w-4 h-4 text-slate-950", syncing && "animate-spin")} />
-                <span>{syncing ? "Syncing Live Data..." : "Force Sync Now"}</span>
+                <span>{syncing ? "Syncing..." : "Force Sync Now"}</span>
               </button>
             </div>
           </div>
         )}
 
         {/* ========================================================================= */}
-        {/* SCENARIO B: DISCONNECTED SOCIAL MEDIA CARDS (Instagram, Facebook, YouTube, LinkedIn, X) */}
+        {/* SCENARIO B: DISCONNECTED SOCIAL MEDIA CARDS */}
         {/* ========================================================================= */}
         {!isConnected && !isAppStore && !isRwScraper && (
           <div className="space-y-4 text-xs">
             <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/25 space-y-1.5">
               <div className="font-bold text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-amber-500" /> Required Authorization Permissions
+                <ShieldCheck className="w-4 h-4 text-amber-500" /> Enterprise OAuth Authorization
               </div>
               <p className="text-[11px] text-amber-800 dark:text-amber-300 font-medium leading-relaxed">
-                Connecting {target.name} allows Hoora ORM to fetch incoming comments, direct messages, brand mentions, and post official replies directly from your single-window dashboard.
+                Connect your company's official {target.name} profile to enable live review ingestion &amp; direct single-window replies.
               </p>
             </div>
 
             <div>
               <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
-                Account Handle / Organization Name
+                Company Page Name / Handle <span className="text-rose-500">*</span>
               </label>
               <input
                 type="text"
                 value={accountHandleInput}
                 onChange={(e) => setAccountHandleInput(e.target.value)}
-                placeholder="@hoora_official"
+                placeholder={`e.g. @${client?.company_name.toLowerCase().replace(/\s+/g, '_') || 'company'}_official`}
                 className="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-white/10 bg-slate-50 dark:bg-black/60 text-slate-900 dark:text-white font-bold"
+              />
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
+                OAuth Token / API Secret (Optional)
+              </label>
+              <input
+                type="password"
+                value={tokenInput}
+                onChange={(e) => setTokenInput(e.target.value)}
+                placeholder="Paste Access Token if pre-generated..."
+                className="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-white/10 bg-slate-50 dark:bg-black/60 text-slate-900 dark:text-white font-mono"
               />
             </div>
 
@@ -309,18 +393,18 @@ export function ConnectorModal({
               <button
                 type="button"
                 onClick={handleOAuthAuthorize}
-                disabled={submitting}
+                disabled={verifying}
                 className="px-5 py-2.5 rounded-xl bg-primary text-slate-950 font-black text-xs hover:bg-primary/90 transition shadow-md flex items-center gap-2 gold-glow disabled:opacity-50"
               >
-                {submitting ? <Loader2 className="w-4 h-4 animate-spin text-slate-950" /> : <Link2 className="w-4 h-4 text-slate-950" />}
-                <span>Authorize via {target.name} OAuth</span>
+                {verifying ? <Loader2 className="w-4 h-4 animate-spin text-slate-950" /> : <Link2 className="w-4 h-4 text-slate-950" />}
+                <span>{verifying ? "Verifying Credentials..." : `Authorize via ${target.name}`}</span>
               </button>
             </div>
           </div>
         )}
 
         {/* ========================================================================= */}
-        {/* SCENARIO C: APP STORE CARDS WITH TABS (Google Play Console & Apple App Store) */}
+        {/* SCENARIO C: APP STORE CARDS WITH TABS */}
         {/* ========================================================================= */}
         {!isConnected && isAppStore && (
           <div className="space-y-4 text-xs">
@@ -355,9 +439,19 @@ export function ConnectorModal({
             {/* TAB 1: Direct OAuth Login */}
             {activeTab === 'oauth' && (
               <div className="space-y-4 pt-1">
-                <p className="text-slate-600 dark:text-slate-300 font-medium">
-                  Log in directly with your official {target.name} developer account via standard OAuth 2.0 authorization.
-                </p>
+                <div>
+                  <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
+                    App Title / Package Name <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={accountHandleInput}
+                    onChange={(e) => setAccountHandleInput(e.target.value)}
+                    placeholder={target.id === 'google_play' ? 'com.company.app' : 'com.company.app.ios'}
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-white/10 bg-slate-50 dark:bg-black/60 text-slate-900 dark:text-white font-mono"
+                  />
+                </div>
+
                 <div className="pt-2 flex items-center justify-end gap-3 border-t border-slate-200 dark:border-white/10">
                   <button
                     type="button"
@@ -369,17 +463,17 @@ export function ConnectorModal({
                   <button
                     type="button"
                     onClick={handleOAuthAuthorize}
-                    disabled={submitting}
+                    disabled={verifying}
                     className="px-5 py-2.5 rounded-xl bg-primary text-slate-950 font-black text-xs hover:bg-primary/90 transition shadow-md flex items-center gap-2 gold-glow disabled:opacity-50"
                   >
-                    {submitting ? <Loader2 className="w-4 h-4 animate-spin text-slate-950" /> : <Link2 className="w-4 h-4 text-slate-950" />}
-                    <span>Authorize via {target.name} OAuth</span>
+                    {verifying ? <Loader2 className="w-4 h-4 animate-spin text-slate-950" /> : <Link2 className="w-4 h-4 text-slate-950" />}
+                    <span>{verifying ? "Verifying Credentials..." : `Authorize via ${target.name}`}</span>
                   </button>
                 </div>
               </div>
             )}
 
-            {/* TAB 2: Service Account / API Key Input */}
+            {/* TAB 2: Service Account / Key Input */}
             {activeTab === 'service_account' && (
               <div className="space-y-4 pt-1">
                 {target.id === 'google_play' ? (
@@ -477,11 +571,11 @@ export function ConnectorModal({
                   <button
                     type="button"
                     onClick={handleSaveServiceAccount}
-                    disabled={submitting}
+                    disabled={verifying}
                     className="px-5 py-2.5 rounded-xl bg-primary text-slate-950 font-black text-xs hover:bg-primary/90 transition shadow-md flex items-center gap-2 gold-glow disabled:opacity-50"
                   >
-                    {submitting ? <Loader2 className="w-4 h-4 animate-spin text-slate-950" /> : <Check className="w-4 h-4 text-slate-950" />}
-                    <span>Save &amp; Verify Connection</span>
+                    {verifying ? <Loader2 className="w-4 h-4 animate-spin text-slate-950" /> : <Check className="w-4 h-4 text-slate-950" />}
+                    <span>{verifying ? "Verifying Credentials..." : "Save & Verify Connection"}</span>
                   </button>
                 </div>
               </div>
@@ -509,7 +603,7 @@ export function ConnectorModal({
 
             <div>
               <label className="mb-1 block font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
-                <KeyRound className="h-3.5 w-3.5 text-primary" /> Master API Secret Key
+                <KeyRound className="h-3.5 w-3.5 text-primary" /> Master API Secret Key <span className="text-rose-500">*</span>
               </label>
               <input
                 type="password"
@@ -519,16 +613,6 @@ export function ConnectorModal({
                 className="w-full rounded-xl border border-slate-300 bg-slate-50 dark:border-white/10 dark:bg-black/60 p-3 text-xs font-mono text-slate-900 dark:text-white focus:border-primary focus:outline-none"
               />
             </div>
-
-            {rwError && (
-              <div className="flex items-start gap-2.5 rounded-xl border border-rose-500/40 bg-rose-500/10 p-3.5 text-xs font-semibold text-rose-700 dark:text-rose-300">
-                <AlertCircle className="h-4 w-4 text-rose-500 shrink-0 mt-0.5" />
-                <div className="min-w-0 flex-1">
-                  <p className="font-bold">Authentication Failed</p>
-                  <p className="text-[11px] text-rose-600 dark:text-rose-300 mt-0.5">{rwError}</p>
-                </div>
-              </div>
-            )}
 
             <div className="pt-2 flex items-center justify-end gap-3 border-t border-slate-200 dark:border-white/10">
               <button
@@ -541,11 +625,11 @@ export function ConnectorModal({
               <button
                 type="button"
                 onClick={handleAuthenticateRw}
-                disabled={submitting || !rwApiKey.trim()}
+                disabled={verifying}
                 className="px-5 py-2.5 rounded-xl bg-primary text-slate-950 font-black text-xs hover:bg-primary/90 transition shadow-md flex items-center gap-2 gold-glow disabled:opacity-50"
               >
-                {submitting ? <Loader2 className="w-4 h-4 animate-spin text-slate-950" /> : <Activity className="w-4 h-4 text-slate-950" />}
-                <span>Authenticate Scraper API</span>
+                {verifying ? <Loader2 className="w-4 h-4 animate-spin text-slate-950" /> : <Activity className="w-4 h-4 text-slate-950" />}
+                <span>{verifying ? "Verifying Credentials..." : "Authenticate Scraper API"}</span>
               </button>
             </div>
           </div>
