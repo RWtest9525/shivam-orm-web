@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Sparkles, Loader2, Mail, Lock, User as UserIcon, Building2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { dbEngine } from '@/lib/dbEngine';
 
 export function LoginPage() {
   const navigate = useNavigate();
