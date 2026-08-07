@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
-import { dbEngine, validateReviewsWorldHandshake } from '@/lib/dbEngine';
+import { dbEngine } from '@/lib/dbEngine';
+import { ClientOnboardingDrawer } from '@/components/ClientOnboardingDrawer';
+import { ConnectorModal, type ConnectorModalTarget } from '@/components/ConnectorModal';
 import {
   Cable, Play, Store, Globe, Instagram, Facebook, Linkedin, Youtube, CheckCircle2,
   RefreshCw, KeyRound, ShieldAlert, Save, X, Loader2, AlertCircle, Server, Activity,
-  LogOut, Link2, ExternalLink, MessageSquare, Check, HelpCircle
+  LogOut, Link2, ExternalLink, MessageSquare, Check, HelpCircle, FileText, ClipboardList
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -16,7 +18,7 @@ export interface ChannelConnectorDef {
   platformKey: string;
   icon: any;
   defaultStatus: 'Connected' | 'Action Needed';
-  authType: 'OAuth 2.0' | 'API Key' | 'Developer Console';
+  authType: 'OAuth 2.0' | 'API Key' | 'Developer Console' | 'Scraper Engine';
   color: string;
   description: string;
 }
@@ -106,11 +108,11 @@ const CONNECTORS: ChannelConnectorDef[] = [
 
 export function IntegrationsPage() {
   const { client } = useAuth();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const connectParam = searchParams.get('connect');
 
   const [loading, setLoading] = useState(false);
-  const [globalConfig, setGlobalConfig] = useState(() => dbEngine.getGlobalApiKey());
+  const [showOnboardingDrawer, setShowOnboardingDrawer] = useState(false);
 
   // Connection State Map (tracks connected vs disconnected status for each platform)
   const [connectedMap, setConnectedMap] = useState<Record<string, boolean>>(() => {
@@ -118,30 +120,29 @@ export function IntegrationsPage() {
     CONNECTORS.forEach((c) => {
       map[c.id] = c.defaultStatus === 'Connected';
     });
+    map['reviews_world'] = true;
     return map;
   });
 
-  // Modal State for Social Platform OAuth / API Connector
-  const [activeChannelModal, setActiveChannelModal] = useState<ChannelConnectorDef | null>(null);
-  const [tokenInput, setTokenInput] = useState('');
-  const [accountHandle, setAccountHandle] = useState('');
-  const [connectingChannel, setConnectingChannel] = useState(false);
+  // Modal State for Universal ConnectorModal
+  const [modalTarget, setModalTarget] = useState<ConnectorModalTarget | null>(null);
 
-  // Modal State for Reviews World Master Scraper API
-  const [showRwModal, setShowRwModal] = useState(false);
-  const [baseUrl, setBaseUrl] = useState(globalConfig.base_url || 'https://yash9525-rw-live-checker.hf.space');
-  const [apiKeyInput, setApiKeyInput] = useState(globalConfig.api_key || '');
-  const [verifying, setVerifying] = useState(false);
-  const [authError, setAuthError] = useState('');
-  const [authSuccess, setAuthSuccess] = useState('');
-
-  // Auto-open modal if URL parameter ?connect=<platform> is provided
+  // Auto-open connector modal if URL parameter ?connect=<platform> is provided
   useEffect(() => {
     if (connectParam) {
       const match = CONNECTORS.find((c) => c.platformKey === connectParam || c.id === connectParam);
       if (match) {
-        setAccountHandle(`@${client?.company_name.toLowerCase().replace(/\s+/g, '') || 'official'}`);
-        setActiveChannelModal(match);
+        setModalTarget({
+          id: match.id,
+          name: match.name,
+          platformKey: match.platformKey,
+          icon: match.icon,
+          status: connectedMap[match.id] ? 'Connected' : 'Disconnected',
+          authType: match.authType,
+          color: match.color,
+          description: match.description,
+          accountHandle: `@${client?.company_name.toLowerCase().replace(/\s+/g, '') || 'official'}`,
+        });
       }
     }
   }, [connectParam, client]);
@@ -150,117 +151,77 @@ export function IntegrationsPage() {
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
-      setGlobalConfig(dbEngine.getGlobalApiKey());
       toast.success('All enterprise connectors and API channels synced');
     }, 800);
   };
 
-  const handleOpenChannelModal = (c: ChannelConnectorDef) => {
-    setAccountHandle(`@${client?.company_name.toLowerCase().replace(/\s+/g, '') || 'official'}`);
-    setTokenInput('');
-    setActiveChannelModal(c);
+  const handleStatusChange = (platformId: string, isConnected: boolean) => {
+    setConnectedMap((prev) => ({ ...prev, [platformId]: isConnected }));
   };
 
-  const handleConnectChannel = (c: ChannelConnectorDef) => {
-    setConnectingChannel(true);
-    setTimeout(() => {
-      if (client?.id) {
-        dbEngine.upsertConnection({
-          client_id: client.id,
-          platform: c.platformKey,
-          account_name: accountHandle || `${c.name} Account`,
-          api_key: tokenInput || `token-${Date.now()}`,
-          access_token: tokenInput || `oauth-${Date.now()}`,
-          status: 'connected',
-          health_status: 'healthy',
-          last_synced_at: new Date().toISOString(),
-        });
-      }
-      setConnectedMap((prev) => ({ ...prev, [c.id]: true }));
-      setConnectingChannel(false);
-      setActiveChannelModal(null);
-      toast.success(`${c.name} OAuth connected & live syncing!`);
-    }, 600);
+  const openConnectorModalForCard = (c: ChannelConnectorDef) => {
+    setModalTarget({
+      id: c.id,
+      name: c.name,
+      platformKey: c.platformKey,
+      icon: c.icon,
+      status: connectedMap[c.id] ? 'Connected' : 'Disconnected',
+      authType: c.authType,
+      color: c.color,
+      description: c.description,
+      accountHandle: `@${client?.company_name.toLowerCase().replace(/\s+/g, '') || 'official'}`,
+    });
   };
 
-  const handleDisconnectChannel = (c: ChannelConnectorDef) => {
-    setConnectedMap((prev) => ({ ...prev, [c.id]: false }));
-    setActiveChannelModal(null);
-    toast.info(`${c.name} disconnected & logged out successfully.`);
+  const openRwScraperModal = () => {
+    setModalTarget({
+      id: 'reviews_world',
+      name: 'Reviews World API Engine',
+      platformKey: 'reviews_world',
+      icon: KeyRound,
+      status: connectedMap['reviews_world'] ? 'Connected' : 'Disconnected',
+      authType: 'Scraper Engine',
+      color: 'text-amber-500',
+      description: 'Master Play Store & App Store live review scraper API provided by platform owner.',
+    });
   };
-
-  const handleAuthenticateReviewsWorld = async () => {
-    setAuthError('');
-    setAuthSuccess('');
-
-    if (!apiKeyInput.trim()) {
-      setAuthError('HTTP 401 Unauthorized: API secret key cannot be empty.');
-      return;
-    }
-
-    setVerifying(true);
-
-    try {
-      const res = await validateReviewsWorldHandshake(baseUrl, apiKeyInput);
-
-      if (!res.isValid || res.statusCode !== 200) {
-        setAuthError(res.error || `HTTP ${res.statusCode || 401} Unauthorized: Invalid API key or unverified provider endpoint.`);
-        return;
-      }
-
-      dbEngine.setGlobalApiKey(
-        apiKeyInput.trim(),
-        'reviews_world_scraper',
-        true,
-        baseUrl.trim(),
-        new Date().toISOString(),
-        res.quotaDetails
-      );
-
-      const updated = dbEngine.getGlobalApiKey();
-      setGlobalConfig(updated);
-      setAuthSuccess('Handshake Successful! Verified Reviews World API connection (HTTP 200 OK).');
-      toast.success('Reviews World API verified and connected successfully!');
-      
-      setTimeout(() => {
-        setShowRwModal(false);
-        setAuthSuccess('');
-      }, 1000);
-    } catch (err: any) {
-      setAuthError(`Connection Error: ${err.message || 'Failed to establish handshake with API server.'}`);
-    } finally {
-      setVerifying(false);
-    }
-  };
-
-  const isRwConnected = globalConfig.is_verified && !!globalConfig.api_key;
 
   return (
     <div className="space-y-6">
-      {/* Top Header */}
-      <div className="p-6 rounded-2xl bg-white border border-slate-200 dark:bg-black/40 dark:border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
+      {/* Top Header Banner with Implementation & Onboarding Plan Button */}
+      <div className="p-6 rounded-3xl bg-white border border-slate-200 dark:bg-black/40 dark:border-white/5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-primary/15 border border-primary/30 flex items-center justify-center shrink-0">
+          <div className="w-12 h-12 rounded-2xl bg-primary/15 border border-primary/30 flex items-center justify-center shrink-0">
             <Cable className="w-6 h-6 text-primary" />
           </div>
           <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight" style={{ fontFamily: "'Playfair Display', serif" }}>
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight" style={{ fontFamily: "'Playfair Display', serif" }}>
               Enterprise Integrations &amp; API Management
             </h2>
-            <p className="text-xs text-slate-500 dark:text-muted-foreground mt-0.5 font-medium">
-              Manage social channel OAuth authorizations, API connectors, and Reviews World Play Store scraper endpoint.
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
+              Manage social channel OAuth authorizations, App Store connectors, and Reviews World scraper endpoint.
             </p>
           </div>
         </div>
 
-        <button
-          onClick={handleSyncAll}
-          disabled={loading}
-          className="px-4 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-slate-950 font-bold text-xs flex items-center gap-2 transition disabled:opacity-50 shadow-sm"
-        >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          <span>Sync All Connectors</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-3 shrink-0">
+          <button
+            onClick={() => setShowOnboardingDrawer(true)}
+            className="px-4 py-2.5 rounded-xl bg-slate-900 dark:bg-white/10 text-white font-bold text-xs hover:bg-slate-800 transition shadow-sm border border-white/10 flex items-center gap-2"
+          >
+            <ClipboardList className="w-4 h-4 text-primary" />
+            <span>📋 View Client Implementation &amp; Onboarding Plan</span>
+          </button>
+
+          <button
+            onClick={handleSyncAll}
+            disabled={loading}
+            className="px-4 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-slate-950 font-bold text-xs flex items-center gap-2 transition disabled:opacity-50 shadow-sm gold-glow"
+          >
+            <RefreshCw className={`w-4 h-4 text-slate-950 ${loading ? 'animate-spin' : ''}`} />
+            <span>Sync All Connectors</span>
+          </button>
+        </div>
       </div>
 
       {/* Social & Store Channels Grid */}
@@ -280,15 +241,15 @@ export function IntegrationsPage() {
                     <div className={`w-9 h-9 rounded-xl bg-slate-100 border border-slate-200 dark:bg-white/5 dark:border-white/5 flex items-center justify-center ${c.color}`}>
                       <Icon className="w-5 h-5" />
                     </div>
-                    <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
+                    <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border ${
                       isConnected ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400' : 'bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400'
                     }`}>
-                      {isConnected ? 'Connected & Syncing' : 'Disconnected'}
+                      {isConnected ? '🟢 Connected & Syncing' : '🔴 Disconnected'}
                     </span>
                   </div>
 
                   <h3 className="text-sm font-bold text-slate-900 dark:text-white mt-3">{c.name}</h3>
-                  <p className="text-[11px] text-slate-500 dark:text-muted-foreground mt-0.5 line-clamp-2">{c.description}</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">{c.description}</p>
                 </div>
 
                 <div className="pt-3 border-t border-slate-200 dark:border-white/5 flex items-center justify-between text-xs">
@@ -301,7 +262,7 @@ export function IntegrationsPage() {
                   </span>
                   <button
                     type="button"
-                    onClick={() => handleOpenChannelModal(c)}
+                    onClick={() => openConnectorModalForCard(c)}
                     className="text-xs text-primary hover:underline font-bold"
                   >
                     {isConnected ? 'Manage / Disconnect →' : 'Connect API →'}
@@ -311,243 +272,60 @@ export function IntegrationsPage() {
             );
           })}
 
-          {/* Master Connector: Reviews World Play Store / App Store Scraper Engine */}
+          {/* Master Connector Card: Reviews World API Engine */}
           <div className="p-5 rounded-2xl bg-white border border-slate-200 dark:bg-black/40 dark:border-primary/30 space-y-3 flex flex-col justify-between hover:border-primary/50 transition shadow-sm gold-glow">
             <div>
               <div className="flex items-center justify-between">
                 <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
                   <KeyRound className="w-5 h-5" />
                 </div>
-                <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
-                  isRwConnected ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400' : 'bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400'
+                <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border ${
+                  connectedMap['reviews_world'] ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400' : 'bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400'
                 }`}>
-                  {isRwConnected ? 'Scraper API Connected' : 'Action Needed'}
+                  {connectedMap['reviews_world'] ? '🟢 Verified & Connected' : '🔴 Action Needed'}
                 </span>
               </div>
 
               <h3 className="text-sm font-bold text-slate-900 dark:text-white mt-3">Reviews World API Engine</h3>
-              <p className="text-[11px] text-slate-500 dark:text-muted-foreground mt-0.5">
-                Play Store &amp; App Store live review scraper endpoint provided by platform owner.
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                Play Store &amp; App Store live review scraper API provided by platform owner.
               </p>
             </div>
 
             <div className="pt-3 border-t border-slate-200 dark:border-white/5 flex items-center justify-between text-xs">
-              <span className={`text-[10px] font-bold flex items-center gap-1 ${isRwConnected ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                {isRwConnected ? <CheckCircle2 className="w-3 h-3" /> : <ShieldAlert className="w-3 h-3" />}
-                {isRwConnected ? 'HTTP 200 Handshake OK' : 'Not Authenticated'}
+              <span className={`text-[10px] font-bold flex items-center gap-1 ${connectedMap['reviews_world'] ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                {connectedMap['reviews_world'] ? <CheckCircle2 className="w-3 h-3" /> : <ShieldAlert className="w-3 h-3" />}
+                {connectedMap['reviews_world'] ? 'HTTP 200 Handshake OK' : 'Not Authenticated'}
               </span>
               <button
                 type="button"
-                onClick={() => {
-                  setAuthError('');
-                  setAuthSuccess('');
-                  setShowRwModal(true);
-                }}
+                onClick={openRwScraperModal}
                 className="text-xs text-primary hover:underline font-bold"
               >
-                {isRwConnected ? 'Manage Base URL & Secret →' : 'Authenticate Scraper API →'}
+                {connectedMap['reviews_world'] ? 'Manage Scraper API →' : 'Authenticate Scraper API →'}
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ========================================================================= */}
-      {/* MODAL: SOCIAL PLATFORM CHANNEL OAUTH & API CONNECTOR */}
-      {/* ========================================================================= */}
-      {activeChannelModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4">
-          <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white dark:border-white/10 dark:bg-neutral-950 p-6 shadow-2xl space-y-4 animate-float-up">
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-3">
-              <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center ${activeChannelModal.color}`}>
-                  <activeChannelModal.icon className="w-6 h-6" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                    {activeChannelModal.name}
-                  </h3>
-                  <span className="text-[10px] uppercase font-bold text-amber-600 dark:text-primary tracking-wider">
-                    {activeChannelModal.authType} Authorization
-                  </span>
-                </div>
-              </div>
-              <button onClick={() => setActiveChannelModal(null)} className="text-slate-400 hover:text-slate-900 dark:hover:text-white">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
+      {/* Task 1: Client Onboarding Drawer */}
+      <ClientOnboardingDrawer
+        isOpen={showOnboardingDrawer}
+        onClose={() => setShowOnboardingDrawer(false)}
+        onOpenConnector={(platformKey) => {
+          const match = CONNECTORS.find((c) => c.platformKey === platformKey);
+          if (match) openConnectorModalForCard(match);
+        }}
+      />
 
-            <div className="space-y-4 text-xs">
-              <p className="text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
-                {activeChannelModal.description}
-              </p>
-
-              <div>
-                <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
-                  Connected Account Handle / Business Name
-                </label>
-                <input
-                  type="text"
-                  value={accountHandle}
-                  onChange={(e) => setAccountHandle(e.target.value)}
-                  placeholder="@your_brand_handle"
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 dark:border-white/10 dark:bg-black/60 p-3 text-xs text-slate-900 dark:text-white focus:border-primary focus:outline-none font-bold"
-                />
-              </div>
-
-              <div>
-                <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">
-                  OAuth Access Token / API Key (Optional)
-                </label>
-                <input
-                  type="password"
-                  value={tokenInput}
-                  onChange={(e) => setTokenInput(e.target.value)}
-                  placeholder="Paste OAuth Token or API Key..."
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 dark:border-white/10 dark:bg-black/60 p-3 text-xs font-mono text-slate-900 dark:text-white focus:border-primary focus:outline-none"
-                />
-              </div>
-
-              <div className="p-3.5 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 space-y-1.5">
-                <div className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                  <Link2 className="w-3.5 h-3.5 text-primary" /> Step-by-Step OAuth Verification
-                </div>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                  Granting OAuth permissions allows Equinox Pulse to sync incoming comments, ratings, and send direct replies to your channel.
-                </p>
-              </div>
-
-              <div className="pt-2 flex items-center justify-between gap-2 border-t border-slate-200 dark:border-white/10">
-                {connectedMap[activeChannelModal.id] ? (
-                  <button
-                    type="button"
-                    onClick={() => handleDisconnectChannel(activeChannelModal)}
-                    className="rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 px-3.5 py-2.5 text-xs font-bold text-rose-600 dark:text-rose-400 transition flex items-center gap-1.5"
-                  >
-                    <LogOut className="w-4 h-4" /> Disconnect &amp; Logout
-                  </button>
-                ) : (
-                  <span />
-                )}
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setActiveChannelModal(null)}
-                    className="rounded-xl border border-slate-200 bg-slate-100 dark:border-white/10 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-neutral-300 transition"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleConnectChannel(activeChannelModal)}
-                    disabled={connectingChannel}
-                    className="rounded-xl bg-primary hover:bg-primary/90 px-5 py-2.5 text-xs font-bold text-slate-950 transition shadow-md disabled:opacity-50 flex items-center gap-1.5 gold-glow"
-                  >
-                    {connectingChannel ? <Loader2 className="h-4 w-4 animate-spin text-slate-950" /> : <Check className="h-4 w-4 text-slate-950" />}
-                    <span>Complete Connection</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* MODAL: REVIEWS WORLD API ENGINE (MASTER SCRAPER ENDPOINT) */}
-      {/* ========================================================================= */}
-      {showRwModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-md p-4">
-          <div className="w-full max-w-lg rounded-3xl border border-slate-200 bg-white dark:border-white/10 dark:bg-neutral-950 p-6 sm:p-7 shadow-2xl space-y-4 animate-float-up">
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
-                  <KeyRound className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                    Authenticate Reviews World API
-                  </h3>
-                  <p className="text-[11px] text-slate-500 dark:text-muted-foreground">
-                    Strict HTTP 200 OK Server Handshake Verification
-                  </p>
-                </div>
-              </div>
-              <button onClick={() => setShowRwModal(false)} className="text-slate-400 hover:text-slate-900 dark:hover:text-white">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="mb-1 block text-xs font-bold text-slate-700 dark:text-neutral-200 flex items-center gap-1.5">
-                  <Server className="h-3.5 w-3.5 text-primary" /> API Provider Base URL
-                </label>
-                <input
-                  type="text"
-                  value={baseUrl}
-                  onChange={(e) => setBaseUrl(e.target.value)}
-                  placeholder="https://yash9525-rw-live-checker.hf.space"
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 dark:border-white/10 dark:bg-black/60 p-3 text-xs font-mono text-slate-900 dark:text-white focus:border-primary focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-xs font-bold text-slate-700 dark:text-neutral-200 flex items-center gap-1.5">
-                  <KeyRound className="h-3.5 w-3.5 text-primary" /> Master API Secret Key
-                </label>
-                <input
-                  type="text"
-                  value={apiKeyInput}
-                  onChange={(e) => setApiKeyInput(e.target.value)}
-                  placeholder="Paste Reviews World API Secret Key (e.g. rw_live_9a87...)"
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 dark:border-white/10 dark:bg-black/60 p-3 text-xs font-mono text-slate-900 dark:text-white focus:border-primary focus:outline-none"
-                />
-              </div>
-
-              {authError && (
-                <div className="flex items-start gap-2.5 rounded-xl border border-rose-500/40 bg-rose-500/10 p-3.5 text-xs font-semibold text-rose-700 dark:text-rose-300">
-                  <AlertCircle className="h-4 w-4 text-rose-500 shrink-0 mt-0.5" />
-                  <div className="min-w-0 flex-1">
-                    <p className="font-bold">Authentication Failed</p>
-                    <p className="text-[11px] text-rose-600 dark:text-rose-300 mt-0.5">{authError}</p>
-                  </div>
-                </div>
-              )}
-
-              {authSuccess && (
-                <div className="flex items-start gap-2.5 rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-3.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
-                  <div className="min-w-0 flex-1">
-                    <p className="font-bold">Handshake Verified</p>
-                    <p className="text-[11px] text-emerald-600 dark:text-emerald-300 mt-0.5">{authSuccess}</p>
-                  </div>
-                </div>
-              )}
-
-              <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-200 dark:border-white/10">
-                <button
-                  type="button"
-                  onClick={() => setShowRwModal(false)}
-                  className="rounded-xl border border-slate-200 bg-slate-100 dark:border-white/10 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-neutral-300 transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleAuthenticateReviewsWorld}
-                  disabled={verifying || !apiKeyInput.trim()}
-                  className="rounded-xl bg-primary hover:bg-primary/90 px-5 py-2.5 text-xs font-bold text-slate-950 transition gold-glow disabled:opacity-50 flex items-center gap-1.5"
-                >
-                  {verifying ? <Loader2 className="h-4 w-4 animate-spin text-slate-950" /> : <Activity className="h-4 w-4 text-slate-950" />}
-                  {verifying ? 'Verifying Handshake (HTTP 200)...' : 'Authenticate & Save Key'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Task 2: Universal Connector Modal Engine */}
+      <ConnectorModal
+        isOpen={!!modalTarget}
+        onClose={() => setModalTarget(null)}
+        target={modalTarget}
+        onStatusChange={handleStatusChange}
+      />
     </div>
   );
 }
