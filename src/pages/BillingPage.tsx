@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { PageHeader } from '@/components/AppLayout';
 import {
@@ -20,6 +21,19 @@ import { cn } from '@/lib/utils';
 export function BillingPage() {
   const { client, userRole, isMasterAdmin, isDemoMode } = useAuth();
   const isAdmin = (isMasterAdmin || userRole === 'super_admin') && !isDemoMode;
+
+  const handleExcelClick = (e: React.MouseEvent, url?: string) => {
+    e.preventDefault();
+    if (isDemoMode) {
+      toast.error('No Excel sheet yet. Log in to your registered account and then check.', {
+        duration: 5000,
+      });
+      return;
+    }
+    if (url) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+  };
 
   // Data listeners & state
   const [clients] = useState<ClientRow[]>(() => dbEngine.getClients());
@@ -420,14 +434,13 @@ export function BillingPage() {
                     {/* Excel Link & Notes */}
                     <div className="flex items-center justify-between gap-2 text-xs">
                       {bRecord.excel_sheet_url ? (
-                        <a
-                          href={bRecord.excel_sheet_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold hover:bg-emerald-500/20 transition border border-emerald-500/20 text-[11px]"
+                        <button
+                          type="button"
+                          onClick={(e) => handleExcelClick(e, bRecord.excel_sheet_url)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold hover:bg-emerald-500/20 transition border border-emerald-500/20 text-[11px] cursor-pointer"
                         >
                           <FileSpreadsheet className="w-3.5 h-3.5" /> Admin Excel Sheet ↗
-                        </a>
+                        </button>
                       ) : (
                         <span className="text-slate-400 text-[10px]">No Excel link set</span>
                       )}
@@ -588,14 +601,13 @@ export function BillingPage() {
                             </td>
                             <td className="p-3.5">
                               {bRec?.excel_sheet_url ? (
-                                <a
-                                  href={bRec.excel_sheet_url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold hover:bg-emerald-500/20 text-[10px] border border-emerald-500/20"
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleExcelClick(e, bRec.excel_sheet_url)}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold hover:bg-emerald-500/20 text-[10px] border border-emerald-500/20 cursor-pointer"
                                 >
                                   <FileSpreadsheet className="w-3 h-3" /> Open Excel ↗
-                                </a>
+                                </button>
                               ) : (
                                 <span className="text-slate-400 text-[10px]">No link</span>
                               )}
