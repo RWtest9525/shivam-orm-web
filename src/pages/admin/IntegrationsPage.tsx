@@ -173,6 +173,7 @@ export function IntegrationsPage() {
           access_token: tokenInput || `oauth-${Date.now()}`,
           status: 'connected',
           health_status: 'healthy',
+          last_synced_at: new Date().toISOString(),
         });
       }
       setConnectedMap((prev) => ({ ...prev, [c.id]: true }));
