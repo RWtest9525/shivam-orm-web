@@ -10,8 +10,21 @@ import {
 } from 'lucide-react';
 
 export function ClientsPage() {
-  const { client } = useAuth();
-  const { clients, addClient, updateClientDetails, deleteClient } = useAllClients(client?.is_super_admin ?? false);
+  const { client, isMasterAdmin, userRole, isDemoMode } = useAuth();
+  const isAdmin = (isMasterAdmin || userRole === 'super_admin') && !isDemoMode;
+  const { clients, addClient, updateClientDetails, deleteClient } = useAllClients(isAdmin);
+
+  if (isDemoMode || !isAdmin) {
+    return (
+      <div className="p-8 text-center bg-white dark:bg-black/40 border border-slate-200 dark:border-white/10 rounded-3xl space-y-3 shadow-sm my-8">
+        <Users className="w-10 h-10 text-amber-500 mx-auto" />
+        <h2 className="text-lg font-bold text-slate-900 dark:text-white">Manage Clients is hidden in Demo Mode</h2>
+        <p className="text-xs text-slate-500 max-w-md mx-auto font-medium">
+          Administrative client creation &amp; management is hidden in Demo Showcase Mode. Log in with real super admin credentials to manage client accounts.
+        </p>
+      </div>
+    );
+  }
 
   const [showAddClient, setShowAddClient] = useState(false);
   const [editingClient, setEditingClient] = useState<ClientRow | null>(null);

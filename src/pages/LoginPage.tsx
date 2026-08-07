@@ -18,19 +18,42 @@ export function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   const submit = async () => {
+    const email = form.email.trim();
+    const pass = form.password.trim();
+
+    if (!email || !pass) {
+      toast.error('Please enter your email and password.');
+      return;
+    }
+
     setLoading(true);
     try {
-      const targetEmail = form.email.trim() || 'shivam@equinox.com';
-      const targetPass = form.password.trim() || 'password123';
-      const res = await signIn(targetEmail, targetPass);
-      if (res && res.success) {
-        toast.success(mode === 'signup' ? 'Workspace created successfully' : `Welcome back! Real data workspace active.`);
+      if (mode === 'signup') {
+        const newClient = dbEngine.addClient({
+          email,
+          company_name: form.orgName.trim() || `${form.name.trim() || 'My'} Workspace`,
+          contact_person: form.name.trim() || 'Client Admin',
+          phone: '+91 9876543210',
+          plan: 'pro',
+          status: 'active',
+          is_super_admin: false,
+          auth_user_id: `user-${Date.now()}`,
+          password: pass,
+        });
+        await signIn(email, pass);
+        toast.success('Workspace created successfully!');
         navigate('/app', { replace: true });
       } else {
-        toast.error(res?.error || 'Invalid credentials');
+        const res = await signIn(email, pass);
+        if (res && res.success) {
+          toast.success(`Welcome back! Real data workspace active.`);
+          navigate('/app', { replace: true });
+        } else {
+          toast.error(res?.error || 'Invalid email or password. Access denied.');
+        }
       }
     } catch (e: any) {
-      toast.error(e?.message || 'Authentication error');
+      toast.error(e?.message || 'Authentication failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
